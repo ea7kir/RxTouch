@@ -1,3 +1,5 @@
+# gui.py
+
 import PySimpleGUI as sg
 
 frequency = '00000.000'
