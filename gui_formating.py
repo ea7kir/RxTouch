@@ -1,14 +1,15 @@
-FREQUENCY = "-----.---"
-SYMBOL_RATE = "-"
-MODE = "-"
-CONSTELLATION = "-"
-FEC = "-/-"
-CODEC = "--"
-DB_MER = "-.-"
-DB_MARGIN = "D -.-"
-DBM_POWER = "---"
-PROVIDER = "-"
-SERVICE = "-"
+FREQUENCY = '-----.---'
+SYMBOL_RATE = '-'
+MODE = '-'
+CONSTELLATION = '-'
+FEC = '-/-'
+CODEC = '--'
+DB_MER = '-.-'
+DB_MARGIN = 'D -.-'
+DBM_POWER = '---'
+PROVIDER = '-'
+SERVICE = '-'
+DRIVE = '-'
 
 def frequency(kHz: int) -> str:
     if kHz > 0:
@@ -35,19 +36,18 @@ def fec(m: str) -> str:
         return m
     return FEC
 
-def codecs(audio: str, video: str) -> str:
-    a = ""
-    v = ""
-    if audio:
-        a = audio
-    else:
-        a = CODEC
+def codecs(video: str, audio: str) -> str:
+    a = ''
+    v = ''
     if video:
         v = video
     else:
         v = CODEC
-
-    return "{} {}".format(a, v)
+    if audio:
+        a = audio
+    else:
+        a = CODEC
+    return '{} {}'.format(v, a)
 
 def db_mer(m: str) -> str:
     if m:
