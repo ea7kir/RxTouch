@@ -1,5 +1,7 @@
 # RxTouch
 
+Control a DATV receiver with a touch screen.
+
 ## Hardware
 
 - Raspberry Pi 4B with 8GB RAM
