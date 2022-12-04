@@ -33,7 +33,7 @@ FRAME_TEXT_FONT = (None, 14)
 FRAME_TITLE_FONT = (None, 14)
 
 
-sg.theme('DarkGreen3')   # Add a touch of color
+sg.theme('DarkGreen3')
 
 # All the stuff inside your window
 
@@ -85,7 +85,7 @@ layout = [
 window = sg.Window('', layout, size=(800, 480), finalize=True)
 
 while True:
-    event, values = window.read(timeout=10)
+    event, values = window.read(timeout=100)
     if event in ('Shutdown','Exit'): # if user closes window or clicks cancel
         break
     window['-FREQUENCY-'].update(fmt.frequency(frequency))
