@@ -2,6 +2,7 @@
 
 import PySimpleGUI as sg
 import gui_formating as fmt
+import shutdown
 
 frequency = 10491551
 symbol_rate = 1500
@@ -17,7 +18,7 @@ provider = 'A71A'
 service = 'QARS'
 
 def readLongmydBuffer():
-    frequency = 12345678 #'00000.000'
+    frequency = '----.---' # ch 27 = 2409.750
     symbol_rate = '-'
     mode = '-'
     constellation = '-'
@@ -37,7 +38,7 @@ def data_field(key):
 
 sg.theme('Black')
 
-# All the stuff inside your window
+# layouts
 
 # ------------------------------------------------
 
@@ -48,21 +49,12 @@ control_labels_layout = [
 
 control_data_layout = [
     # frequency
-    [sg.Combo(['2400.00','2400.00','2400.00','2400.00'])],
+    [sg.Combo(['2409.750','2400.00','2400.00','2400.00'], size=(30,30))],
     # symbol rate
     [sg.Combo(['250','333','500'])],
     [sg.Button('Activate')]
 ]
-'''
-control_layout = [sg.Frame('Control Panel',
-    [
-        [sg.Column(control_labels_layout), sg.Column(control_data_layout)]
-    ],
-    title_color = 'green',
-    size = (225,340),
-    )
-]
-'''
+
 # ------------------------------------------------
 
 status_labels_layout =  [
@@ -75,7 +67,7 @@ status_labels_layout =  [
             [text_label('dB MER')],
             [text_label('dB Margin')],
             [text_label('dBm Power')],
-            [text_label('Povider')],
+            [text_label('Provider')],
             [text_label('Service')],
         ]
 
@@ -93,22 +85,12 @@ status_data_layout =  [
             [data_field('-SERVICE-')],
         ]
 
-'''
-status_layout = [sg.Frame(' Received Status ',
-    [
-        [sg.Column(status_labels_layout), sg.Column(status_data_layout)]   
-    ],
-    title_color = 'green',
-    #border_color = 'green',
-    #font = FRAME_TITLE_FONT, # for the title
-    size = (225,340),
-    )
-]
-'''
 # ------------------------------------------------
 
 buttons = [ [sg.Button('Shutdown')],
 ]
+
+# ------------------------------------------------
 
 layout = [
     [sg.Frame('Receiver Controls',
@@ -116,7 +98,8 @@ layout = [
             [sg.Column(control_labels_layout), sg.Column(control_data_layout)]
         ],
         title_color = 'green',
-        size = (300,340),
+        size = (350,340),
+        pad = (15, 15)
         ),
         
         sg.Frame('Received Status',
@@ -124,12 +107,14 @@ layout = [
             [sg.Column(status_labels_layout), sg.Column(status_data_layout)]
         ],
         title_color = 'green',
-        size = (225,340),
+        size = (350,340),
+        pad = (15, 15)
         ),
     ],
     [ sg.Column(buttons) ],
-
 ]
+
+# ------------------------------------------------
 
 window = sg.Window('', layout, size=(800, 480), finalize=True)
 
@@ -153,4 +138,5 @@ while True:
     update_all()
 
 window.close()
-print('Doing the shutdown sequence.')
+
+shutdown.shutdown()

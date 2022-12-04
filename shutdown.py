@@ -1,4 +1,5 @@
 import subprocess
 
 def shutdown():
-    subprocess.check_call(['sudo', 'poweroff'])
+    print('Doing the shutdown sequence.')
+    #subprocess.check_call(['sudo', 'poweroff'])
