@@ -3,18 +3,18 @@
 import PySimpleGUI as sg
 import gui_formating as fmt
 
-frequency = 12345678
-symbol_rate = 333
-mode = "mode"
-constellation = 'constellation'
-fec = '3/4'
-codec_audio = "ACC"
-codec_video = "H265"
-db_mer = 7.2
-db_margin = 3.4
-dbm_power = 70
-provider = "EA7KIR"
-service = "service"
+frequency = 10491551
+symbol_rate = 1500
+mode = 'Locked DVB-S2'
+constellation = 'QPSK'
+fec = '4/5'
+codec_video = 'H264'
+codec_audio = 'MP3'
+db_mer = 78.9
+db_margin = 4.1
+dbm_power = -60
+provider = 'A71A'
+service = 'QARS'
 
 def readLongmydBuffer():
     frequency = 12345678 #'00000.000'
@@ -42,18 +42,18 @@ sg.theme('Black')
 # ------------------------------------------------
 
 control_labels_layout = [
-    [text_label("Frequency")],
-    [text_label("Symbol Rate")],
+    [text_label('Frequency')],
+    [text_label('Symbol Rate')],
 ]
 
 control_data_layout = [
     # frequency
-    [sg.Combo(["2400.00","2400.00","2400.00","2400.00"])],
+    [sg.Combo(['2400.00','2400.00','2400.00','2400.00'])],
     # symbol rate
-    [sg.Combo(['250',"333","500"])],
+    [sg.Combo(['250','333','500'])],
     [sg.Button('Activate')]
 ]
-"""
+'''
 control_layout = [sg.Frame('Control Panel',
     [
         [sg.Column(control_labels_layout), sg.Column(control_data_layout)]
@@ -62,13 +62,13 @@ control_layout = [sg.Frame('Control Panel',
     size = (225,340),
     )
 ]
-"""
+'''
 # ------------------------------------------------
 
 status_labels_layout =  [
-            [text_label("Frequency")],
-            [text_label("Symbol Rate")],
-            [text_label("Mode")],
+            [text_label('Frequency')],
+            [text_label('Symbol Rate')],
+            [text_label('Mode')],
             [text_label('Constellation')],
             [text_label('FEC')],
             [text_label('Codecs')],
@@ -93,7 +93,7 @@ status_data_layout =  [
             [data_field('-SERVICE-')],
         ]
 
-"""
+'''
 status_layout = [sg.Frame(' Received Status ',
     [
         [sg.Column(status_labels_layout), sg.Column(status_data_layout)]   
@@ -104,10 +104,10 @@ status_layout = [sg.Frame(' Received Status ',
     size = (225,340),
     )
 ]
-"""
+'''
 # ------------------------------------------------
 
-buttons = [ [sg.Button("Shutdown")],
+buttons = [ [sg.Button('Shutdown')],
 ]
 
 layout = [
