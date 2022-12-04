@@ -39,7 +39,33 @@ sg.theme('Black')
 
 # All the stuff inside your window
 
-received_status_labels_layout =  [
+# ------------------------------------------------
+
+control_labels_layout = [
+    [text_label("Frequency")],
+    [text_label("Symbol Rate")],
+]
+
+control_data_layout = [
+    # frequency
+    [sg.Combo(["2400.00","2400.00","2400.00","2400.00"])],
+    # symbol rate
+    [sg.Combo(['250',"333","500"])],
+    [sg.Button('Activate')]
+]
+"""
+control_layout = [sg.Frame('Control Panel',
+    [
+        [sg.Column(control_labels_layout), sg.Column(control_data_layout)]
+    ],
+    title_color = 'green',
+    size = (225,340),
+    )
+]
+"""
+# ------------------------------------------------
+
+status_labels_layout =  [
             [text_label("Frequency")],
             [text_label("Symbol Rate")],
             [text_label("Mode")],
@@ -53,7 +79,7 @@ received_status_labels_layout =  [
             [text_label('Service')],
         ]
 
-received_status_data_layout =  [
+status_data_layout =  [
             [data_field('-FREQUENCY-')],
             [data_field('-SYMBOL_RATE-')],
             [data_field('-MODE-')],
@@ -67,31 +93,47 @@ received_status_data_layout =  [
             [data_field('-SERVICE-')],
         ]
 
-received_status_layout = [sg.Frame(' Received Status ',
+"""
+status_layout = [sg.Frame(' Received Status ',
     [
-        [sg.Column(received_status_labels_layout), sg.Column(received_status_data_layout)]
+        [sg.Column(status_labels_layout), sg.Column(status_data_layout)]   
     ],
     title_color = 'green',
     #border_color = 'green',
     #font = FRAME_TITLE_FONT, # for the title
-    size = (225,340)
+    size = (225,340),
     )
 ]
+"""
+# ------------------------------------------------
 
-buttons = [ [sg.Exit()],
+buttons = [ [sg.Button("Shutdown")],
 ]
 
 layout = [
-    [ received_status_layout ],
-    [ sg.Column(buttons),]
+    [sg.Frame('Receiver Controls',
+        [
+            [sg.Column(control_labels_layout), sg.Column(control_data_layout)]
+        ],
+        title_color = 'green',
+        size = (300,340),
+        ),
+        
+        sg.Frame('Received Status',
+        [
+            [sg.Column(status_labels_layout), sg.Column(status_data_layout)]
+        ],
+        title_color = 'green',
+        size = (225,340),
+        ),
+    ],
+    [ sg.Column(buttons) ],
+
 ]
 
 window = sg.Window('', layout, size=(800, 480), finalize=True)
 
-while True:
-    event, values = window.read(timeout=100)
-    if event in ('Shutdown','Exit'): # if user closes window or clicks cancel
-        break
+def update_all():
     window['-FREQUENCY-'].update(fmt.frequency(frequency))
     window['-SYMBOL_RATE-'].update(fmt.symbol_rate(symbol_rate))
     window['-MODE-'].update(fmt.mode(mode))
@@ -103,6 +145,12 @@ while True:
     window['-DBM_POWER-'].update(fmt.dbm_power(dbm_power))
     window['-PROVIDER-'].update(fmt.provider(provider))
     window['-SERVICE-'].update(fmt.service(service))
+
+while True:
+    event, values = window.read(timeout=100)
+    if event in ('Shutdown','Exit'): # if user closes window or clicks cancel
+        break
+    update_all()
 
 window.close()
 print('Doing the shutdown sequence.')
