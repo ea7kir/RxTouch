@@ -2,7 +2,8 @@
 
 import PySimpleGUI as sg
 import gui_formating as fmt
-import shutdown
+from defs import shutdown, activate_longmynd
+from bandplan import RX_FREQUENCY_LIST, SYMBOL_RATE_LIST
 
 frequency = 10491551
 symbol_rate = 1500
@@ -49,9 +50,9 @@ control_labels_layout = [
 
 control_data_layout = [
     # frequency
-    [sg.Combo(['2409.750','2400.00','2400.00','2400.00'], size=(30,30))],
+    [sg.Combo(RX_FREQUENCY_LIST)],
     # symbol rate
-    [sg.Combo(['250','333','500'])],
+    [sg.Combo(SYMBOL_RATE_LIST)],
     [sg.Button('Activate')]
 ]
 
@@ -135,8 +136,10 @@ while True:
     event, values = window.read(timeout=100)
     if event in ('Shutdown','Exit'): # if user closes window or clicks cancel
         break
+    if event == 'Activate':
+        activate_longmynd()
     update_all()
 
 window.close()
 
-shutdown.shutdown()
+shutdown()
