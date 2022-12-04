@@ -6,7 +6,7 @@ import gui_formating as fmt
 frequency = 12345678
 symbol_rate = 333
 mode = "mode"
-constellation = 'constellatio'
+constellation = 'constellation'
 fec = '3/4'
 codec_audio = "ACC"
 codec_video = "H265"
@@ -29,48 +29,52 @@ def readLongmydBuffer():
     provider = '-'
     service = '-'
 
-FRAME_TEXT_FONT = (None, 14)
-FRAME_TITLE_FONT = (None, 14)
+def text_label(name):
+    return sg.Text(name, font=(None, 11))
 
+def data_field(key):
+    return sg.Text('', key=key, text_color='orange', font=(None, 11))
 
-sg.theme('DarkGreen3')
+sg.theme('Black')
 
 # All the stuff inside your window
 
 received_status_labels_layout =  [
-            [sg.Text("Frequency", font = FRAME_TEXT_FONT)],
-            [sg.Text("Symbol Rate", font = FRAME_TEXT_FONT)],
-            [sg.Text("Mode", font = FRAME_TEXT_FONT)],
-            [sg.Text('Constellation', font = FRAME_TEXT_FONT)],
-            [sg.Text('FEC', font = FRAME_TEXT_FONT)],
-            [sg.Text('Codecs', font = FRAME_TEXT_FONT)],
-            [sg.Text('dB MER', font = FRAME_TEXT_FONT)],
-            [sg.Text('dB Margin', font = FRAME_TEXT_FONT)],
-            [sg.Text('dBm Power', font = FRAME_TEXT_FONT)],
-            [sg.Text('Povider', font = FRAME_TEXT_FONT)],
-            [sg.Text('Service', font = FRAME_TEXT_FONT)],
+            [text_label("Frequency")],
+            [text_label("Symbol Rate")],
+            [text_label("Mode")],
+            [text_label('Constellation')],
+            [text_label('FEC')],
+            [text_label('Codecs')],
+            [text_label('dB MER')],
+            [text_label('dB Margin')],
+            [text_label('dBm Power')],
+            [text_label('Povider')],
+            [text_label('Service')],
         ]
 
 received_status_data_layout =  [
-            [sg.Text(font = FRAME_TEXT_FONT, key='-FREQUENCY-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-SYMBOL_RATE-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-MODE-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-CONSTELLATION-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-FEC-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-CODECS-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-DB_MER-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-DB_MARGIN-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-DBM_POWER-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-PROVIDER-')],
-            [sg.Text(font = FRAME_TEXT_FONT, key='-SERVICE-')],
+            [data_field('-FREQUENCY-')],
+            [data_field('-SYMBOL_RATE-')],
+            [data_field('-MODE-')],
+            [data_field('-CONSTELLATION-')],
+            [data_field('-FEC-')],
+            [data_field('-CODECS-')],
+            [data_field('-DB_MER-')],
+            [data_field('-DB_MARGIN-')],
+            [data_field('-DBM_POWER-')],
+            [data_field('-PROVIDER-')],
+            [data_field('-SERVICE-')],
         ]
 
-received_status_layout = [sg.Frame('Received Status',
+received_status_layout = [sg.Frame(' Received Status ',
     [
         [sg.Column(received_status_labels_layout), sg.Column(received_status_data_layout)]
     ],
-    font = FRAME_TITLE_FONT, # for the title
-    size = (220,335)
+    title_color = 'green',
+    #border_color = 'green',
+    #font = FRAME_TITLE_FONT, # for the title
+    size = (225,340)
     )
 ]
 
