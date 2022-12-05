@@ -1,5 +1,3 @@
-# ryde-longmynd.py
-
 #    Ryde Player provides a on screen interface and video player for Longmynd compatible tuners.
 #    Copyright © 2021 Tim Clark
 #
