@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 import gui_formating as fmt
 from defs import shutdown, activate_longmynd
 from bandplan import RX_FREQUENCY_LIST, SYMBOL_RATE_LIST
-from lm_functions import lm_data_dict
+from lm_functions import lm_status_available, read_lm_status
 
 def text_label(name):
     return sg.Text(name, font=(None, 11))
@@ -70,27 +70,15 @@ buttons = [ [sg.Button('Shutdown')],
 
 layout = [
     [sg.Frame('Receiver Controls',
-        [
-            [sg.Column(control_labels_layout), sg.Column(control_data_layout)]
-        ],
-        title_color = 'green',
-        size = (350,340),
-        pad = (15, 15)
-        ),
+        [ [sg.Column(control_labels_layout), sg.Column(control_data_layout)] ],
+        title_color='green', size=(355,340), pad=(15,15)),
         
         sg.Frame('Received Status',
-        [
-            [sg.Column(status_labels_layout), sg.Column(status_data_layout)]
-        ],
-        title_color = 'green',
-        size = (350,340),
-        pad = (15, 15)
-        ),
+        [ [sg.Column(status_labels_layout), sg.Column(status_data_layout)] ],
+        title_color='green', size=(355,340), pad=(15,15) ),
     ],
     [ sg.Column(buttons) ],
 ]
-
-# ------------------------------------------------
 
 window = sg.Window('', layout, size=(800, 480), finalize=True)
 
@@ -100,18 +88,19 @@ while True:
         break
     if event == 'Activate':
         activate_longmynd()
-    data_dict = lm_data_dict()
-    window['-FREQUENCY-'].update(fmt.frequency(data_dict['-FREQUENCY-']))
-    window['-SYMBOL_RATE-'].update(fmt.symbol_rate(data_dict['-SYMBOL_RATE-']))
-    window['-MODE-'].update(fmt.mode(data_dict['-MODE-']))
-    window['-CONSTELLATION-'].update(fmt.constellation(data_dict['-CONSTELLATION-']))
-    window['-FEC-'].update(fmt.fec(data_dict['-FEC-']))
-    window['-CODECS-'].update(fmt.codecs(data_dict['-CODECS-']))
-    window['-DB_MER-'].update(fmt.db_mer(data_dict['-DB_MER-']))
-    window['-DB_MARGIN-'].update(fmt.db_margin(data_dict['-DB_MARGIN-']))
-    window['-DBM_POWER-'].update(fmt.dbm_power(data_dict['-DBM_POWER-']))
-    window['-PROVIDER-'].update(fmt.provider(data_dict['-PROVIDER-']))
-    window['-SERVICE-'].update(fmt.service(data_dict['-SERVICE-']))
+    if lm_status_available:
+        lm_status = read_lm_status()
+        window['-FREQUENCY-'].update(fmt.frequency(lm_status.frequency))
+        window['-SYMBOL_RATE-'].update(fmt.symbol_rate(lm_status.symbol_rate))
+        window['-MODE-'].update(fmt.mode(lm_status.mode))
+        window['-CONSTELLATION-'].update(fmt.constellation(lm_status.constellation))
+        window['-FEC-'].update(fmt.fec(lm_status.fec))
+        window['-CODECS-'].update(fmt.codecs(lm_status.codecs))
+        window['-DB_MER-'].update(fmt.db_mer(lm_status.db_mer))
+        window['-DB_MARGIN-'].update(fmt.db_margin(lm_status.db_margin))
+        window['-DBM_POWER-'].update(fmt.dbm_power(lm_status.dbm_power))
+        window['-PROVIDER-'].update(fmt.provider(lm_status.provider))
+        window['-SERVICE-'].update(fmt.service(lm_status.service))
 
 window.close(); del window
 shutdown()
