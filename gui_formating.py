@@ -1,3 +1,5 @@
+# gui_formatting.py
+
 FREQUENCY = '-----.---'
 SYMBOL_RATE = '-'
 MODE = '-'

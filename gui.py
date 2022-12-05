@@ -34,36 +34,36 @@ control_data_layout = [
 # ------------------------------------------------
 
 status_labels_layout =  [
-            [text_label('Frequency')],
-            [text_label('Symbol Rate')],
-            [text_label('Mode')],
-            [text_label('Constellation')],
-            [text_label('FEC')],
-            [text_label('Codecs')],
-            [text_label('dB MER')],
-            [text_label('dB Margin')],
-            [text_label('dBm Power')],
-            [text_label('Provider')],
-            [text_label('Service')],
-        ]
-
+    [text_label('Frequency')],
+    [text_label('Symbol Rate')],
+    [text_label('Mode')],
+    [text_label('Constellation')],
+    [text_label('FEC')],
+    [text_label('Codecs')],
+    [text_label('dB MER')],
+    [text_label('dB Margin')],
+    [text_label('dBm Power')],
+    [text_label('Provider')],
+    [text_label('Service')],
+]
 status_data_layout =  [
-            [data_field('-FREQUENCY-')],
-            [data_field('-SYMBOL_RATE-')],
-            [data_field('-MODE-')],
-            [data_field('-CONSTELLATION-')],
-            [data_field('-FEC-')],
-            [data_field('-CODECS-')],
-            [data_field('-DB_MER-')],
-            [data_field('-DB_MARGIN-')],
-            [data_field('-DBM_POWER-')],
-            [data_field('-PROVIDER-')],
-            [data_field('-SERVICE-')],
-        ]
+    [data_field('-FREQUENCY-')],
+    [data_field('-SYMBOL_RATE-')],
+    [data_field('-MODE-')],
+    [data_field('-CONSTELLATION-')],
+    [data_field('-FEC-')],
+    [data_field('-CODECS-')],
+    [data_field('-DB_MER-')],
+    [data_field('-DB_MARGIN-')],
+    [data_field('-DBM_POWER-')],
+    [data_field('-PROVIDER-')],
+    [data_field('-SERVICE-')],
+]
 
 # ------------------------------------------------
 
-buttons = [ [sg.Button('Shutdown')],
+buttons = [
+    [sg.Button('Shutdown')],
 ]
 
 # ------------------------------------------------

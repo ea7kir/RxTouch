@@ -1,4 +1,4 @@
-# band_plan.py
+# bandplan.py
 
 RX_FREQUENCY_LIST = [
     '10491.500',
