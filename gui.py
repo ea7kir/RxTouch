@@ -4,32 +4,7 @@ import PySimpleGUI as sg
 import gui_formating as fmt
 from defs import shutdown, activate_longmynd
 from bandplan import RX_FREQUENCY_LIST, SYMBOL_RATE_LIST
-
-frequency = 10491551
-symbol_rate = 1500
-mode = 'Locked DVB-S2'
-constellation = 'QPSK'
-fec = '4/5'
-codec_video = 'H264'
-codec_audio = 'MP3'
-db_mer = 78.9
-db_margin = 4.1
-dbm_power = -60
-provider = 'A71A'
-service = 'QARS'
-
-def readLongmydBuffer():
-    frequency = '----.---' # ch 27 = 2409.750
-    symbol_rate = '-'
-    mode = '-'
-    constellation = '-'
-    fec = '-/-'
-    codecs = '- -'
-    db_mer = '-.-'
-    db_margin = 'D -.-'
-    dbm_power = '---'
-    provider = '-'
-    service = '-'
+from lm_functions import lm_data_dict
 
 def text_label(name):
     return sg.Text(name, font=(None, 11))
@@ -119,27 +94,24 @@ layout = [
 
 window = sg.Window('', layout, size=(800, 480), finalize=True)
 
-def update_all():
-    window['-FREQUENCY-'].update(fmt.frequency(frequency))
-    window['-SYMBOL_RATE-'].update(fmt.symbol_rate(symbol_rate))
-    window['-MODE-'].update(fmt.mode(mode))
-    window['-CONSTELLATION-'].update(fmt.constellation(constellation))
-    window['-FEC-'].update(fmt.fec(fec))
-    window['-CODECS-'].update(fmt.codecs(codec_audio,codec_video))
-    window['-DB_MER-'].update(fmt.db_mer(db_mer))
-    window['-DB_MARGIN-'].update(fmt.db_margin(db_margin))
-    window['-DBM_POWER-'].update(fmt.dbm_power(dbm_power))
-    window['-PROVIDER-'].update(fmt.provider(provider))
-    window['-SERVICE-'].update(fmt.service(service))
-
 while True:
     event, values = window.read(timeout=100)
     if event in ('Shutdown','Exit'): # if user closes window or clicks cancel
         break
     if event == 'Activate':
         activate_longmynd()
-    update_all()
+    data_dict = lm_data_dict()
+    window['-FREQUENCY-'].update(fmt.frequency(data_dict['-FREQUENCY-']))
+    window['-SYMBOL_RATE-'].update(fmt.symbol_rate(data_dict['-SYMBOL_RATE-']))
+    window['-MODE-'].update(fmt.mode(data_dict['-MODE-']))
+    window['-CONSTELLATION-'].update(fmt.constellation(data_dict['-CONSTELLATION-']))
+    window['-FEC-'].update(fmt.fec(data_dict['-FEC-']))
+    window['-CODECS-'].update(fmt.codecs(data_dict['-CODECS-']))
+    window['-DB_MER-'].update(fmt.db_mer(data_dict['-DB_MER-']))
+    window['-DB_MARGIN-'].update(fmt.db_margin(data_dict['-DB_MARGIN-']))
+    window['-DBM_POWER-'].update(fmt.dbm_power(data_dict['-DBM_POWER-']))
+    window['-PROVIDER-'].update(fmt.provider(data_dict['-PROVIDER-']))
+    window['-SERVICE-'].update(fmt.service(data_dict['-SERVICE-']))
 
-window.close()
-
+window.close(); del window
 shutdown()

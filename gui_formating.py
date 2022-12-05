@@ -3,7 +3,8 @@ SYMBOL_RATE = '-'
 MODE = '-'
 CONSTELLATION = '-'
 FEC = '-/-'
-CODEC = '--'
+CODEC = '-'
+CODECS = '- -'
 DB_MER = '-.-'
 DB_MARGIN = 'D -.-'
 DBM_POWER = '---'
@@ -36,9 +37,14 @@ def fec(m: str) -> str:
         return m
     return FEC
 
-def codecs(video: str, audio: str) -> str:
-    a = ''
-    v = ''
+def codecs(m: str) -> str:
+    if m:
+        return m
+    return CODECS
+
+def codecs_va(video: str, audio: str) -> str:
+    a = None
+    v = None
     if video:
         v = video
     else:
@@ -73,4 +79,3 @@ def service(m: str) -> str:
     if m:
         return m
     return MODE
-

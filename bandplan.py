@@ -85,8 +85,9 @@ FEC_LIST = [
 ]
 
 MODE_LIST = [
-    'DVB-S',
-    'DVB-S2',
+    'SEARCHING',
+    'Locked DVB-S',
+    'Locked DVB-S2',
 ]
 
 CODEC_LIST = [

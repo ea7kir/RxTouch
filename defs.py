@@ -10,6 +10,9 @@ def deactivate_longmynd():
 def activate_longmynd():
     print('activating longmynd with:')
 
+def read_longmynd(list):
+    list['frequency'] = 123
+
 def shutdown():
     print('Doing the shutdown sequence.')
     deactivate_longmynd()
