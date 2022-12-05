@@ -6,11 +6,19 @@ from defs import shutdown, activate_longmynd
 from bandplan import RX_FREQUENCY_LIST, SYMBOL_RATE_LIST
 from lm_functions import lm_status_available, read_lm_status
 
-def text_label(name):
+def xxx_text_label(name):
     return sg.Text(name, font=(None, 11))
 
-def data_field(key):
+def xxx_data_field(key):
     return sg.Text('', key=key, text_color='orange', font=(None, 11))
+
+def data_field2(name, key):
+    FONT = (None,11); SIZE=(15,1)
+    return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Text('', key=key, text_color='orange', font=FONT) ]
+
+def data_combo(name, values, width):
+    FONT = (None,11); SIZE=(15,1)
+    return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Combo(values, size=SIZE, font=FONT) ]
 
 sg.theme('Black')
 
@@ -18,47 +26,25 @@ sg.theme('Black')
 
 # ------------------------------------------------
 
-control_labels_layout = [
-    [text_label('Name'), data_field('-Key-')],
-    [text_label('Frequency')],
-    [text_label('Symbol Rate')],
-]
-
-control_data_layout = [
-    # frequency
-    [sg.Combo(RX_FREQUENCY_LIST)],
-    # symbol rate
-    [sg.Combo(SYMBOL_RATE_LIST)],
-    [sg.Button('Activate')]
+control_layout = [
+    data_combo('Frequency', RX_FREQUENCY_LIST, 10),
+    data_combo('Symbol Rate', SYMBOL_RATE_LIST, 10),
 ]
 
 # ------------------------------------------------
 
-status_labels_layout = [
-    [text_label('Frequency')],
-    [text_label('Symbol Rate')],
-    [text_label('Mode')],
-    [text_label('Constellation')],
-    [text_label('FEC')],
-    [text_label('Codecs')],
-    [text_label('dB MER')],
-    [text_label('dB Margin')],
-    [text_label('dBm Power')],
-    [text_label('Provider')],
-    [text_label('Service')],
-]
-status_data_layout =  [
-    [data_field('-FREQUENCY-')],
-    [data_field('-SYMBOL_RATE-')],
-    [data_field('-MODE-')],
-    [data_field('-CONSTELLATION-')],
-    [data_field('-FEC-')],
-    [data_field('-CODECS-')],
-    [data_field('-DB_MER-')],
-    [data_field('-DB_MARGIN-')],
-    [data_field('-DBM_POWER-')],
-    [data_field('-PROVIDER-')],
-    [data_field('-SERVICE-')],
+status_layout = [
+    data_field2('Frequency', '-FREQUENCY-'),
+    data_field2('Symbol Rate', '-SYMBOL_RATE-'),
+    data_field2('Mode', '-MODE-'),
+    data_field2('Constellation', '-CONSTELLATION-'),
+    data_field2('FEC', '-FEC-'),
+    data_field2('Codecs', '-CODECS-'),
+    data_field2('dB MER', '-DB_MER-'),
+    data_field2('dB Margin', '-DB_MARGIN-'),
+    data_field2('dBm Power', '-DBM_POWER-'),
+    data_field2('Provider', '-PROVIDER-'),
+    data_field2('Service', '-SERVICE-'),
 ]
 
 # ------------------------------------------------
@@ -71,12 +57,10 @@ buttons = [
 
 layout = [
     [sg.Frame('Receiver Controls',
-        [ [sg.Column(control_labels_layout), sg.Column(control_data_layout)] ],
-        title_color='green', size=(355,340), pad=(15,15)),
+        control_layout, title_color='green', size=(355,340), pad=(15,15)),
         
         sg.Frame('Received Status',
-        [ [sg.Column(status_labels_layout), sg.Column(status_data_layout)] ],
-        title_color='green', size=(355,340), pad=(15,15) ),
+        status_layout, title_color='green', size=(355,340), pad=(15,15) ),
     ],
     [ sg.Column(buttons) ],
 ]

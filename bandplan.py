@@ -69,8 +69,8 @@ SYMBOL_RATE_LIST = [
     '250',
     '333',
     '500',
-    '100',
-    '150',
+    '1000',
+    '1500',
 ]
 
 FEC_LIST = [
@@ -83,6 +83,11 @@ FEC_LIST = [
     '7/8',
     '8/9',
 ]
+
+MODE_SEL_LIST = {
+    'DVB-S',
+    'DVB-S2',
+}
 
 MODE_LIST = [
     'Initialising',
