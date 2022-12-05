@@ -44,3 +44,21 @@ def read_lm_status() -> LmStatus:
     lm_status.provider = 'A71A'
     lm_status.service = 'QARS'
     return lm_status
+
+longmynd_running = False
+
+def read_longmynd_ts() -> str:
+    msg = ''
+    
+    return msg
+
+def stop_longmynd():
+    longmynd_running = False
+
+def start_longmynd(frequency, symbol_rates):
+    if longmynd_running:
+        stop_longmynd
+    # TODO: execute longmynd with args
+    longmynd_running = True
+
+

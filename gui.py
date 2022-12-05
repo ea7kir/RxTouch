@@ -19,6 +19,7 @@ sg.theme('Black')
 # ------------------------------------------------
 
 control_labels_layout = [
+    [text_label('Name'), data_field('-Key-')],
     [text_label('Frequency')],
     [text_label('Symbol Rate')],
 ]
@@ -33,7 +34,7 @@ control_data_layout = [
 
 # ------------------------------------------------
 
-status_labels_layout =  [
+status_labels_layout = [
     [text_label('Frequency')],
     [text_label('Symbol Rate')],
     [text_label('Mode')],
