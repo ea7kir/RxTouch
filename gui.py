@@ -6,19 +6,17 @@ from defs import shutdown, activate_longmynd
 from bandplan import RX_FREQUENCY_LIST, SYMBOL_RATE_LIST
 from lm_functions import lm_status_available, read_lm_status
 
-def xxx_text_label(name):
-    return sg.Text(name, font=(None, 11))
-
-def xxx_data_field(key):
-    return sg.Text('', key=key, text_color='orange', font=(None, 11))
-
-def data_field2(name, key):
+def text_data(name, key):
     FONT = (None,11); SIZE=(15,1)
     return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Text('', key=key, text_color='orange', font=FONT) ]
 
-def data_combo(name, values, width):
-    FONT = (None,11); SIZE=(15,1)
+def text_combo(name, values):
+    FONT = (None,11); SIZE=(15,None)
     return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Combo(values, size=SIZE, font=FONT) ]
+
+def text_button(name, b_name):
+    FONT = (None,11); SIZE=(13,2)
+    return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Button(b_name, size=SIZE, font=FONT) ]
 
 sg.theme('Black')
 
@@ -27,24 +25,26 @@ sg.theme('Black')
 # ------------------------------------------------
 
 control_layout = [
-    data_combo('Frequency', RX_FREQUENCY_LIST, 10),
-    data_combo('Symbol Rate', SYMBOL_RATE_LIST, 10),
+    text_combo('Frequency', RX_FREQUENCY_LIST),
+    text_combo('Symbol Rate', SYMBOL_RATE_LIST),
+    text_button('Minitiouner', 'Tune'),
+    text_data('Sending:', '-TUNED-'),
 ]
 
 # ------------------------------------------------
 
 status_layout = [
-    data_field2('Frequency', '-FREQUENCY-'),
-    data_field2('Symbol Rate', '-SYMBOL_RATE-'),
-    data_field2('Mode', '-MODE-'),
-    data_field2('Constellation', '-CONSTELLATION-'),
-    data_field2('FEC', '-FEC-'),
-    data_field2('Codecs', '-CODECS-'),
-    data_field2('dB MER', '-DB_MER-'),
-    data_field2('dB Margin', '-DB_MARGIN-'),
-    data_field2('dBm Power', '-DBM_POWER-'),
-    data_field2('Provider', '-PROVIDER-'),
-    data_field2('Service', '-SERVICE-'),
+    text_data('Frequency', '-FREQUENCY-'),
+    text_data('Symbol Rate', '-SYMBOL_RATE-'),
+    text_data('Mode', '-MODE-'),
+    text_data('Constellation', '-CONSTELLATION-'),
+    text_data('FEC', '-FEC-'),
+    text_data('Codecs', '-CODECS-'),
+    text_data('dB MER', '-DB_MER-'),
+    text_data('dB Margin', '-DB_MARGIN-'),
+    text_data('dBm Power', '-DBM_POWER-'),
+    text_data('Provider', '-PROVIDER-'),
+    text_data('Service', '-SERVICE-'),
 ]
 
 # ------------------------------------------------
@@ -65,13 +65,17 @@ layout = [
     [ sg.Column(buttons) ],
 ]
 
-window = sg.Window('', layout, size=(800, 480), finalize=True)
+window = sg.Window('', layout, size=(800, 480), finalize=True, 
+    default_button_element_size=(15,2), auto_size_buttons=False, use_default_focus=False)
+#window.set_cursor('none')
+
 
 while True:
     event, values = window.read(timeout=100)
     if event in ('Shutdown','Exit'): # if user closes window or clicks cancel
         break
-    if event == 'Activate':
+    if event == 'Tune':
+        window['-TUNED-'].update('this: ')
         activate_longmynd()
     if lm_status_available:
         lm_status = read_lm_status()
