@@ -2,46 +2,50 @@
 
 import PySimpleGUI as sg
 import gui_formating as fmt
-from defs import shutdown, activate_longmynd
-from bandplan import RX_FREQUENCY_LIST, SYMBOL_RATE_LIST
+from defs import shutdown
+from bandplan import selected
 from lm_functions import lm_status_available, read_lm_status
 
 # ------------------------------------------------
 
 # The callback functions
+
+
+
+
+control_changed = True
+
 def band_down():
-    print('band_down callback')
+    selected.dec_band()
 
 def band_up():
-    print('band_up callback')
+    selected.inc_band()
 
 def freq_down():
-    print('freq_down callback')
+    selected.dec_frequency()
 
 def freq_up():
-    print('freq_up callback')
+    selected.inc_frequency()
 
 def sr_down():
-    print('sr_down callback')
+    selected.dec_band()
 
 def sr_up():
-    print('sr_up callback')
+    selected.inc_frequency()
+
+def beacon():
+    pass
 
 def tune():
     print('tune callback')
 
-def pre_shutdown():
-    print('pre_shutdown callback')
-
-def timeout():
-    pass
 
 # Lookup dictionary that maps button to function to call
 dispatch_dictionary = { 
     '-BD-':band_down, '-BU-':band_up, 
     '-FD-':freq_down, '-FU-':freq_up, 
-    '-SD-':sr_down, '-SU-':sr_up, 
-    '-TUNE-':tune #, '-SHUTDOWN-':pre_shutdown, '-TIMEOUT-':timeout
+    '-SD-':sr_down, '-SU-':sr_up,
+    '-BEACON-':beacon, '-TUNE-':tune,
 }
 
 # ------------------------------------------------
@@ -64,7 +68,7 @@ def my_button(name, key):
 
 def button_selector(key_down, key_text, key_up):
     #FONT = (None,11); SIZE=(15,1)
-    return [ my_button('<', key_down), sg.Push(), sg.Text('V.Narrow', key=key_text, font=(None,18)), sg.Push(), my_button('>', key_up) ]
+    return [ my_button('<', key_down), sg.Push(), sg.Text('', key=key_text, text_color='orange', font=(None,18)), sg.Push(), my_button('>', key_up) ]
 
 
 # ------------------------------------------------
@@ -77,17 +81,14 @@ sg.theme('Black')
 # ------------------------------------------------
 
 control_layout = [
-    #text_combo('Frequency', RX_FREQUENCY_LIST),
-    #text_combo('Symbol Rate', SYMBOL_RATE_LIST),
-    #text_button('Minitiouner', 'Tune'),
     [sg.Text('Band')],
     button_selector('-BD-', '-BT-', '-BU-'),
     [sg.Text('Channel Frequency')],
-    button_selector('-FD-', 'FT', '-FU-'),
+    button_selector('-FD-', '-FT-', '-FU-'),
     [sg.Text('Symbol Rate')],
-    button_selector('-SD-', 'ST', '-SU-'),
+    button_selector('-SD-', '-ST-', '-SU-'),
     [sg.Text('')],
-    [sg.Button('TUNE', key='-TUNE-', font=(None,11), size=(15,2))],
+    [sg.Button('BEACON', key='-BEACON-', font=(None,11), size=(13,2)), sg.Push(), sg.Button('TUNE', key='-TUNE-', font=(None,11), size=(13,2))],
 ]
 
 # ------------------------------------------------
@@ -109,7 +110,7 @@ status_layout = [
 # ------------------------------------------------
 
 buttons = [
-    [sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11), size=(15,2))],
+    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11), size=(13,2))]
 ]
 
 # ------------------------------------------------
@@ -132,13 +133,19 @@ window = sg.Window('', layout, size=(800, 480), use_default_focus=False, finaliz
 while True:
     event, values = window.read(timeout=100)
     if event == '-SHUTDOWN-':
-        break
+        if sg.popup_ok_cancel('Shutdown Now?', font=(None,11), background_color='red') == 'OK':
+            break
 
-    if event in dispatch_dictionary:
-        func_to_call = dispatch_dictionary[event]   # get function from dispatch dictionary
-        func_to_call()
-#    else:
-#        print('Event {} not in dispatch dictionary'.format(event))
+    if event != '-TIMEOUT':
+        if event in dispatch_dictionary:
+            func_to_call = dispatch_dictionary[event]   # get function from dispatch dictionary
+            func_to_call()
+
+    if selected.changed:
+            window['-BT-'].update(selected.band)
+            window['-FT-'].update(selected.frequency)
+            window['-ST-'].update(selected.symbol_rate)
+            selected.changed = False
 
     if lm_status_available:
         lm_status = read_lm_status()
