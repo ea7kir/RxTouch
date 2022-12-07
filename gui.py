@@ -2,50 +2,25 @@
 
 import PySimpleGUI as sg
 import gui_formating as fmt
-from defs import shutdown
-from bandplan import selected
-from lm_functions import lm_status_available, read_lm_status
+from bandplan import band_plan as bp
+from lm_functions import lm_status_available, read_lm_status, start_longmynd, stop_longmynd, longmynd_running
 
 # ------------------------------------------------
 
 # The callback functions
 
-
-
-
-control_changed = True
-
-def band_down():
-    selected.dec_band()
-
-def band_up():
-    selected.inc_band()
-
-def freq_down():
-    selected.dec_frequency()
-
-def freq_up():
-    selected.inc_frequency()
-
-def sr_down():
-    selected.dec_band()
-
-def sr_up():
-    selected.inc_frequency()
-
-def beacon():
-    pass
-
 def tune():
+    f = bp.frequency
+    s = bp.symbol_rate
     print('tune callback')
 
 
 # Lookup dictionary that maps button to function to call
 dispatch_dictionary = { 
-    '-BD-':band_down, '-BU-':band_up, 
-    '-FD-':freq_down, '-FU-':freq_up, 
-    '-SD-':sr_down, '-SU-':sr_up,
-    '-BEACON-':beacon, '-TUNE-':tune,
+    '-BD-':bp.dec_band, '-BU-':bp.inc_band, 
+    '-FD-':bp.dec_frequency, '-FU-':bp.inc_frequency, 
+    '-SD-':bp.dec_symbol_rate, '-SU-':bp.inc_symbol_rate,
+    '-TUNE-':tune,
 }
 
 # ------------------------------------------------
@@ -66,9 +41,9 @@ def my_button(name, key):
     #FONT = (None,11); SIZE=(5,2)
     return sg.Button(name, key=key, size=(5,2), font=(None,11))
 
-def button_selector(key_down, key_text, key_up):
+def button_selector(key_down, value, key_up):
     #FONT = (None,11); SIZE=(15,1)
-    return [ my_button('<', key_down), sg.Push(), sg.Text('', key=key_text, text_color='orange', font=(None,18)), sg.Push(), my_button('>', key_up) ]
+    return [ my_button('<', key_down), sg.Push(), sg.Text('', key=value, text_color='orange', font=(None,18)), sg.Push(), my_button('>', key_up) ]
 
 
 # ------------------------------------------------
@@ -82,13 +57,13 @@ sg.theme('Black')
 
 control_layout = [
     [sg.Text('Band')],
-    button_selector('-BD-', '-BT-', '-BU-'),
+    button_selector('-BD-', '-BV-', '-BU-'),
     [sg.Text('Channel Frequency')],
-    button_selector('-FD-', '-FT-', '-FU-'),
+    button_selector('-FD-', '-FV-', '-FU-'),
     [sg.Text('Symbol Rate')],
-    button_selector('-SD-', '-ST-', '-SU-'),
+    button_selector('-SD-', '-SV-', '-SU-'),
     [sg.Text('')],
-    [sg.Button('BEACON', key='-BEACON-', font=(None,11), size=(13,2)), sg.Push(), sg.Button('TUNE', key='-TUNE-', font=(None,11), size=(13,2))],
+    [sg.Push(), sg.Button('TUNE', key='-TUNE-', font=(None,11), size=(13,2))],
 ]
 
 # ------------------------------------------------
@@ -109,12 +84,6 @@ status_layout = [
 
 # ------------------------------------------------
 
-buttons = [
-    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11), size=(13,2))]
-]
-
-# ------------------------------------------------
-
 layout = [
     [sg.Frame('Receiver Controls',
         control_layout, title_color='green', size=(355,340), pad=(15,15)),
@@ -122,7 +91,7 @@ layout = [
         sg.Frame('Received Status',
         status_layout, title_color='green', size=(355,340), pad=(15,15) ),
     ],
-    [ sg.Column(buttons) ],
+    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11), size=(13,2))],
 ]
 
 window = sg.Window('', layout, size=(800, 480), use_default_focus=False, finalize=True)
@@ -136,16 +105,15 @@ while True:
         if sg.popup_ok_cancel('Shutdown Now?', font=(None,11), background_color='red') == 'OK':
             break
 
-    if event != '-TIMEOUT':
-        if event in dispatch_dictionary:
-            func_to_call = dispatch_dictionary[event]   # get function from dispatch dictionary
-            func_to_call()
+    if event in dispatch_dictionary:
+        func_to_call = dispatch_dictionary[event]
+        func_to_call()
 
-    if selected.changed:
-            window['-BT-'].update(selected.band)
-            window['-FT-'].update(selected.frequency)
-            window['-ST-'].update(selected.symbol_rate)
-            selected.changed = False
+    if bp.changed:
+            window['-BV-'].update(bp.band)
+            window['-FV-'].update(bp.frequency)
+            window['-SV-'].update(bp.symbol_rate)
+            bp.changed = False
 
     if lm_status_available:
         lm_status = read_lm_status()
@@ -162,4 +130,9 @@ while True:
         window['-SERVICE-'].update(fmt.service(lm_status.service))
 
 window.close(); del window
-shutdown()
+
+stop_longmynd()
+print('about to shutdown')
+#import subprocess
+#subprocess.check_call(['sudo', 'poweroff'])
+

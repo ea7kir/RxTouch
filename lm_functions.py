@@ -53,12 +53,20 @@ def read_longmynd_ts() -> str:
     return msg
 
 def stop_longmynd():
+    global longmynd_running
+    if not longmynd_running:
+        return
+    print('stopping longmynd')
     longmynd_running = False
+    print('longmynd stopped')
 
 def start_longmynd(frequency, symbol_rates):
+    global longmynd_running
     if longmynd_running:
         stop_longmynd
     # TODO: execute longmynd with args
+    print('starting longmynd')
     longmynd_running = True
+    print('longmynd running')
 
 

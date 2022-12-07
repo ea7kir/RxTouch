@@ -1,5 +1,10 @@
 # bandplan.py
 
+BEACON_BAND_LIST_INDEX = 0
+WIDE_BAND_LIST_INDEX = 1
+NARROW_BAND_LIST_INDEX = 2
+V_NARROW_BAND_LIST_INDEX = 3
+
 BAND_LIST = [
     'Beacon',
     'Wide',
@@ -28,7 +33,7 @@ NARROW_FREQUENCY_LIST = [
     '10497.75 - 21',
     '10498.25 - 23',
     '10498.75 - 25',
-    '10499.25 - 27',
+    '10499.25 - 27', # _f_index 13
 ]
 V_NARROW_FREQUENCY_LIST = [
     '10492.75 -  1',
@@ -78,106 +83,94 @@ V_NARROW_SYMBOL_RATE_LIST = [
     '66',
 ]
 
-from dataclasses import dataclass
+class BandPlan():
+    def __init__(self, band = 0, frequency = 0, symbol_rate = 0):
+        self._b_index = band
+        self._f_index = frequency
+        self._s_index = symbol_rate
+        self._curr_frequency_list = NARROW_FREQUENCY_LIST
+        self._curr_symbol_rate_list = NARROW_SYMBOL_RATE_LIST
+
+        self._prev_b_index = self._b_index
+        self._prev_f_index = self._f_index
+        self._prev_s_index = self._s_index
+
+        self.changed = True
+        self.band = BAND_LIST[self._b_index]
+        self.frequency = self._curr_frequency_list[self._f_index]
+        self.symbol_rate = self._curr_symbol_rate_list[self._s_index]
+
+    def _update_variables(self):
+        self.band = BAND_LIST[self._b_index]
+        self.frequency = self._curr_frequency_list[self._f_index]
+        self.symbol_rate = self._curr_symbol_rate_list[self._s_index]
+        self.changed = True
+
+    def _change_band(self):
+        if self._b_index == BEACON_BAND_LIST_INDEX:
+            self._curr_frequency_list = BEACON_FREQUENCY_LIST
+            self._f_index = 0
+            self._curr_symbol_rate_list = BEACON_SYMBOL_RATE_LIST
+            self._s_index = 0
+        elif self._b_index == WIDE_BAND_LIST_INDEX:
+            self._curr_frequency_list = WIDE_FREQUENCY_LIST
+            self._f_index = 0
+            self._curr_symbol_rate_list = WIDE_SYMBOL_RATE_LIST
+            self._s_index = 0
+        elif self._b_index == NARROW_BAND_LIST_INDEX:
+            self._curr_frequency_list = NARROW_FREQUENCY_LIST
+            self._f_index = 0
+            self._curr_symbol_rate_list = NARROW_SYMBOL_RATE_LIST
+            self._s_index = 0
+        elif self._b_index == V_NARROW_BAND_LIST_INDEX:
+            self._curr_frequency_list = V_NARROW_FREQUENCY_LIST
+            self._f_index = 0
+            self._curr_symbol_rate_list = V_NARROW_SYMBOL_RATE_LIST
+            self._s_index = 0
+
+    def dec_band(self):
+        if self._b_index > 0:
+            self._b_index -= 1
+            self._change_band()
+            self._update_variables()
+
+    def inc_band(self):
+        if self._b_index < len(BAND_LIST) - 1:
+            self._b_index += 1
+            self._change_band()
+            self._update_variables()
+
+    def dec_frequency(self):
+        if self._f_index > 0:
+            self._f_index -= 1
+            self._update_variables()
+
+    def inc_frequency(self):
+        if self._f_index < len(self._curr_frequency_list) - 1:
+            self._f_index += 1
+            self._update_variables()
+
+    def dec_symbol_rate(self):
+        if self._s_index > 0:
+            self._s_index -= 1
+            self._update_variables()
+
+    def inc_symbol_rate(self):
+        if self._s_index < len(self._curr_symbol_rate_list) - 1:
+            self._s_index += 1
+            self._update_variables()
+
+
+# read configuration
+default_band = BEACON_BAND_LIST_INDEX
+default_frequency = 0
+default_symbol_rate = 0
+
+band_plan = BandPlan(default_band, default_frequency, default_symbol_rate)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-@dataclass
-class Selected:
-    b_index = 2 # NARROW
-    f_index = 27
-    s_index = 1 # 250
-    updated = True
-
-    curr_frequency_list = NARROW_FREQUENCY_LIST
-    curr_symbol_rate_list = NARROW_SYMBOL_RATE_LIST
-
-    changed = updated
-    band = BAND_LIST[b_index]
-    frequency = curr_frequency_list[f_index]
-    symbol_rate = curr_symbol_rate_list[b_index]
-
-    def set_current(band):
-        if band == 0:
-            curr_frequency_list = BEACON_FREQUENCY_LIST
-            f_index = 0
-            curr_symbol_rate_list = BEACON_SYMBOL_RATE_LIST
-            s_index = 0
-        elif band == 1:
-            curr_frequency_list = WIDE_FREQUENCY_LIST
-            f_index = 0
-            curr_symbol_rate_list = WIDE_SYMBOL_RATE_LIST
-            s_index = 0
-        elif band == 2:
-            curr_frequency_list = NARROW_FREQUENCY_LIST
-            f_index = 0
-            curr_symbol_rate_list = NARROW_SYMBOL_RATE_LIST
-            s_index = 0
-        elif band == 3:
-            curr_frequency_list = V_NARROW_FREQUENCY_LIST
-            f_index = 0
-            curr_symbol_rate_list = V_NARROW_SYMBOL_RATE_LIST
-            s_index = 0
-
-    def dec_band():
-        if b_index > 0:
-            b_index = b_index - 1
-            set_current(b_index)
-            updated = True
-
-    def inc_band():
-        if b_index < len(BAND_LIST) - 1:
-            b_index = b_index + 1
-            set_current(b_index)
-            updated = True
-
-    def dec_frequency():
-        if b_index > 0:
-            b_index = b_index - 1
-            updated = True
-
-    def inc_frequency():
-        if f_index < len(curr_frequency_list) - 1:
-            f_index = f_index + 1
-            updated = True
-
-    def dec_symbol_rate():
-        if b_index > 0:
-            b_index = b_index - 1
-            updated = True
-
-    def inc_symbol_rate():
-        if b_index < len(curr_symbol_rate_list) - 1:
-            b_index = b_index + 1
-            updated = True
-
-
-selected = Selected()
-
-
-
-###################################################################
+######## For TxTouch ###########################################################
 
 TX_FREQUENCY_LIST = [
     '2403.25 -  1',
@@ -208,7 +201,6 @@ TX_FREQUENCY_LIST = [
     '2409.50 - 26',
     '2409.75 - 27',
 ]
-
 SYMBOL_RATE_LIST = [
     '25',
     '33',
@@ -220,7 +212,6 @@ SYMBOL_RATE_LIST = [
     '1000',
     '1500',
 ]
-
 FEC_LIST = [
     '1/2',
     '2/3',
@@ -231,12 +222,10 @@ FEC_LIST = [
     '7/8',
     '8/9',
 ]
-
 MODE_SEL_LIST = {
     'DVB-S',
     'DVB-S2',
 }
-
 MODE_LIST = [
     'Initialising',
     'Searching',
@@ -244,12 +233,10 @@ MODE_LIST = [
     'Locked DVB-S',
     'Locked DVB-S2',
 ]
-
 CODEC_LIST = [
     'H264 ACC',
     'H265 ACC',
 ]
-
 CONSTELLATION_LIST = [
     'QPSK',
     '8PSK',
