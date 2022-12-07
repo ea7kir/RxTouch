@@ -84,21 +84,21 @@ V_NARROW_SYMBOL_RATE_LIST = [
 ]
 
 class BandPlan():
-    def __init__(self, band = 0, frequency = 0, symbol_rate = 0):
-        self._b_index = band
-        self._f_index = frequency
-        self._s_index = symbol_rate
-        self._curr_frequency_list = NARROW_FREQUENCY_LIST
-        self._curr_symbol_rate_list = NARROW_SYMBOL_RATE_LIST
+    def __init__(self):
+        self._b_index = 0
+        self._f_index = 0
+        self._s_index = 0
 
-        self._prev_b_index = self._b_index
-        self._prev_f_index = self._f_index
-        self._prev_s_index = self._s_index
+        self._prev_band = 0
+        self._prev_wide_f_index = 0
+        self._prev_wide_s_index = 0
+        self._prev_narrow_f_index = 0
+        self._prev_narrow_s_index = 0
+        self._prev_v_narrow_f_index = 0
+        self._prev_v_narrow_s_index = 0
 
-        self.changed = True
-        self.band = BAND_LIST[self._b_index]
-        self.frequency = self._curr_frequency_list[self._f_index]
-        self.symbol_rate = self._curr_symbol_rate_list[self._s_index]
+        self._change_band()
+        self._update_variables()
 
     def _update_variables(self):
         self.band = BAND_LIST[self._b_index]
@@ -114,21 +114,22 @@ class BandPlan():
             self._s_index = 0
         elif self._b_index == WIDE_BAND_LIST_INDEX:
             self._curr_frequency_list = WIDE_FREQUENCY_LIST
-            self._f_index = 0
+            self._f_index = self._prev_wide_f_index
             self._curr_symbol_rate_list = WIDE_SYMBOL_RATE_LIST
-            self._s_index = 0
+            self._s_index = self._prev_wide_s_index
         elif self._b_index == NARROW_BAND_LIST_INDEX:
             self._curr_frequency_list = NARROW_FREQUENCY_LIST
-            self._f_index = 0
+            self._f_index = self._prev_narrow_f_index
             self._curr_symbol_rate_list = NARROW_SYMBOL_RATE_LIST
-            self._s_index = 0
+            self._s_index = self._prev_narrow_s_index
         elif self._b_index == V_NARROW_BAND_LIST_INDEX:
             self._curr_frequency_list = V_NARROW_FREQUENCY_LIST
-            self._f_index = 0
+            self._f_index = self._prev_v_narrow_f_index
             self._curr_symbol_rate_list = V_NARROW_SYMBOL_RATE_LIST
-            self._s_index = 0
+            self._s_index = self._prev_v_narrow_s_index
 
     def dec_band(self):
+        self._prev_b_index = self._b_index
         if self._b_index > 0:
             self._b_index -= 1
             self._change_band()
@@ -161,12 +162,9 @@ class BandPlan():
             self._update_variables()
 
 
-# read configuration
-default_band = BEACON_BAND_LIST_INDEX
-default_frequency = 0
 default_symbol_rate = 0
 
-band_plan = BandPlan(default_band, default_frequency, default_symbol_rate)
+band_plan = BandPlan()
 
 
 
