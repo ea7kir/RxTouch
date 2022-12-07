@@ -60,12 +60,12 @@ def stop_longmynd():
     longmynd_running = False
     print('longmynd stopped')
 
-def start_longmynd(frequency, symbol_rates):
+def start_longmynd(frequency, symbol_rate):
     global longmynd_running
     if longmynd_running:
         stop_longmynd
     # TODO: execute longmynd with args
-    print('starting longmynd')
+    print('starting longmynd', frequency, symbol_rate)
     longmynd_running = True
     print('longmynd running')
 

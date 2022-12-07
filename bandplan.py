@@ -12,7 +12,7 @@ BAND_LIST = [
     'V.Narrow',
 ]
 BEACON_FREQUENCY_LIST = [
-    '10491.50 -  B',
+    ' 0 / 10491.50 /  B',
 ]
 WIDE_FREQUENCY_LIST = [
     '10493.25 -  3',
@@ -20,7 +20,7 @@ WIDE_FREQUENCY_LIST = [
     '10496.25 - 15',
 ]
 NARROW_FREQUENCY_LIST = [
-    '10492.75 -  1',
+    ' 1 / 10492.75 /  1',
     '10493.25 -  3',
     '10493.75 -  5',
     '10494.25 -  7',

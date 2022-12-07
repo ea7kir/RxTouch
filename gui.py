@@ -10,9 +10,7 @@ from lm_functions import lm_status_available, read_lm_status, start_longmynd, st
 # The callback functions
 
 def tune():
-    f = bp.frequency
-    s = bp.symbol_rate
-    print('tune callback')
+    start_longmynd(bp.frequency, bp.symbol_rate)
 
 
 # Lookup dictionary that maps button to function to call
@@ -27,23 +25,13 @@ dispatch_dictionary = {
 
 def text_data(name, key):
     FONT = (None,11); SIZE=(15,1)
-    return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Text('', key=key, text_color='orange', font=FONT) ]
+    return [ sg.Text(' '), sg.Text(name, size=SIZE), sg.Text('', key=key, text_color='orange', font=FONT) ]
 
-def text_combo(name, values):
-    FONT = (None,11); SIZE=(15,None)
-    return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Combo(values, size=SIZE, font=FONT) ]
-
-def text_button(name, b_name):
-    FONT = (None,11); SIZE=(15,2)
-    return [ sg.Text(' '), sg.Text(name, size=SIZE, font=FONT), sg.Button(b_name, size=SIZE, font=FONT) ]
-
-def my_button(name, key):
-    #FONT = (None,11); SIZE=(5,2)
-    return sg.Button(name, key=key, size=(5,2), font=(None,11))
+def incdec_but(name, key):
+    return sg.Button(name, key=key, size=(4,1), font=(None,13))
 
 def button_selector(key_down, value, key_up):
-    #FONT = (None,11); SIZE=(15,1)
-    return [ my_button('<', key_down), sg.Push(), sg.Text('', key=value, text_color='orange', font=(None,18)), sg.Push(), my_button('>', key_up) ]
+    return [ incdec_but('<', key_down), sg.Push(), sg.Text('', key=value, text_color='orange', font=(None,13)), sg.Push(), incdec_but('>', key_up) ]
 
 
 # ------------------------------------------------
@@ -56,14 +44,14 @@ sg.theme('Black')
 # ------------------------------------------------
 
 control_layout = [
-    [sg.Text('Band')],
+    [sg.Push(), sg.Text('Band', text_color='green'), sg.Push()],
     button_selector('-BD-', '-BV-', '-BU-'),
-    [sg.Text('Channel Frequency')],
+    [sg.Push(), sg.Text('Channel / Frequency', text_color='green'), sg.Push()],
     button_selector('-FD-', '-FV-', '-FU-'),
-    [sg.Text('Symbol Rate')],
+    [sg.Push(), sg.Text('Symbol Rate', text_color='green'), sg.Push()],
     button_selector('-SD-', '-SV-', '-SU-'),
     [sg.Text('')],
-    [sg.Push(), sg.Button('TUNE', key='-TUNE-', font=(None,11), size=(13,2))],
+    [sg.Push(), sg.Button('TUNE', key='-TUNE-'), sg.Push() ],
 ]
 
 # ------------------------------------------------
@@ -91,10 +79,11 @@ layout = [
         sg.Frame('Received Status',
         status_layout, title_color='green', size=(355,340), pad=(15,15) ),
     ],
-    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11), size=(13,2))],
+    [sg.Text('')],
+    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11))],
 ]
 
-window = sg.Window('', layout, size=(800, 480), use_default_focus=False, finalize=True)
+window = sg.Window('', layout, size=(800, 480), font=(None, 11), button_color='grey', use_default_focus=False, finalize=True)
     #default_button_element_size=(15,2), auto_size_buttons=False, use_default_focus=False)
 #window.set_cursor('none')
 
@@ -102,7 +91,9 @@ window = sg.Window('', layout, size=(800, 480), use_default_focus=False, finaliz
 while True:
     event, values = window.read(timeout=100)
     if event == '-SHUTDOWN-':
-        if sg.popup_ok_cancel('Shutdown Now?', font=(None,11), background_color='red') == 'OK':
+        if sg.popup_ok_cancel('Shutdown Now?', font=(None,11), background_color='red',
+                    #no_titlebar=True, keep_on_top=True) == 'OK':
+                    keep_on_top=True) == 'OK':
             break
 
     if event in dispatch_dictionary:
