@@ -46,7 +46,7 @@ sg.theme('Black')
 control_layout = [
     [sg.Push(), sg.Text('Band', text_color='green'), sg.Push()],
     button_selector('-BD-', '-BV-', '-BU-'),
-    [sg.Push(), sg.Text('Channel / Frequency', text_color='green'), sg.Push()],
+    [sg.Push(), sg.Text('Frequency / Channel', text_color='green'), sg.Push()],
     button_selector('-FD-', '-FV-', '-FU-'),
     [sg.Push(), sg.Text('Symbol Rate', text_color='green'), sg.Push()],
     button_selector('-SD-', '-SV-', '-SU-'),
