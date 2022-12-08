@@ -91,7 +91,6 @@ class BandPlan():
         self._b_index = 0
         self._f_index = 0
         self._s_index = 0
-
         self._prev_band = 0
         self._prev_wide_f_index = 0
         self._prev_wide_s_index = 0
@@ -99,7 +98,6 @@ class BandPlan():
         self._prev_narrow_s_index = 0
         self._prev_v_narrow_f_index = 0
         self._prev_v_narrow_s_index = 0
-
         self._change_band()
         self._update_variables()
 
@@ -164,8 +162,15 @@ class BandPlan():
             self._s_index += 1
             self._update_variables()
 
+    def fequency_and_rate_list(self):
+        if self.symbol_rate == 'AUTO':
+            rate_list = self._curr_symbol_rate_list
+            rate_list.remove("AUTO")
+        else:
+            rate_list = [self.symbol_rate]
+        return self.frequency[:8], rate_list
 
-default_symbol_rate = 0
+
 
 band_plan = BandPlan()
 

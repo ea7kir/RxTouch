@@ -10,7 +10,8 @@ from lm_manager import lm_manager as lm
 # The callback functions
 
 def tune():
-    lm.start_longmynd(bp.frequency, bp.symbol_rate)
+    frequency, rate_list = bp.fequency_and_rate_list()
+    lm.start_longmynd(frequency, rate_list)
 
 
 # Lookup dictionary that maps button to function to call
