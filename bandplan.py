@@ -150,7 +150,7 @@ class BandPlan():
             self._update_variables()
 
     def inc_frequency(self):
-        if self._f_index < len(self._curr_frequency_list) - 1: #
+        if self._f_index < len(self._curr_frequency_list) - 1:
             self._f_index += 1
             self._update_variables()
 
@@ -160,7 +160,7 @@ class BandPlan():
             self._update_variables()
 
     def inc_symbol_rate(self):
-        if self._s_index < len(self._curr_symbol_rate_list) - 1: #
+        if self._s_index < len(self._curr_symbol_rate_list) - 1:
             self._s_index += 1
             self._update_variables()
 
