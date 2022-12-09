@@ -25,8 +25,7 @@ dispatch_dictionary = {
 # ------------------------------------------------
 
 def text_data(name, key):
-    FONT = (None,11); SIZE=(15,1)
-    return [ sg.Text(' '), sg.Text(name, size=SIZE), sg.Text('', key=key, text_color='orange', font=FONT) ]
+    return [ sg.Text(' '), sg.Text(name, size=(15,1)), sg.Text('', key=key, text_color='orange', font=(None,11)) ]
 
 def incdec_but(name, key):
     return sg.Button(name, key=key, size=(4,1), font=(None,13))
@@ -52,7 +51,7 @@ control_layout = [
     [sg.Push(), sg.Text('Symbol Rate', text_color='green'), sg.Push()],
     button_selector('-SD-', '-SV-', '-SU-'),
     [sg.Text('')],
-    [sg.Push(), sg.Button('TUNE', key='-TUNE-'), sg.Push() ],
+    [sg.Push(), sg.Button('TUNE', key='-TUNE-'), sg.Push()],
 ]
 
 # ------------------------------------------------
@@ -73,18 +72,26 @@ status_layout = [
 
 # ------------------------------------------------
 
-layout = [
+main_layout = [
     [sg.Frame('Receiver Controls',
-        control_layout, title_color='green', size=(355,340), pad=(15,15)),
+        control_layout, title_color='green', size=(340,340), pad=(15,15) ),
         
         sg.Frame('Received Status',
-        status_layout, title_color='green', size=(355,340), pad=(15,15) ),
+        status_layout, title_color='green', size=(340,340), pad=(15,15) ),
     ],
-    [sg.Text('')],
+    #[sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11))],
+    [sg.Text('', key='-STATUS_BAR-', text_color='green')],
+]
+
+system_layout = [
     [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11))],
 ]
 
-window = sg.Window('', layout, size=(800, 480), font=(None, 11), button_color='grey', use_default_focus=False, finalize=True)
+layout = [
+    [sg.TabGroup([[sg.Tab('    Main    ', main_layout), sg.Tab('   System   ', system_layout)]], expand_x=True, expand_y=True)],
+]
+
+window = sg.Window('', layout, size=(800, 480), font=(None,11), button_color='grey', use_default_focus=False, finalize=True)
     #default_button_element_size=(15,2), auto_size_buttons=False, use_default_focus=False)
 window.set_cursor('none')
 
@@ -92,9 +99,10 @@ window.set_cursor('none')
 while True:
     event, values = window.read(timeout=100)
     if event == '-SHUTDOWN-':
-        if sg.popup_ok_cancel('Shutdown Now?', font=(None,11), background_color='red',
+        if sg.popup_ok_cancel('Shutdown Now?', font=(None,15), background_color='red',
                     #no_titlebar=True, keep_on_top=True) == 'OK':
                     keep_on_top=True) == 'OK':
+            lm.stop_longmynd()
             break
 
     if event in dispatch_dictionary:
@@ -120,10 +128,12 @@ while True:
         window['-DBM_POWER-'].update(fmt.dbm_power(lm.dbm_power))
         window['-PROVIDER-'].update(fmt.provider(lm.provider))
         window['-SERVICE-'].update(fmt.service(lm.service))
+        window['-STATUS_BAR-'].update(lm.status_msg)
 
-window.close(); del window
+window.close()
+del window
 
-lm.stop_longmynd()
+
 print('about to shutdown')
 #import subprocess
 #subprocess.check_call(['sudo', 'poweroff'])

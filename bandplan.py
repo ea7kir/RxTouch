@@ -163,9 +163,10 @@ class BandPlan():
             self._update_variables()
 
     def fequency_and_rate_list(self):
+        rate_list:str = []
         if self.symbol_rate == 'AUTO':
-            rate_list = self._curr_symbol_rate_list
-            rate_list.remove("AUTO")
+            for i in range(1, len(self._curr_symbol_rate_list)):
+                rate_list.append(self._curr_symbol_rate_list[i])
         else:
             rate_list = [self.symbol_rate]
         return self.frequency[:8], rate_list

@@ -29,6 +29,7 @@ class LmManager():
         self.dbm_power: int = 0
         self.provider: str = ''
         self.service: str = ''
+        self.status_msg: str = ''
 
     def start_longmynd(self, frequency, rate_list):
         if self.running:
@@ -43,16 +44,16 @@ class LmManager():
         for i in range(1, len(rate_list)):
             allSrs += f',{rate_list[i]}'
         params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, allSrs]
-        # TODO: execute longmynd with args
+        # TODO: execute longmynd with args see: https://youtu.be/VlfLqG_qjx0
         self.running = True
-        print('longmynd running with params: ', params)
+        self.status_msg = 'longmynd running with params: {0}'.format(params)
 
     def stop_longmynd(self):
         if not self.running:
             return
-        print('stopping longmynd')
+        self.status_msg = 'stopping longmynd'
         self.running = False
-        print('longmynd stopped')
+        self.status_msg = 'longmynd stopped'
 
     def read_status(self): # THIS IS A DUMMY READ, PENDING GETTING longmynd WORKING !
         self.frequency = 10491551
