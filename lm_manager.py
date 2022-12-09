@@ -34,15 +34,18 @@ class LmManager():
         if self.running:
             self.stop_longmynd
         # assemble the command line arguments
-        args = '-i '
-        args += frequency
-        for sr in rate_list:
-            args += f' {sr}'
-
+        # params = ["-i", TS_IP, TS_Port, "-S", "0.6", requestKHzStr, allSrs]
+        OFFSET = 9750000
+        TS_IP = '192.168.1.36'
+        TS_PORT = '7777'
+        requestKHzStr = str(float(frequency) * 1000 - OFFSET)
+        allSrs = rate_list[0]
+        for i in range(1, len(rate_list)):
+            allSrs += f',{rate_list[i]}'
+        params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, allSrs]
         # TODO: execute longmynd with args
-
         self.running = True
-        print('longmynd running with args: ', args)
+        print('longmynd running with params: ', params)
 
     def stop_longmynd(self):
         if not self.running:
