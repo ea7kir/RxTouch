@@ -128,7 +128,7 @@ class BandPlan():
             self._f_index = self._prev_v_narrow_f_index
             self._curr_symbol_rate_list = V_NARROW_SYMBOL_RATE_LIST
             self._s_index = self._prev_v_narrow_s_index
-
+            
     def dec_band(self):
         self._prev_b_index = self._b_index
         if self._b_index > 0:

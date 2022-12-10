@@ -1,18 +1,15 @@
 # gui.py
 
 import PySimpleGUI as sg
-import gui_formating as fmt
+#import gui_formating as fmt
 from bandplan import band_plan as bp
-#from lm_functions import lm_status_available, read_lm_status, start_longmynd, stop_longmynd, longmynd_running
 from lm_manager import lm_manager as lm
-# ------------------------------------------------
 
 # The callback functions
 
 def tune():
     frequency, rate_list = bp.fequency_and_rate_list()
     lm.start_longmynd(frequency, rate_list)
-
 
 # Lookup dictionary that maps button to function to call
 dispatch_dictionary = { 
@@ -24,18 +21,19 @@ dispatch_dictionary = {
 
 # ------------------------------------------------
 
+MYBUTCOLORS = ('#FFFFFF','#222222')
+MYDISABLEDBTCOLORS = ('#444444',None)
+
 def text_data(name, key):
     return [ sg.Text(' '), sg.Text(name, size=(15,1)), sg.Text('', key=key, text_color='orange', font=(None,11)) ]
 
 def incdec_but(name, key):
-    return sg.Button(name, key=key, size=(4,1), font=(None,13))
+    return sg.Button(name, key=key, size=(4,1), font=(None,13), border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS)
 
 def button_selector(key_down, value, key_up):
     return [ incdec_but('<', key_down), sg.Push(), sg.Text('', key=value, text_color='orange', font=(None,13)), sg.Push(), incdec_but('>', key_up) ]
 
-
 # ------------------------------------------------
-
 
 sg.theme('Black')
 
@@ -51,7 +49,7 @@ control_layout = [
     [sg.Push(), sg.Text('Symbol Rate', text_color='green'), sg.Push()],
     button_selector('-SD-', '-SV-', '-SU-'),
     [sg.Text('')],
-    [sg.Push(), sg.Button('TUNE', key='-TUNE-'), sg.Push()],
+    [sg.Push(), sg.Button('TUNE', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False), sg.Push()],
 ]
 
 # ------------------------------------------------
@@ -69,7 +67,6 @@ status_layout = [
     text_data('Provider', '-PROVIDER-'),
     text_data('Service', '-SERVICE-'),
 ]
-
 # ------------------------------------------------
 
 main_layout = [
@@ -94,7 +91,7 @@ layout = [
 window = sg.Window('', layout, size=(800, 480), font=(None,11), button_color='grey', use_default_focus=False, finalize=True)
     #default_button_element_size=(15,2), auto_size_buttons=False, use_default_focus=False)
 window.set_cursor('none')
-
+#window.block_focus(block=True)
 
 while True:
     event, values = window.read(timeout=100)
@@ -115,26 +112,24 @@ while True:
             window['-SV-'].update(bp.symbol_rate)
             bp.changed = False
 
-    if lm.status_available:
-        lm_status = lm.read_status()
-        window['-FREQUENCY-'].update(fmt.frequency(lm.frequency))
-        window['-SYMBOL_RATE-'].update(fmt.symbol_rate(lm.symbol_rate))
-        window['-MODE-'].update(fmt.mode(lm.mode))
-        window['-CONSTELLATION-'].update(fmt.constellation(lm.constellation))
-        window['-FEC-'].update(fmt.fec(lm.fec))
-        window['-CODECS-'].update(fmt.codecs(lm.codecs))
-        window['-DB_MER-'].update(fmt.db_mer(lm.db_mer))
-        window['-DB_MARGIN-'].update(fmt.db_margin(lm.db_margin))
-        window['-DBM_POWER-'].update(fmt.dbm_power(lm.dbm_power))
-        window['-PROVIDER-'].update(fmt.provider(lm.provider))
-        window['-SERVICE-'].update(fmt.service(lm.service))
-        window['-STATUS_BAR-'].update(lm.status_msg)
+#    if lm.status_available:
+    lm_status = lm.read_status()
+    window['-FREQUENCY-'].update(lm.frequency)
+    window['-SYMBOL_RATE-'].update(lm.symbol_rate)
+    window['-MODE-'].update(lm.mode)
+    window['-CONSTELLATION-'].update(lm.constellation)
+    window['-FEC-'].update(lm.fec)
+    window['-CODECS-'].update(lm.codecs)
+    window['-DB_MER-'].update(lm.db_mer)
+    window['-DB_MARGIN-'].update(lm.db_margin)
+    window['-DBM_POWER-'].update(lm.dbm_power)
+    window['-PROVIDER-'].update(lm.provider)
+    window['-SERVICE-'].update(lm.service)
+    window['-STATUS_BAR-'].update(lm.status_msg)
 
 window.close()
 del window
 
-
 print('about to shutdown')
 #import subprocess
 #subprocess.check_call(['sudo', 'poweroff'])
-
