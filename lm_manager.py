@@ -1,6 +1,6 @@
 # lm_manager.py
 
-import time
+#import time
 
 #from dataclasses import dataclass
 
@@ -47,7 +47,7 @@ class LmManager():
             allSrs += f',{rate_list[i]}'
         params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, allSrs]
         # TODO: execute longmynd with args see: https://youtu.be/VlfLqG_qjx0
-        time.sleep(2)
+        #time.sleep(2)
         self.running = True
         self.status_msg = 'longmynd running with params: {0}'.format(params)
 
@@ -56,7 +56,7 @@ class LmManager():
             return
         self.status_msg = 'stopping longmynd'
         self.running = False
-        time.sleep(2)
+        #time.sleep(2)
         self.status_msg = 'longmynd stopped'
 
     def read_status(self): # THIS IS A DUMMY READ, PENDING GETTING longmynd WORKING !

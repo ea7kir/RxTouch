@@ -69,32 +69,23 @@ status_layout = [
 ]
 # ------------------------------------------------
 
-main_layout = [
+layout = [
     [sg.Frame('Receiver Controls',
         control_layout, title_color='green', size=(340,340), pad=(15,15) ),
         
         sg.Frame('Received Status',
         status_layout, title_color='green', size=(340,340), pad=(15,15) ),
     ],
-    #[sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11))],
+    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11))],
     [sg.Text('', key='-STATUS_BAR-', text_color='green')],
 ]
 
-system_layout = [
-    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11))],
-]
-
-layout = [
-    [sg.TabGroup([[sg.Tab('    Main    ', main_layout), sg.Tab('   System   ', system_layout)]], expand_x=True, expand_y=True)],
-]
-
-window = sg.Window('', layout, size=(800, 480), font=(None,11), button_color='grey', use_default_focus=False, finalize=True)
-    #default_button_element_size=(15,2), auto_size_buttons=False, use_default_focus=False)
+window = sg.Window('', layout, size=(800, 480), font=(None,11), use_default_focus=False, finalize=True)
+    
 window.set_cursor('none')
-#window.block_focus(block=True)
 
 while True:
-    event, values = window.read(timeout=100)
+    event, values = window.read(timeout=10)
     if event == '-SHUTDOWN-':
         if sg.popup_ok_cancel('Shutdown Now?', font=(None,15), background_color='red',
                     #no_titlebar=True, keep_on_top=True) == 'OK':
