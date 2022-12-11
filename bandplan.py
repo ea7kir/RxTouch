@@ -1,10 +1,5 @@
 # bandplan.py
 
-BEACON_BAND_LIST_INDEX = 0
-WIDE_BAND_LIST_INDEX = 1
-NARROW_BAND_LIST_INDEX = 2
-V_NARROW_BAND_LIST_INDEX = 3
-
 BAND_LIST = [
     'Beacon',
     'Wide',
@@ -85,6 +80,11 @@ V_NARROW_SYMBOL_RATE_LIST = [
     '33',
     '66',
 ]
+
+BEACON_BAND_LIST_INDEX = 0
+WIDE_BAND_LIST_INDEX = 1
+NARROW_BAND_LIST_INDEX = 2
+V_NARROW_BAND_LIST_INDEX = 3
 
 class BandPlan():
     def __init__(self):
@@ -175,78 +175,3 @@ class BandPlan():
 
 band_plan = BandPlan()
 
-
-
-######## For TxTouch ###########################################################
-
-TX_FREQUENCY_LIST = [
-    '2403.25 / 1',
-    '2403.50 / 2',
-    '2403.75 / 3',
-    '2404.00 / 4',
-    '2404.25 / 5',
-    '2404.50 / 6',
-    '2404.75 / 7',
-    '2405.00 / 8',
-    '2405.25 / 9',
-    '2405.50 / 10',
-    '2405.75 / 11',
-    '2406.00 / 12',
-    '2406.25 / 13',
-    '2406.50 / 14',
-    '2406.75 / 15',
-    '2407.00 / 16',
-    '2407.25 / 17',
-    '2407.50 / 18',
-    '2407.75 / 19',
-    '2408.00 / 20',
-    '2408.25 / 21',
-    '2408.50 / 22',
-    '2408.75 / 23',
-    '2409.00 / 24',
-    '2409.25 / 25',
-    '2409.50 / 26',
-    '2409.75 / 27',
-]
-SYMBOL_RATE_LIST = [
-    '25',
-    '33',
-    '66',
-    '125',
-    '250',
-    '333',
-    '500',
-    '1000',
-    '1500',
-]
-FEC_LIST = [
-    '1/2',
-    '2/3',
-    '3/4',
-    '4/5',
-    '5/6',
-    '6/7',
-    '7/8',
-    '8/9',
-]
-MODE_SEL_LIST = {
-    'DVB-S',
-    'DVB-S2',
-}
-MODE_LIST = [
-    'Initialising',
-    'Searching',
-    'Found Headers',
-    'Locked DVB-S',
-    'Locked DVB-S2',
-]
-CODEC_LIST = [
-    'H264 ACC',
-    'H265 ACC',
-]
-CONSTELLATION_LIST = [
-    'QPSK',
-    '8PSK',
-    '16PSK',
-    '32PSK',
-]
