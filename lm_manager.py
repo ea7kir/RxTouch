@@ -31,6 +31,7 @@ class LmManager():
 #        self.dbm_power: int = 0
 #        self.provider: str = ''
 #        self.service: str = ''
+        self.read_status()
         self.status_msg: str = ''
 
     def start_longmynd(self, frequency, rate_list):

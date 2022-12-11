@@ -76,13 +76,31 @@ layout = [
         sg.Frame('Received Status',
         status_layout, title_color='green', size=(340,340), pad=(15,15) ),
     ],
-    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', font=(None,11))],
+    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS)],
     [sg.Text('', key='-STATUS_BAR-', text_color='green')],
 ]
 
 window = sg.Window('', layout, size=(800, 480), font=(None,11), use_default_focus=False, finalize=True)
-    
 window.set_cursor('none')
+
+def update_control():
+    window['-BV-'].update(bp.band)
+    window['-FV-'].update(bp.frequency)
+    window['-SV-'].update(bp.symbol_rate)
+
+def update_status():
+    window['-FREQUENCY-'].update(lm.frequency)
+    window['-SYMBOL_RATE-'].update(lm.symbol_rate)
+    window['-MODE-'].update(lm.mode)
+    window['-CONSTELLATION-'].update(lm.constellation)
+    window['-FEC-'].update(lm.fec)
+    window['-CODECS-'].update(lm.codecs)
+    window['-DB_MER-'].update(lm.db_mer)
+    window['-DB_MARGIN-'].update(lm.db_margin)
+    window['-DBM_POWER-'].update(lm.dbm_power)
+    window['-PROVIDER-'].update(lm.provider)
+    window['-SERVICE-'].update(lm.service)
+    window['-STATUS_BAR-'].update(lm.status_msg)    
 
 while True:
     event, values = window.read(timeout=10)
@@ -96,27 +114,17 @@ while True:
     if event in dispatch_dictionary:
         func_to_call = dispatch_dictionary[event]
         func_to_call()
+    elif bp.changed:
+        update_control()
+        bp.changed = False
+    else:
+        update_status()
 
-    if bp.changed:
-            window['-BV-'].update(bp.band)
-            window['-FV-'].update(bp.frequency)
-            window['-SV-'].update(bp.symbol_rate)
-            bp.changed = False
-
+############ for long operations, see: https://www.pysimplegui.org/en/latest/cookbook/#threaded-long-operation
 #    if lm.status_available:
-    lm_status = lm.read_status()
-    window['-FREQUENCY-'].update(lm.frequency)
-    window['-SYMBOL_RATE-'].update(lm.symbol_rate)
-    window['-MODE-'].update(lm.mode)
-    window['-CONSTELLATION-'].update(lm.constellation)
-    window['-FEC-'].update(lm.fec)
-    window['-CODECS-'].update(lm.codecs)
-    window['-DB_MER-'].update(lm.db_mer)
-    window['-DB_MARGIN-'].update(lm.db_margin)
-    window['-DBM_POWER-'].update(lm.dbm_power)
-    window['-PROVIDER-'].update(lm.provider)
-    window['-SERVICE-'].update(lm.service)
-    window['-STATUS_BAR-'].update(lm.status_msg)
+#    window.perform_long_operation(lm.read_status(), '-FUNCTION COMPLETED-')
+#    
+#    if event == '-FUNCTION COMPLETED-':)
 
 window.close()
 del window
