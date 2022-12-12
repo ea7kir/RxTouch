@@ -1,25 +1,14 @@
 # gui.py
 
+"""RxTouch"""
+
 import PySimpleGUI as sg
-#import gui_formating as fmt
-from bandplan import band_plan as bp
+from rx_bandplan import rx_bandplan as bp
 from lm_manager import lm_manager as lm
 
-# The callback functions
+# LAYOUT ----------------------------------------
 
-def tune():
-    frequency, rate_list = bp.fequency_and_rate_list()
-    lm.start_longmynd(frequency, rate_list)
-
-# Lookup dictionary that maps button to function to call
-dispatch_dictionary = { 
-    '-BD-':bp.dec_band, '-BU-':bp.inc_band, 
-    '-FD-':bp.dec_frequency, '-FU-':bp.inc_frequency, 
-    '-SD-':bp.dec_symbol_rate, '-SU-':bp.inc_symbol_rate,
-    '-TUNE-':tune,
-}
-
-# ------------------------------------------------
+sg.theme('Black')
 
 MYBUTCOLORS = ('#FFFFFF','#222222')
 MYDISABLEDBTCOLORS = ('#444444',None)
@@ -33,14 +22,6 @@ def incdec_but(name, key):
 def button_selector(key_down, value, key_up):
     return [ incdec_but('<', key_down), sg.Push(), sg.Text('', key=value, text_color='orange', font=(None,13)), sg.Push(), incdec_but('>', key_up) ]
 
-# ------------------------------------------------
-
-sg.theme('Black')
-
-# layouts
-
-# ------------------------------------------------
-
 control_layout = [
     [sg.Push(), sg.Text('Band', text_color='green'), sg.Push()],
     button_selector('-BD-', '-BV-', '-BU-'),
@@ -51,8 +32,6 @@ control_layout = [
     [sg.Text('')],
     [sg.Push(), sg.Button('TUNE', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False), sg.Push()],
 ]
-
-# ------------------------------------------------
 
 status_layout = [
     text_data('Frequency', '-FREQUENCY-'),
@@ -67,21 +46,33 @@ status_layout = [
     text_data('Provider', '-PROVIDER-'),
     text_data('Service', '-SERVICE-'),
 ]
-# ------------------------------------------------
 
 layout = [
-    [sg.Frame('Receiver Controls',
+    [sg.Frame(' Receiver Controls ',
         control_layout, title_color='green', size=(340,340), pad=(15,15) ),
-        
-        sg.Frame('Received Status',
+        sg.Frame(' Received Status ',
         status_layout, title_color='green', size=(340,340), pad=(15,15) ),
     ],
     [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS)],
     [sg.Text('', key='-STATUS_BAR-', text_color='green')],
 ]
 
-window = sg.Window('', layout, size=(800, 480), font=(None,11), use_default_focus=False, finalize=True)
-window.set_cursor('none')
+# CALLBACK DISPATCH -----------------------------
+
+def tune():
+    # callout to longmynd
+    frequency, rate_list = bp.fequency_and_rate_list()
+    lm.start_longmynd(frequency, rate_list)
+
+dispatch_dictionary = {
+    # Lookup dictionary that maps button to function to call
+    '-BD-':bp.dec_band, '-BU-':bp.inc_band, 
+    '-FD-':bp.dec_frequency, '-FU-':bp.inc_frequency, 
+    '-SD-':bp.dec_symbol_rate, '-SU-':bp.inc_symbol_rate,
+    '-TUNE-':tune,
+}
+
+# UPDATE FUNCTIONS ------------------------------
 
 def update_control():
     window['-BV-'].update(bp.band)
@@ -102,10 +93,15 @@ def update_status():
     window['-SERVICE-'].update(lm.service)
     window['-STATUS_BAR-'].update(lm.status_msg)    
 
+# MAIN ------------------------------------------
+
+window = sg.Window('', layout, size=(800, 480), font=(None,11), use_default_focus=False, finalize=True)
+window.set_cursor('none')
+
 while True:
     event, values = window.read(timeout=10)
     if event == '-SHUTDOWN-':
-        if sg.popup_ok_cancel('Shutdown Now?', font=(None,15), background_color='red',
+        if sg.popup_ok_cancel('Shutdown Now?', font=(None,15), background_color='red', no_titlebar=True,
                     #no_titlebar=True, keep_on_top=True) == 'OK':
                     keep_on_top=True) == 'OK':
             lm.stop_longmynd()
@@ -120,14 +116,14 @@ while True:
     else:
         update_status()
 
+window.close()
+del window
+
 ############ for long operations, see: https://www.pysimplegui.org/en/latest/cookbook/#threaded-long-operation
 #    if lm.status_available:
 #    window.perform_long_operation(lm.read_status(), '-FUNCTION COMPLETED-')
 #    
 #    if event == '-FUNCTION COMPLETED-':)
-
-window.close()
-del window
 
 print('about to shutdown')
 #import subprocess

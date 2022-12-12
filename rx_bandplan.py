@@ -1,4 +1,4 @@
-# bandplan.py
+# rx_bandplan.py
 
 BAND_LIST = [
     'Beacon',
@@ -86,7 +86,7 @@ WIDE_BAND_LIST_INDEX = 1
 NARROW_BAND_LIST_INDEX = 2
 V_NARROW_BAND_LIST_INDEX = 3
 
-class BandPlan():
+class RxBandPlan():
     def __init__(self):
         self._b_index = 0
         self._f_index = 0
@@ -173,5 +173,5 @@ class BandPlan():
 
 
 
-band_plan = BandPlan()
+rx_bandplan = RxBandPlan()
 
