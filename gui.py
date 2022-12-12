@@ -101,13 +101,10 @@ window.set_cursor('none')
 while True:
     event, values = window.read(timeout=10)
     if event == '-SHUTDOWN-':
-        if sg.popup_ok_cancel('Shutdown now?', background_color='red', keep_on_top=True) == 'OK':
-        #if sg.popup_ok_cancel('Shutdown Now?', background_color='red', no_titlebar=True,
-        #            #no_titlebar=True, keep_on_top=True) == 'OK':
-        #            keep_on_top=True) == 'OK':
+        if sg.popup_yes_no('Shutdown Now?', font=(None,11), background_color='red', keep_on_top=True) == 'Yes':
             lm.stop_longmynd()
             break
-
+        
     if event in dispatch_dictionary:
         func_to_call = dispatch_dictionary[event]
         func_to_call()
@@ -126,6 +123,6 @@ del window
 #    
 #    if event == '-FUNCTION COMPLETED-':)
 
-print('about to shutdown')
+print('Shutting down...')
 #import subprocess
 #subprocess.check_call(['sudo', 'poweroff'])
