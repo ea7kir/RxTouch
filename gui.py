@@ -101,9 +101,10 @@ window.set_cursor('none')
 while True:
     event, values = window.read(timeout=10)
     if event == '-SHUTDOWN-':
-        if sg.popup_ok_cancel('Shutdown Now?', font=(None,15), background_color='red', no_titlebar=True,
-                    #no_titlebar=True, keep_on_top=True) == 'OK':
-                    keep_on_top=True) == 'OK':
+        if sg.popup_ok_cancel('Shutdown now?', background_color='red', keep_on_top=True) == 'OK':
+        #if sg.popup_ok_cancel('Shutdown Now?', background_color='red', no_titlebar=True,
+        #            #no_titlebar=True, keep_on_top=True) == 'OK':
+        #            keep_on_top=True) == 'OK':
             lm.stop_longmynd()
             break
 
