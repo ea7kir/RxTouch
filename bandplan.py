@@ -1,4 +1,4 @@
-# bandplan.py
+# bandplan.py ZZZZZZZZZ
 
 BAND_LIST = [
     'Beacon',
