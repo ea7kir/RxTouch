@@ -1,0 +1,111 @@
+LATEST INSTALL METHOD on Bullseye 64-bit Lite
+
+TODO: add instructions to burn Bullseye to micro sd card.
+
+0) BEGIN
+
+$ cd
+
+$ sudo apt update
+
+$ sudo apt full-upgrade -y
+
+$ sudo apt autoremove
+
+$ sudo rpi-eeprom-update -a
+
+	* proceed as neccessary
+
+$ sudo reboot
+
+$ sudo apt install git -y
+
+-------------------
+
+1) INSTALL PYENV
+
+$ sudo apt-get update
+
+$ sudo apt-get install make build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+
+$ git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+
+$ echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+
+$ echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+
+$ echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n eval "$(pyenv init --path)"\nfi' >> ~/.bashrc
+
+$ exec $SHELL
+
+-------------------
+
+2) INSTALL PYTHON
+
+$ pyenv global system
+
+$ pyenv versions
+
+	* system (set by /home/pi/.pyenv/version)
+
+$ pyenv install 3.11.0
+
+$ pyenv versions
+
+	* system (set by /home/pi/.pyenv/version)
+	3.11.0
+
+pyenv global 3.11.0
+
+	* system 3.11.0 (set by /home/pi/.pyenv/version)
+	3.9.2
+
+-------------------
+
+4) UPGRADE PIP
+
+$ pip install --upgrade pip
+
+-------------------
+
+5) INSTALL PYSIMPLEGUI & PyYAML
+
+$ pip install pysimplegui
+
+$ pip install PyYAML
+
+-------------------
+
+6) INSTALL A GUI
+
+$ sudo apt install raspberrypi-ui-mods
+
+AT THIS POINT I UPGRADED THE BOOT ROM IN RASPI-CONFIG
+
+-------------------
+
+7) RUN PASPI-CONFIG
+
+$ sudo rasps-config
+
+	* SELECT 1 Sytem -> S5 Boot -> Auto Login -> B4 Desktop Auto Login
+
+# sudo reboot
+
+#########################################################
+
+Clone my repo in VSCODE
+
+SEE: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
+
+$ git config --global user.name "ea7kir"
+$ git config --global user.email "mikenaylorspain@icloud.com"
+$ git config --global init.defaultBranch main
+
+
+
+
+
+
