@@ -1,4 +1,4 @@
-# lm_manager.py
+# longmynd_manager.py
 
 #import time
 
@@ -17,7 +17,7 @@
 #    provider: str = ''
 #    service: str = ''
 
-class LmManager():
+class LongmyndManager():
     def __init__(self):
         self.running = False
 #        self.status_available = True
@@ -50,7 +50,7 @@ class LmManager():
         # TODO: execute longmynd with args see: https://youtu.be/VlfLqG_qjx0
         #time.sleep(2)
         self.running = True
-        self.status_msg = 'longmynd running with params: {0}'.format(params)
+        self.status_msg = '{0}'.format(params)
 
     def stop_longmynd(self):
         if not self.running:
@@ -100,4 +100,4 @@ class LmManager():
 #        self.provider = '-'
 #        self.service = '-'
 
-lm_manager = LmManager()
+longmynd_manager = LongmyndManager()

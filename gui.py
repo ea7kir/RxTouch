@@ -3,8 +3,8 @@
 """RxTouch"""
 
 import PySimpleGUI as sg
-from rx_bandplan import rx_bandplan as bp
-from lm_manager import lm_manager as lm
+from bandplan import bandplan as bp
+from longmynd_manager import longmynd_manager as lm
 
 # LAYOUT ----------------------------------------
 
@@ -33,6 +33,13 @@ control_layout = [
     [sg.Push(), sg.Button('TUNE', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False), sg.Push()],
 ]
 
+top_layout = [
+    sg.Button('RxTouch', key='-SYSTEM-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS),
+    sg.Text('', key='-STATUS_BAR-', text_color='green'),
+    sg.Push(),
+    sg.Button('Shutdown', key='-SHUTDOWN-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS),    
+]
+
 status_layout = [
     text_data('Frequency', '-FREQUENCY-'),
     text_data('Symbol Rate', '-SYMBOL_RATE-'),
@@ -48,13 +55,13 @@ status_layout = [
 ]
 
 layout = [
-    [sg.Frame(' Receiver Controls ',
+    top_layout,
+    [
+        sg.Frame(' Receiver Controls ',
         control_layout, title_color='green', size=(340,340), pad=(15,15) ),
         sg.Frame(' Received Status ',
         status_layout, title_color='green', size=(340,340), pad=(15,15) ),
     ],
-    [sg.Push(), sg.Button('Shutdown', key='-SHUTDOWN-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS)],
-    [sg.Text('', key='-STATUS_BAR-', text_color='green')],
 ]
 
 # CALLBACK DISPATCH -----------------------------
