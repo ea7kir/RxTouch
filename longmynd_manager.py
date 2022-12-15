@@ -1,6 +1,6 @@
 # longmynd_manager.py
 
-#import time
+import random # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
 
 #from dataclasses import dataclass
 
@@ -14,6 +14,7 @@
 #    db_mer: float = 0
 #    db_margin: float = 0
 #    dbm_power: int = 0
+#    null_ratio: int = 0
 #    provider: str = ''
 #    service: str = ''
 
@@ -29,6 +30,7 @@ class LongmyndManager():
 #        self.db_mer: float = 0
 #        self.db_margin: float = 0
 #        self.dbm_power: int = 0
+#        self.null_ratio: int = 0
 #        self.provider: str = ''
 #        self.service: str = ''
         self.read_status()
@@ -71,6 +73,7 @@ class LongmyndManager():
             self.db_mer = '8.9'
             self.db_margin = '4.1'
             self.dbm_power = '-60'
+            self.null_ratio = random.randint(40, 60) # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
             self.provider = 'A71A'
             self.service = 'QARS'
         else:
@@ -83,21 +86,9 @@ class LongmyndManager():
             self.db_mer = '-'
             self.db_margin = '-'
             self.dbm_power = '-'
+            self.null_ratio = 0
             self.provider = '-'
             self.service = '-'
   
-
-#    def _reset_status(self):
-#        self.frequency = '-'
-#        self.symbol_rate = '-'
-#        self.mode = '-'
-#        self.constellation = '-'
-#        self.fec = '-'
-#        self.codecs = '-'
-#        self.db_mer = '-'
-#        self.db_margin = '-'
-#        self.dbm_power = '-'
-#        self.provider = '-'
-#        self.service = '-'
 
 longmynd_manager = LongmyndManager()

@@ -50,6 +50,8 @@ status_layout = [
     text_data('dB MER', '-DB_MER-'),
     text_data('dB Margin', '-DB_MARGIN-'),
     text_data('dBm Power', '-DBM_POWER-'),
+    text_data('Null Ratio', '-NULL_RATIO-'),
+    [sg.ProgressBar(100, orientation='h', size=(10, 10), key='-NULL_RATIO-BAR-', bar_color=('#00FF00','#111111'))],
     text_data('Provider', '-PROVIDER-'),
     text_data('Service', '-SERVICE-'),
 ]
@@ -57,10 +59,10 @@ status_layout = [
 layout = [
     top_layout,
     [
-        sg.Frame(' Receiver Controls ',
+        sg.Frame(' Receiver Control ',
         control_layout, title_color='green', size=(340,340), pad=(15,15) ),
         sg.Frame(' Received Status ',
-        status_layout, title_color='green', size=(340,340), pad=(15,15) ),
+        status_layout, title_color='green', size=(340,400), pad=(15,15) ),
     ],
 ]
 
@@ -96,6 +98,8 @@ def update_status():
     window['-DB_MER-'].update(lm.db_mer)
     window['-DB_MARGIN-'].update(lm.db_margin)
     window['-DBM_POWER-'].update(lm.dbm_power)
+    window['-NULL_RATIO-'].Update(lm.null_ratio)
+    window['-NULL_RATIO-BAR-'].UpdateBar(lm.null_ratio)
     window['-PROVIDER-'].update(lm.provider)
     window['-SERVICE-'].update(lm.service)
     window['-STATUS_BAR-'].update(lm.status_msg)    
@@ -119,6 +123,7 @@ while True:
         update_control()
         bp.changed = False
     else:
+        lm.read_status()
         update_status()
 
 window.close()
