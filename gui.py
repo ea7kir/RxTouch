@@ -1,5 +1,3 @@
-# gui.py
-
 """RxTouch"""
 
 import PySimpleGUI as sg
