@@ -1,18 +1,17 @@
 import PySimpleGUI as sg
-import time
-import threading
-from ok_net_utils import start_listening, get_stream_msg
-from ok_process_spectrum_data import SpectrumData, process_spectrum_data
-from ok_dummy_data import get_dummy_data
+import asyncio
+#from ok_dummy_data import get_dummy_data
+from ok_process_spectrum_data import get_recvd_data, SpectrumData, process_spectrum_data
 
-def get_spectrum_data():
-    recvd_data = get_stream_msg()
-    #recvd_data = get_dummy_data()
-    #print('ok_display_spectrum_data.py recvd_data got: ', len(recvd_data))
-    return process_spectrum_data(recvd_data)
+running = True
+   
+async def get_spectrum_data() -> SpectrumData:
+    recvd_data = get_recvd_data()
+    processed_data = process_spectrum_data(recvd_data)
+    return processed_data
 
-def main():
-
+async def main_window():
+    global running
     layout = [
         [sg.Quit(button_color=('white', 'red'))],
         [sg.Graph(canvas_size=(700, 200), graph_bottom_left=(0, 0), graph_top_right=(918, 2), background_color='black', float_values=False, key='graph')],      
@@ -23,33 +22,34 @@ def main():
 
     #points = [0,0] * 919
 
-    
-    window.perform_long_operation(start_listening, '-OPERATION DONE-')
-    #start_listening()
-    print('########## HERE ###########')
-    while True: # the Event Loop
+    while running: # the Event Loop
   
-        event, values = window.read(timeout=100)
+        event, values = window.read(timeout=1)
         if event in ('Quit', None):
-            break
+            running = False
 
-        spectrum_data = get_spectrum_data()
-        #print(spectrum_data.spectrum_value)
+        spectrum_data = await get_spectrum_data()
 
         points = [(0,0)]
 
         for i in range(0, 918):
             points.append((i, spectrum_data.spectrum_value[i]))
         points.append((918,0))
-
-        #print(points[0], points[1], points[2], points[3], points[4])
-
         spectrum_graph.erase()
-        #triangle = [(0.0,0.0),(459.7,6300.5),(918-9,0.0)]
         spectrum_graph.draw_polygon(points, fill_color='green')
-        
-    
+        asyncio.sleep(0)
+
+async def main():
+    await asyncio.gather(
+        main_window(),
+    )
+    print('all tasks have closed')
     window.close()
+    if window.was_closed():
+        print('main window has closed')
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
+    print('about to shut down')
+    #import subprocess
+    #subprocess.check_call(['sudo', 'poweroff'])
