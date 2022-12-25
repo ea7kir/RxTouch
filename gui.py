@@ -3,6 +3,8 @@
 """RxTouch"""
 
 import PySimpleGUI as sg
+import asyncio
+import random
 from bandplan import bandplan as bp
 from longmynd_manager import longmynd_manager as lm
 
@@ -109,32 +111,46 @@ def update_status():
 window = sg.Window('', layout, size=(800, 480), font=(None,11), use_default_focus=False, finalize=True)
 window.set_cursor('none')
 
-while True:
-    event, values = window.read(timeout=10)
-    if event == '-SHUTDOWN-':
-        if sg.popup_yes_no('Shutdown Now?', font=(None,11), background_color='red', keep_on_top=True) == 'Yes':
-            lm.stop_longmynd()
-            break
-        
-    if event in dispatch_dictionary:
-        func_to_call = dispatch_dictionary[event]
-        func_to_call()
-    elif bp.changed:
-        update_control()
-        bp.changed = False
-    else:
+async def ui(window):
+    while True:
+        event, values = window.read(timeout=10)
+        if event == '-SHUTDOWN-':
+            if sg.popup_yes_no('Shutdown Now?', font=(None,11), background_color='red', keep_on_top=True) == 'Yes':
+                lm.stop_longmynd()
+                break
+
+        if event in dispatch_dictionary:
+            func_to_call = dispatch_dictionary[event]
+            func_to_call()
+        elif bp.changed:
+            update_control()
+            bp.changed = False
+        #else:
+        #    lm.read_status()
+        #    update_status()
+        await asyncio.sleep(0)
+
+    window.close()
+    del window
+
+async def background(window):
+    while True:
+        rando = random.randint(2, 2000)
+        print(rando)
+        #window['-STATUS_BAR-'].update(rando)
         lm.read_status()
         update_status()
+        await asyncio.sleep(1)
 
-window.close()
-del window
 
-############ for long operations, see: https://www.pysimplegui.org/en/latest/cookbook/#threaded-long-operation
-#    if lm.status_available:
-#    window.perform_long_operation(lm.read_status(), '-FUNCTION COMPLETED-')
-#    
-#    if event == '-FUNCTION COMPLETED-':)
+async def main():
+    await asyncio.gather(
+        ui(window),
+        background(window),
+    )
 
+#if __name__ == '__main__':
+asyncio.run(main())
 print('Shutting down...')
-#import subprocess
-#subprocess.check_call(['sudo', 'poweroff'])
+    #import subprocess
+    #subprocess.check_call(['sudo', 'poweroff'])
