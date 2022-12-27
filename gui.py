@@ -9,60 +9,70 @@ from longmynd_manager import longmynd_manager as lm
 
 sg.theme('Black')
 
+MYSCRCOLOR = '#111111'
 MYBUTCOLORS = ('#FFFFFF','#222222')
 MYDISABLEDBTCOLORS = ('#444444',None)
 
 def text_data(name, key):
-    return [ sg.Text(' '), sg.Text(name, size=(15,1)), sg.Text('', key=key, text_color='orange', font=(None,11)) ]
+    return sg.Text(name, size=15), sg.Text('', key=key, text_color='orange')
 
 def incdec_but(name, key):
-    return sg.Button(name, key=key, size=(4,1), font=(None,13), border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS)
+    return sg.Button(name, key=key, size=4, border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS)
 
-def button_selector(key_down, value, key_up):
-    return [ incdec_but('<', key_down), sg.Push(), sg.Text('', key=value, text_color='orange', font=(None,13)), sg.Push(), incdec_but('>', key_up) ]
-
-control_layout = [
-    [sg.Push(), sg.Text('Band', text_color='green'), sg.Push()],
-    button_selector('-BD-', '-BV-', '-BU-'),
-    [sg.Push(), sg.Text('Frequency / Channel', text_color='green'), sg.Push()],
-    button_selector('-FD-', '-FV-', '-FU-'),
-    [sg.Push(), sg.Text('Symbol Rate', text_color='green'), sg.Push()],
-    button_selector('-SD-', '-SV-', '-SU-'),
-    [sg.Text('')],
-    [sg.Push(), sg.Button('TUNE', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False), sg.Push()],
-]
+def button_selector(key_down, value, key_up, width):
+    return  incdec_but('<', key_down), sg.Text(' ', size=width, key=value, text_color='orange'), incdec_but('>', key_up) 
 
 top_layout = [
     sg.Button('RxTouch', key='-SYSTEM-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS),
-    sg.Text('', key='-STATUS_BAR-', text_color='green'),
-    sg.Push(),
+    sg.Text(' ', expand_x=True, key='-STATUS_BAR-', text_color='green'),
     sg.Button('Shutdown', key='-SHUTDOWN-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS),    
 ]
 
+spectrum_layout = [
+    sg.Graph(canvas_size=(800, 200), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
+]
+
+tune_layout = [
+        sg.Column([
+            button_selector('-BD-', '-BV-', '-BU-', 8),
+        ], size=(220, 40)),
+        sg.Column([
+            button_selector('-SD-', '-SV-', '-SU-', 4),
+        ], size=(220, 40)),
+        sg.Column([
+            button_selector('-FD-', '-FV-', '-FU-', 13),
+        ], size=(220, 40)),
+    sg.Push(),
+    sg.Button('TUNE', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False),
+]
+
 status_layout = [
-    text_data('Frequency', '-FREQUENCY-'),
-    text_data('Symbol Rate', '-SYMBOL_RATE-'),
-    text_data('Mode', '-MODE-'),
-    text_data('Constellation', '-CONSTELLATION-'),
-    text_data('FEC', '-FEC-'),
-    text_data('Codecs', '-CODECS-'),
-    text_data('dB MER', '-DB_MER-'),
-    text_data('dB Margin', '-DB_MARGIN-'),
-    text_data('dBm Power', '-DBM_POWER-'),
-    text_data('Null Ratio', '-NULL_RATIO-'),
-    [sg.ProgressBar(100, orientation='h', size=(10, 10), key='-NULL_RATIO-BAR-', bar_color=('#00FF00','#111111'))],
-    text_data('Provider', '-PROVIDER-'),
-    text_data('Service', '-SERVICE-'),
+    sg.Column([
+        text_data('Frequency', '-FREQUENCY-'),
+        text_data('Symbol Rate', '-SYMBOL_RATE-'),
+        text_data('Mode', '-MODE-'),
+        text_data('Constellation', '-CONSTELLATION-'),
+    ], size=(240, 150)),
+    sg.Column([
+        text_data('FEC', '-FEC-'),
+        text_data('Codecs', '-CODECS-'),
+        text_data('dB MER', '-DB_MER-'),
+        text_data('dB Margin', '-DB_MARGIN-'),
+    ], size=(240, 150)),
+    sg.Column([
+        text_data('dBm Power', '-DBM_POWER-'),
+        text_data('Null Ratio', '-NULL_RATIO-'),
+        [sg.ProgressBar(100, orientation='h', size=(10, 10), key='-NULL_RATIO-BAR-', bar_color=('#00FF00','#111111'))],
+        text_data('Provider', '-PROVIDER-'),
+        text_data('Service', '-SERVICE-'),
+    ], size=(240, 150)),
 ]
 
 layout = [
     top_layout,
-    [
-        sg.Frame(' Receiver Control ',
-        control_layout, title_color='green', size=(340,340), pad=(15,15) ),
-        sg.Frame(' Received Status ',
-        status_layout, title_color='green', size=(340,400), pad=(15,15) ),
-    ],
+    spectrum_layout,
+    tune_layout,
+    status_layout,
 ]
 
 # CALLBACK DISPATCH -----------------------------
@@ -101,11 +111,11 @@ def update_status():
     window['-NULL_RATIO-BAR-'].UpdateBar(lm.null_ratio)
     window['-PROVIDER-'].update(lm.provider)
     window['-SERVICE-'].update(lm.service)
-    window['-STATUS_BAR-'].update(lm.status_msg)    
+    window['-STATUS_BAR-'].update(lm.status_msg)
 
 # MAIN ------------------------------------------
 
-window = sg.Window('', layout, size=(800, 480), font=(None,11), use_default_focus=False, finalize=True)
+window = sg.Window('', layout, size=(800, 480), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
 window.set_cursor('none')
 
 running = True
@@ -115,7 +125,7 @@ async def main_window():
     while running:
         event, values = window.read(timeout=10)
         if event == '-SHUTDOWN-':
-            if sg.popup_yes_no('Shutdown Now?', font=(None,11), background_color='red', keep_on_top=True) == 'Yes':
+            if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
                 lm.stop_longmynd()
                 running = False
         if event in dispatch_dictionary:

@@ -11,6 +11,15 @@ window = sg.Window('Qatar-OSCAR 100 Wideband Spectrum Monitor', layout, finalize
 spectrum_graph = window['graph']
 running = True
 
+# Each scan sends a block of 1844 bytes
+# This is 922 16-bit samples in low-high format
+# The last two 16-bit samples are zero
+# Sample zero is at 10490.500MHz
+# Each sample represents 10000 / 1024 = 9.765625kHz
+# Sample 919 is at 10499.475MHz
+# The noise floor value is around 10000
+# The peak of the beacon is around 40000
+
 from dataclasses import dataclass
 @dataclass
 class SpectrumData:
