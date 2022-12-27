@@ -41,13 +41,16 @@ async def get_spectrum_data(websocket) -> (bool, float, list):
     return True, beacon_level, points
 
 async def main_window():
+    # TODO: having websocket here is wrong !!!
     BATC_SPECTRUM_URI = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
     websocket = await websockets.connect(BATC_SPECTRUM_URI)
+
     global running
     while running:
         event, values = window.read(timeout=1)
         if event in ('Quit', None):
             running = False
+        ##################################
         spectrum_graph.erase()
         # draw graticule
         for i in range(1, 19):
@@ -64,6 +67,7 @@ async def main_window():
             spectrum_graph.draw_line((0, beacon_level), (918, beacon_level), color='red', width=1)
             # draw spectrum
             spectrum_graph.draw_polygon(points, fill_color='green')
+        ##################################
         await asyncio.sleep(0)
     await websocket.close()
 

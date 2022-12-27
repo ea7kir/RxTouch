@@ -6,12 +6,6 @@ from bandplan import bandplan as bp
 from longmynd_manager import longmynd_manager as lm
 
 import websockets
-from dataclasses import dataclass
-
-@dataclass
-class SpectrumData:
-    beacon_value = 0.0
-    spectrum_value = [0.0] * 918
 
 # Each scan sends a block of 1844 bytes
 # This is 922 16-bit samples in low-high format
@@ -22,32 +16,25 @@ class SpectrumData:
 # The noise floor value is around 10000
 # The peak of the beacon is around 40000
 
-async def process_spectrum_data(recvd_data: bytearray) -> SpectrumData:
-    spectrum_data = SpectrumData()
+async def get_spectrum_data(websocket) -> (bool, float, list):
+    recvd_data = await websocket.recv()
+    beacon_level = 0.0
+    points = [(0,0)] * 919 # ensure the last point is (0,0)
     if len(recvd_data) != 1844:
         print('rcvd_data != 1844')
-        return spectrum_data
+        return False, 0, []
     for i in range(0, 1836, 2):
         uint_16: int = int(recvd_data[i]) + (int(recvd_data[i+1] << 8))
         # chop off 1/8 noise
-        if uint_16 < 8192: uint_16 = 8192
-        spectrum_data.spectrum_value[i // 2] = float(uint_16 - 8192) / 52000.0
-    # find the average beacon value where beacon center is 103
-    spectrum_data.beacon_value = 0.0
-    #for i in range(73, 133):
-    for i in range(93, 113):
-        spectrum_data.beacon_value += spectrum_data.spectrum_value[i]
-    spectrum_data.beacon_value /= 20.0
-    # invert y axis
-    #spectrum_data.beacon_value = 1.0 - spectrum_data.beacon_value / 61.0
-    #print(spectrum_data.spectrum_value)
-    return spectrum_data
-
-async def get_spectrum_data(websocket) -> SpectrumData:
-    recvd_data = await websocket.recv()
-    processed_data = await process_spectrum_data(recvd_data)
-    return processed_data
-
+        if uint_16 < 8192: uint_16 = 8192 # TODO: where di I get this info from?
+        j = (i // 2) + 1
+        points[j] = (j, float(uint_16 - 8192) / 52000.0)
+    # calculate average beacon peak level where beacon center is 103
+    beacon_level = 0.0
+    for i in range(93, 113): # should be range(73, 133), but this works better
+        beacon_level += points[i][1]
+    beacon_level /= 20.0
+    return True, beacon_level, points
 
 # LAYOUT ----------------------------------------
 
@@ -74,7 +61,7 @@ top_layout = [
 
 spectrum_layout = [
     # TODO: 700 or 800 or what?
-    sg.Graph(canvas_size=(800, 200), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
+    sg.Graph(canvas_size=(800, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
 ]
 
 tune_layout = [
@@ -169,20 +156,21 @@ spectrum_graph = window['graph']
 running = True
 
 async def main_window():
+    # TODO: having websocket here is wrong !!!
     BATC_SPECTRUM_URI = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
     websocket = await websockets.connect(BATC_SPECTRUM_URI)
-    #points = [(0,0)] * 919
+
     global running
     while running:
         # TODO: decide on timeout value
-        event, values = window.read(timeout=300)
+        event, values = window.read(timeout=1)
         if event == '-SHUTDOWN-':
             if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
                 lm.stop_longmynd()
                 running = False
-################################## TODO: async most og this out of this loop ###########
+        ##################################
         spectrum_graph.erase()
-        # graticule
+        # draw graticule
         for i in range(1, 19):
             y = (1.0 / 18.0) * i
             if i in {1,6,11,16}:
@@ -190,16 +178,14 @@ async def main_window():
             else:
                 color = '#222222'
             spectrum_graph.draw_line((0, y), (918, y), color=color)
-        # data
-        spectrum_data = await get_spectrum_data(websocket)
-        points = [(0,0)]
-        for i in range(0, 918):
-            points.append((i, spectrum_data.spectrum_value[i]))
-        points.append((918,0))
-        # beacon level
-        #spectrum_graph.draw_line((0, spectrum_data.beacon_value), (918, spectrum_data.beacon_value), color='red', width=1)
-        spectrum_graph.draw_polygon(points, fill_color='green')
-##########################################################################################
+        # get new data
+        valid, beacon_level, points = await get_spectrum_data(websocket)
+        if valid:
+            # draw beacon level
+            spectrum_graph.draw_line((0, beacon_level), (918, beacon_level), color='red', width=1)
+            # draw spectrum
+            spectrum_graph.draw_polygon(points, fill_color='green')
+        ##################################
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
@@ -218,7 +204,7 @@ async def read_lm_status():
 async def main():
     await asyncio.gather(
         main_window(),
-        read_lm_status(),
+        #read_lm_status(),
     )
     print('all tasks have closed')
     window.close()
