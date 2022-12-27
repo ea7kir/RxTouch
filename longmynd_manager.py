@@ -18,6 +18,13 @@ import random # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
 #    provider: str = ''
 #    service: str = ''
 
+MODE = [
+    'Seaching',
+    'Locked',
+    'DVB-S',
+    'DVB-S2',
+]
+
 class LongmyndManager():
     def __init__(self):
         self.running = False
@@ -66,7 +73,7 @@ class LongmyndManager():
         if self.running:
             self.frequency = '10491.551'
             self.symbol_rate = '1500'
-            self.mode = 'Locked DVB-S2'
+            self.mode = MODE[0]
             self.constellation = 'QPSK'
             self.fec = '4/5'
             self.codecs = 'H264 MP3'
