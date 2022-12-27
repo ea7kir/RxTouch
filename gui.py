@@ -14,13 +14,13 @@ MYBUTCOLORS = ('#FFFFFF','#222222')
 MYDISABLEDBTCOLORS = ('#444444',None)
 
 def text_data(name, key):
-    return sg.Text(name, size=15), sg.Text('', key=key, text_color='orange')
+    return sg.Text(name, size=11), sg.Text(' ', size=9, key=key, text_color='orange')
 
 def incdec_but(name, key):
     return sg.Button(name, key=key, size=4, border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS)
 
 def button_selector(key_down, value, key_up, width):
-    return  incdec_but('<', key_down), sg.Text(' ', size=width, key=value, text_color='orange'), incdec_but('>', key_up) 
+    return  incdec_but('<', key_down), sg.Text(' ', size=width, justification='center', key=value, text_color='orange'), incdec_but('>', key_up) 
 
 top_layout = [
     sg.Button('RxTouch', key='-SYSTEM-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS),
@@ -35,15 +35,13 @@ spectrum_layout = [
 tune_layout = [
         sg.Column([
             button_selector('-BD-', '-BV-', '-BU-', 8),
-        ], size=(220, 40)),
+        ]),
         sg.Column([
-            button_selector('-SD-', '-SV-', '-SU-', 4),
-        ], size=(220, 40)),
+            button_selector('-SD-', '-SV-', '-SU-', 5),
+        ]),
         sg.Column([
-            button_selector('-FD-', '-FV-', '-FU-', 13),
-        ], size=(220, 40)),
-    sg.Push(),
-    sg.Button('TUNE', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False),
+            button_selector('-FD-', '-FV-', '-FU-', 12),
+        ]),
 ]
 
 status_layout = [
@@ -52,20 +50,25 @@ status_layout = [
         text_data('Symbol Rate', '-SYMBOL_RATE-'),
         text_data('Mode', '-MODE-'),
         text_data('Constellation', '-CONSTELLATION-'),
-    ], size=(240, 150)),
+    ]),
     sg.Column([
         text_data('FEC', '-FEC-'),
         text_data('Codecs', '-CODECS-'),
         text_data('dB MER', '-DB_MER-'),
         text_data('dB Margin', '-DB_MARGIN-'),
-    ], size=(240, 150)),
+    ]),
     sg.Column([
         text_data('dBm Power', '-DBM_POWER-'),
         text_data('Null Ratio', '-NULL_RATIO-'),
         [sg.ProgressBar(100, orientation='h', size=(10, 10), key='-NULL_RATIO-BAR-', bar_color=('#00FF00','#111111'))],
         text_data('Provider', '-PROVIDER-'),
         text_data('Service', '-SERVICE-'),
-    ], size=(240, 150)),
+    ]),
+    sg.Column([
+        [sg.Button(' TUNE ', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False)],
+        [sg.Text(' ')],
+        [sg.Button(' Mute ', key='-MUTE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False)],
+    ]),
 ]
 
 layout = [
@@ -115,7 +118,7 @@ def update_status():
 
 # MAIN ------------------------------------------
 
-window = sg.Window('', layout, size=(800, 480), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
+window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
 window.set_cursor('none')
 
 running = True
