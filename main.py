@@ -61,7 +61,7 @@ top_layout = [
 
 spectrum_layout = [
     # TODO: 700 or 800 or what?
-    sg.Graph(canvas_size=(800, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
+    sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
 ]
 
 tune_layout = [

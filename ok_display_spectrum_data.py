@@ -4,7 +4,7 @@ import websockets
 
 layout = [
     [sg.Quit(button_color=('white', 'red'))],
-    [sg.Graph(canvas_size=(700, 200), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph')],      
+    [sg.Graph(canvas_size=(770, 200), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph')],      
 ]
 
 window = sg.Window('Qatar-OSCAR 100 Wideband Spectrum Monitor', layout, finalize=True)

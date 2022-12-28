@@ -29,7 +29,7 @@ top_layout = [
 ]
 
 spectrum_layout = [
-    sg.Graph(canvas_size=(800, 200), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
+    sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
 ]
 
 tune_layout = [
@@ -137,6 +137,9 @@ async def main_window():
         if bp.changed:
             update_control()
             bp.changed = False
+        spectrum_graph = window['graph']
+        spectrum_graph.draw_line((0, 0), (459, 1.0), color='red', width=1)
+        spectrum_graph.draw_line((459, 1.0), (918, 0.0), color='red', width=1)
         await asyncio.sleep(0)
 
 async def read_lm_status():
