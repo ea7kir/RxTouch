@@ -10,7 +10,7 @@ async def task_batc_stream_client(uri):
             raw_data = await websocket.recv()
             length = len(raw_data)
             print(f'recvd {length} bytes')
-            asyncio.sleep(0)
+            await asyncio.sleep(0)
 
 async def task_another():
     # report a message
