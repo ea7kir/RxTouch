@@ -35,50 +35,46 @@ LONGMYND = '-LONGMYND-'
 #            print(f'recvd {length} bytes')
 #            await asyncio.sleep(0)
 
-async def task_1_read_spectrum_stream_as_points(window):
-    win = window  
+async def task_1_read_spectrum_stream_as_points(window):  
     points = [(0,0)] * 918
+    await asyncio.sleep(1.0)
     i = 0
     while True:
         i += 1
         points[0] = (i,i)
-        print('task_1')
-        win.write_event_value(SPECTRUM, points)
-        await asyncio.sleep(0.5)
+        window.write_event_value(SPECTRUM, points)
+        await asyncio.sleep(0.3)
 
 async def task_2_read_longmynd_status_as_dataclass(window):
-    win = window
     status = LmStatus()
+    await asyncio.sleep(1.0)
     while True:
         status.null_ratio += 1
-        print('task_2')
-        win.write_event_value(LONGMYND, status)
+        window.write_event_value(LONGMYND, status)
         await asyncio.sleep(0.5)
 
 async def main():
     layout = [
-        [sg.Text('Spectrum'), sg.Text('DATA GOES HERE', key='-spectrum_data-')],
-        [sg.Text('Longmynd'), sg.Text('DATA GOES HERE', key='-longmynd_data-')],
+        [sg.Text('Spectrum'), sg.Text('DATA GOES HERE', key=SPECTRUM)],
+        [sg.Text('Longmynd'), sg.Text('DATA GOES HERE', key=LONGMYND)],
     ]
     window = sg.Window('Window Title', layout, size=(200,100), finalize=True)
-    await asyncio.sleep(0.5)
     task_1 = asyncio.create_task(task_1_read_spectrum_stream_as_points(window))
-    await asyncio.sleep(0.5)
     task_2 = asyncio.create_task(task_2_read_longmynd_status_as_dataclass(window))
-    await asyncio.sleep(0.5)
     while True:
-        event, values = window.read(timeout=1) # is this incompatable with asyncio?
+        event, values = window.read(timeout=1)
         if event == sg.WIN_CLOSED:
-            task_1.cancel()
-            task_2.cancel()
             break
         if event == SPECTRUM:
-            window['-spectrum_data-'](values[SPECTRUM][0])
+            window[SPECTRUM](values[SPECTRUM][0])
         if event == LONGMYND:
-            window['-longmynd_data-'](values[LONGMYND].null_ratio)
+            window[LONGMYND](values[LONGMYND].null_ratio)
+        await asyncio.sleep(0)
+    task_1.cancel()
+    task_2.cancel()
+    await asyncio.sleep(1.0)
     window.close()
     del window
-
 
 if __name__ == '__main__':
     asyncio.run(main())
