@@ -22,8 +22,8 @@ from dataclasses import dataclass
 
 @dataclass
 class SpectrumData:
-    points = [(0,0)] * 919 # to ensure the last point is (0,0)
-    beacon_level = 0.0
+    points = [(int(0),int(0))] * 920 # to ensure the last point is (0,0)
+    beacon_level:int = 0
 
 spectrum_data = SpectrumData()
 
@@ -36,17 +36,17 @@ async def get_spectrum_data():
         if len(recvd_data) != 1844:
             print('rcvd_data != 1844')
             continue
+        j = 1
         for i in range(0, 1836, 2):
             uint_16: int = int(recvd_data[i]) + (int(recvd_data[i+1] << 8))
-            # chop off 1/8 noise
-            if uint_16 < 8192: uint_16 = 8192 # TODO: where di I get this info from?
-            j = (i // 2) + 1
-            spectrum_data.points[j] = (j, float(uint_16 - 8192) / 52000.0)
-        # calculate average beacon peak level where beacon center is 103
-        spectrum_data.beacon_level = 0.0
+            spectrum_data.points[j] = (j, uint_16)
+            j += 1
+        spectrum_data.points[919] = (919, 0)
+        # calculate the average beacon peak level where beacon center is 103
+        spectrum_data.beacon_level = 0
         for i in range(93, 113): # should be range(73, 133), but this works better
             spectrum_data.beacon_level += spectrum_data.points[i][1]
-        spectrum_data.beacon_level /= 20.0
+        spectrum_data.beacon_level //= 20.0
         spectrum_data_changed = True
 
 # LAYOUT ----------------------------------------
@@ -68,12 +68,13 @@ def button_selector(key_down, value, key_up, width):
 
 top_layout = [
     sg.Button('RxTouch', key='-SYSTEM-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS),
-    sg.Text(' ', expand_x=True, key='-STATUS_BAR-', text_color='green'),
+    sg.Text(' ', expand_x=True, key='-STATUS_BAR-', text_color='orange'),
     sg.Button('Shutdown', key='-SHUTDOWN-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS),    
 ]
 
 spectrum_layout = [
-    sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
+    # ORIGINAL sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
+    sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0x2000), graph_top_right=(918, 0xFFFF), background_color='black', float_values=False, key='graph'),
 ]
 
 tune_layout = [
@@ -161,21 +162,26 @@ def update_status():
     window['-STATUS_BAR-'].update(lm.status_msg)
 
 def update_graph():
+    # TODO: try just deleting the polygon and beakcon_level
+    spectrum_graph.erase()
+    # draw graticule
+    c = 0
+    for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
+        if c in {0,5,10,15}:
+            color = '#444444'
+        else:
+            color = '#222222'
+        c += 1
+        spectrum_graph.draw_line((0, y), (918, y), color=color)
+    # TODO: sg.Text('15dB') 
+    # TODO: sg.Text('10dB') 
+    # TODO: sg.Text('5dB') 
     if TEST_GRAPH:
-        spectrum_graph.draw_line((0, 0), (459, 1.0), color='red', width=1)
-        spectrum_graph.draw_line((459, 1.0), (918, 0.0), color='red', width=1)
+        spectrum_graph.draw_line((0, 0), (459, 0xFFFF), color='red', width=1)
+        spectrum_graph.draw_line((459, 0xFFFF), (918, 0), color='red', width=1)
     else:
-        spectrum_graph.erase()
-        # draw graticule
-        for i in range(1, 19):
-            y = (1.0 / 18.0) * i
-            if i in {1,6,11,16}:
-                color = '#444444'
-            else:
-                color = '#222222'
-            spectrum_graph.draw_line((0, y), (918, y), color=color)
         # draw beacon level
-        spectrum_graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='red', width=1)
+        spectrum_graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
         # draw spectrum
         spectrum_graph.draw_polygon(spectrum_data.points, fill_color='green')
 
@@ -215,17 +221,17 @@ async def read_lm_status():
         update_status()
         await asyncio.sleep(1)
 
-async def read_spectrum_data():
+async def read_spectrum_data(): # TODO: could we call get_spectrum_data() directly?
     global running
     while running:
         await get_spectrum_data()
         await asyncio.sleep(0)
 
-async def main():
+async def main(): # TODO: could we call 
     await asyncio.gather(
         main_window(),
         read_lm_status(),
-        read_spectrum_data(),
+        read_spectrum_data(), # TODO: could we call get_spectrum_data() directly?
     )
     print('all tasks have closed')
     window.close()
