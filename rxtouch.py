@@ -16,6 +16,9 @@ import websockets
 # The noise floor value is around 10000
 # The peak of the beacon is around 40000
 
+#    BATC_SPECTRUM_URI = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
+#    websocket = await websockets.connect(BATC_SPECTRUM_URI)
+
 async def get_spectrum_data(websocket) -> (bool, float, list):
     recvd_data = await websocket.recv()
     beacon_level = 0.0
@@ -60,7 +63,6 @@ top_layout = [
 ]
 
 spectrum_layout = [
-    # TODO: 700 or 800 or what?
     sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
 ]
 
@@ -152,46 +154,26 @@ def update_status():
 
 window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
 window.set_cursor('none')
-spectrum_graph = window['graph']
+
 running = True
 
 async def main_window():
-    # TODO: having websocket here is wrong !!!
-    BATC_SPECTRUM_URI = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
-    websocket = await websockets.connect(BATC_SPECTRUM_URI)
-
     global running
     while running:
-        # TODO: decide on timeout value
-        event, values = window.read(timeout=1)
+        event, values = window.read(timeout=10)
         if event == '-SHUTDOWN-':
             if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
                 lm.stop_longmynd()
                 running = False
-        ##################################
-        spectrum_graph.erase()
-        # draw graticule
-        for i in range(1, 19):
-            y = (1.0 / 18.0) * i
-            if i in {1,6,11,16}:
-                color = '#444444'
-            else:
-                color = '#222222'
-            spectrum_graph.draw_line((0, y), (918, y), color=color)
-        # get new data
-        valid, beacon_level, points = await get_spectrum_data(websocket)
-        if valid:
-            # draw beacon level
-            spectrum_graph.draw_line((0, beacon_level), (918, beacon_level), color='red', width=1)
-            # draw spectrum
-            spectrum_graph.draw_polygon(points, fill_color='green')
-        ##################################
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
         if bp.changed:
             update_control()
             bp.changed = False
+        spectrum_graph = window['graph']
+        spectrum_graph.draw_line((0, 0), (459, 1.0), color='red', width=1)
+        spectrum_graph.draw_line((459, 1.0), (918, 0.0), color='red', width=1)
         await asyncio.sleep(0)
 
 async def read_lm_status():
@@ -204,7 +186,7 @@ async def read_lm_status():
 async def main():
     await asyncio.gather(
         main_window(),
-        #read_lm_status(),
+        read_lm_status(),
     )
     print('all tasks have closed')
     window.close()
