@@ -3,6 +3,7 @@
 import PySimpleGUI as sg
 import asyncio
 from rx_bandplan import bandplan as bp
+from rx_bandplan import TUNED_MARKER
 
 ########################################################################### begin spectrum data
 
@@ -274,7 +275,12 @@ def update_graph():
         spectrum_graph.draw_line((0, y), (918, y), color=color)
     # TODO: sg.Text('15dB') 
     # TODO: sg.Text('10dB') 
-    # TODO: sg.Text('5dB') 
+    # TODO: sg.Text('5dB')
+
+    # draw tuned marker
+    x = bp.selected_frequency_marker()
+    spectrum_graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
+
     if TEST_GRAPH:
         spectrum_graph.draw_line((0, 0), (459, 0xFFFF), color='red', width=1)
         spectrum_graph.draw_line((459, 0xFFFF), (918, 0), color='red', width=1)
