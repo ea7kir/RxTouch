@@ -49,6 +49,7 @@ async def read_spectrum_data():
         spectrum_data.beacon_level //= 20.0
         spectrum_data.changed = True
         await asyncio.sleep(0)
+    await websocket.close()
 
 ########################################################################### end spectrum data
 
