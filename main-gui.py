@@ -3,7 +3,8 @@
 import PySimpleGUI as sg
 import asyncio
 from bandplan import bandplan as bp
-from longmynd_manager import longmynd_manager as lm
+
+########################################################################### begin spectrum data
 
 import websockets
 
@@ -49,6 +50,108 @@ async def read_spectrum_data():
         spectrum_data.beacon_level //= 20.0
         spectrum_data_changed = True
         await asyncio.sleep(0)
+
+########################################################################### end spectrum data
+
+########################################################################### begin longmynd data
+
+#from dataclasses import dataclass
+
+@dataclass
+class LongmyndData:
+    frequency: int = 0
+    symbol_rate: int = 0
+    constellation: str = ''
+    fec: str = ''
+    codecs: str = ''
+    db_mer: float = 0
+    db_margin: float = 0
+    dbm_power: int = 0
+    null_ratio: int = 0
+    provider: str = ''
+    service: str = ''
+    status_msg: str = 'status message'
+
+longmynd_data = LongmyndData()
+
+# TODO: put these into LongmyndData
+longmynd_data_changed = False
+longmynd_locked = True
+
+import random # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
+
+MODE = [
+    'Seaching',
+    'Locked',
+    'DVB-S',
+    'DVB-S2',
+]
+
+async def read_longmynd_data():
+    global running, longmynd_data_changed, longmynd_locked
+    longmynd_locked = True
+    while running:
+        await asyncio.sleep(1) # temp delay to simulate data reading
+        if longmynd_locked:
+            longmynd_data.frequency = '10491.551'
+            longmynd_data.symbol_rate = '1500'
+            longmynd_data.mode = MODE[0]
+            longmynd_data.constellation = 'QPSK'
+            longmynd_data.fec = '4/5'
+            longmynd_data.codecs = 'H264 MP3'
+            longmynd_data.db_mer = '8.9'
+            longmynd_data.db_margin = '4.1'
+            longmynd_data.dbm_power = '-60'
+            longmynd_data.null_ratio = random.randint(40, 60) # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
+            longmynd_data.provider = 'A71A'
+            longmynd_data.service = 'QARS'
+            longmynd_data.status_msg = 'online'
+        else:
+            longmynd_data.frequency = '-'
+            longmynd_data.symbol_rate = '-'
+            longmynd_data.mode = '-'
+            longmynd_data.constellation = '-'
+            longmynd_data.fec = '-'
+            longmynd_data.codecs = '-'
+            longmynd_data.db_mer = '-'
+            longmynd_data.db_margin = '-'
+            longmynd_data.dbm_power = '-'
+            longmynd_data.null_ratio = 0
+            longmynd_data.provider = '-'
+            longmynd_data.service = '-'
+            longmynd_data.status_msg = 'offline'
+        longmynd_data_changed = True
+        await asyncio.sleep(1)
+
+def start_longmynd(frequency, rate_list):
+    global longmynd_locked
+    if longmynd_locked:
+        stop_longmynd
+    # assemble the command line arguments
+    # params = ["-i", TS_IP, TS_Port, "-S", "0.6", requestKHzStr, allSrs]
+    OFFSET = 9750000
+    TS_IP = '192.168.1.36'
+    TS_PORT = '7777'
+    requestKHzStr = str(float(frequency) * 1000 - OFFSET)
+    allSrs = rate_list[0]
+    for i in range(1, len(rate_list)):
+        allSrs += f',{rate_list[i]}'
+    params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, allSrs]
+    # TODO: execute longmynd with args see: https://youtu.be/VlfLqG_qjx0
+    #time.sleep(2)
+    longmynd_locked = True
+    #self.status_msg = '{0}'.format(params)
+
+def stop_longmynd(self):
+    global longmynd_locked
+    if not longmynd_locked:
+        return
+    #self.status_msg = 'stopping longmynd'
+    longmynd_locked = False
+    #time.sleep(2)
+    #self.status_msg = 'longmynd stopped'
+
+########################################################################### end longmynd data
 
 # LAYOUT ----------------------------------------
 
@@ -129,7 +232,7 @@ layout = [
 def tune():
     # callout to longmynd
     frequency, rate_list = bp.fequency_and_rate_list()
-    lm.start_longmynd(frequency, rate_list)
+    start_longmynd(frequency, rate_list)
 
 dispatch_dictionary = {
     # Lookup dictionary that maps button to function to call
@@ -146,21 +249,21 @@ def update_control():
     window['-FV-'].update(bp.frequency)
     window['-SV-'].update(bp.symbol_rate)
 
-def update_status():
-    window['-FREQUENCY-'].update(lm.frequency)
-    window['-SYMBOL_RATE-'].update(lm.symbol_rate)
-    window['-MODE-'].update(lm.mode)
-    window['-CONSTELLATION-'].update(lm.constellation)
-    window['-FEC-'].update(lm.fec)
-    window['-CODECS-'].update(lm.codecs)
-    window['-DB_MER-'].update(lm.db_mer)
-    window['-DB_MARGIN-'].update(lm.db_margin)
-    window['-DBM_POWER-'].update(lm.dbm_power)
-    window['-NULL_RATIO-'].Update(lm.null_ratio)
-    window['-NULL_RATIO-BAR-'].UpdateBar(lm.null_ratio)
-    window['-PROVIDER-'].update(lm.provider)
-    window['-SERVICE-'].update(lm.service)
-    window['-STATUS_BAR-'].update(lm.status_msg)
+def update_longmynd_status():
+    window['-FREQUENCY-'].update(longmynd_data.frequency)
+    window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
+    window['-MODE-'].update(longmynd_data.mode)
+    window['-CONSTELLATION-'].update(longmynd_data.constellation)
+    window['-FEC-'].update(longmynd_data.fec)
+    window['-CODECS-'].update(longmynd_data.codecs)
+    window['-DB_MER-'].update(longmynd_data.db_mer)
+    window['-DB_MARGIN-'].update(longmynd_data.db_margin)
+    window['-DBM_POWER-'].update(longmynd_data.dbm_power)
+    window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
+    window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio)
+    window['-PROVIDER-'].update(longmynd_data.provider)
+    window['-SERVICE-'].update(longmynd_data.service)
+    window['-STATUS_BAR-'].update(longmynd_data.status_msg)
 
 def update_graph():
     # TODO: try just deleting the polygon and beakcon_level
@@ -196,7 +299,7 @@ running = True
 TEST_GRAPH = False
 
 async def main_window():
-    global running, spectrum_data_changed
+    global running, spectrum_data_changed, longmynd_data_changed
     
     while running:
         event, values = window.read(timeout=10)
@@ -207,26 +310,22 @@ async def main_window():
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
-        if bp.changed:
-            update_control()
-            bp.changed = False
         if spectrum_data_changed:
             update_graph()
             spectrum_data_changed = False
+        if bp.changed:
+            update_control()
+            bp.changed = False
+        if longmynd_data_changed:
+            update_longmynd_status()
+            longmynd_data_changed = False
         await asyncio.sleep(0)
-
-async def read_lm_status(): # TODO: could we call lm.read_status() directly?
-    global running
-    while running:
-        lm.read_status()
-        update_status()
-        await asyncio.sleep(1)
 
 async def main(): # TODO: could we call 
     await asyncio.gather(
         main_window(),
-        read_lm_status(),  # TODO: could we call lm.read_status() directly?
         read_spectrum_data(),
+        read_longmynd_data(),
     )
     print('all tasks have closed')
     window.close()
