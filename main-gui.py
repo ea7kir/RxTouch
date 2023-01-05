@@ -5,6 +5,10 @@ import asyncio
 from rx_bandplan import bandplan as bp
 from rx_bandplan import TUNED_MARKER
 
+running = True
+
+TEST_GRAPH = False
+
 ########################################################################### begin spectrum data
 
 import websockets
@@ -49,7 +53,7 @@ async def read_spectrum_data():
             spectrum_data.beacon_level += spectrum_data.points[i][1]
         spectrum_data.beacon_level //= 20.0
         spectrum_data.changed = True
-        await asyncio.sleep(0)
+        #await asyncio.sleep(0)
     await websocket.close()
 
 ########################################################################### end spectrum data
@@ -89,7 +93,7 @@ MODE = [
 async def read_longmynd_data():
     global running
     while running:
-        await asyncio.sleep(1) # temp delay to simulate data reading
+        await asyncio.sleep(1.0) # temp delay to simulate data reading
         if longmynd_data.longmynd_running:
             longmynd_data.frequency = '10491.551'
             longmynd_data.symbol_rate = '1500'
@@ -120,12 +124,11 @@ async def read_longmynd_data():
             longmynd_data.status_msg = 'offline'
         # TODO: set longmynd_data.changed accordingly
         longmynd_data.changed = True
-        await asyncio.sleep(0)
+        #await asyncio.sleep(0)
     stop_longmynd()
 
 def start_longmynd(frequency, rate_list):
-    if longmynd_data.longmynd_running:
-        stop_longmynd
+    stop_longmynd()
     # assemble the command line arguments
     # params = ["-i", TS_IP, TS_Port, "-S", "0.6", requestKHzStr, allSrs]
     OFFSET = 9750000
@@ -173,7 +176,6 @@ top_layout = [
 ]
 
 spectrum_layout = [
-    # ORIGINAL sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0), graph_top_right=(918, 1.0), background_color='black', float_values=True, key='graph'),
     sg.Graph(canvas_size=(770, 250), graph_bottom_left=(0, 0x2000), graph_top_right=(918, 0xFFFF), background_color='black', float_values=False, key='graph'),
 ]
 
@@ -240,12 +242,12 @@ dispatch_dictionary = {
 
 # UPDATE FUNCTIONS ------------------------------
 
-def update_control():
+def update_control(window):
     window['-BV-'].update(bp.band)
     window['-FV-'].update(bp.frequency)
     window['-SV-'].update(bp.symbol_rate)
 
-def update_longmynd_status():
+def update_longmynd_status(window):
     window['-FREQUENCY-'].update(longmynd_data.frequency)
     window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
     window['-MODE-'].update(longmynd_data.mode)
@@ -261,22 +263,24 @@ def update_longmynd_status():
     window['-SERVICE-'].update(longmynd_data.service)
     window['-STATUS_BAR-'].update(longmynd_data.status_msg)
 
-def update_graph():
-    # TODO: try just deleting the polygon and beakcon_level
+def update_graph(spectrum_graph):
+    # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
     spectrum_graph.erase()
     # draw graticule
     c = 0
     for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
-        if c in {0,5,10,15}:
-            color = '#444444'
+        if c == 5:
+            spectrum_graph.draw_text('5dB', (13,y), color='#444444')
+            spectrum_graph.draw_line((40, y), (918, y), color='#444444')
+        elif c == 10:
+            spectrum_graph.draw_text('10dB', (17,y), color='#444444')
+            spectrum_graph.draw_line((40, y), (918, y), color='#444444')
+        elif c == 15:
+            spectrum_graph.draw_text('15dB', (17,y), color='#444444')
+            spectrum_graph.draw_line((40, y), (918, y), color='#444444')
         else:
-            color = '#222222'
+            spectrum_graph.draw_line((0, y), (918, y), color='#222222')
         c += 1
-        spectrum_graph.draw_line((0, y), (918, y), color=color)
-    # TODO: sg.Text('15dB') 
-    # TODO: sg.Text('10dB') 
-    # TODO: sg.Text('5dB')
-
     # draw tuned marker
     x = bp.selected_frequency_marker()
     spectrum_graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
@@ -292,46 +296,39 @@ def update_graph():
 
 # MAIN ------------------------------------------
 
-window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
-window.set_cursor('none')
-spectrum_graph = window['graph']
-
-running = True
-TEST_GRAPH = False
-
-async def main_window():
-    global running, spectrum_data_changed, longmynd_data_changed
-    
+async def main_ui():
+    global running  #, spectrum_data_changed, longmynd_data_changed
+    window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
+    window.set_cursor('none')
+    graph = window['graph']
     while running:
-        event, values = window.read(timeout=10)
+        event, values = window.read(timeout=1)
         if event == '-SHUTDOWN-':
             if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-                stop_longmynd()
+                #stop_longmynd()
                 running = False
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
         if spectrum_data.changed:
-            update_graph()
+            update_graph(graph)
             spectrum_data.changed = False
         if bp.changed:
-            update_control()
+            update_control(window)
             bp.changed = False
         if longmynd_data.changed:
-            update_longmynd_status()
+            update_longmynd_status(window)
             longmynd_data.changed = False
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.2)
+    window.close()
+    del window
 
 async def main(): # TODO: could we call 
     await asyncio.gather(
-        main_window(),
+        main_ui(),
         read_spectrum_data(),
         read_longmynd_data(),
     )
-    print('all tasks have closed')
-    window.close()
-    if window.was_closed():
-        print('main window has closed')
 
 if __name__ == '__main__':
     asyncio.run(main())
