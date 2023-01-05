@@ -1,4 +1,4 @@
-# bandplan.py
+# rx_bandplan.py
 
 BAND_LIST = [
     'Beacon',

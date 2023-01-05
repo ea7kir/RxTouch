@@ -2,7 +2,7 @@
 
 import PySimpleGUI as sg
 import asyncio
-from bandplan import bandplan as bp
+from rx_bandplan import bandplan as bp
 
 ########################################################################### begin spectrum data
 
@@ -17,19 +17,18 @@ import websockets
 # The noise floor value is around 10000
 # The peak of the beacon is around 40000
 
-spectrum_data_changed = False
-
 from dataclasses import dataclass
 
 @dataclass
 class SpectrumData:
     points = [(int(0),int(0))] * 920 # to ensure the last point is (0,0)
     beacon_level:int = 0
+    changed: bool = False
 
 spectrum_data = SpectrumData()
 
 async def read_spectrum_data():
-    global running, spectrum_data_changed
+    global running
     BATC_SPECTRUM_URI = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
     websocket = await websockets.connect(BATC_SPECTRUM_URI)
     while running:
@@ -48,7 +47,7 @@ async def read_spectrum_data():
         for i in range(93, 113): # should be range(73, 133), but this works better
             spectrum_data.beacon_level += spectrum_data.points[i][1]
         spectrum_data.beacon_level //= 20.0
-        spectrum_data_changed = True
+        spectrum_data.changed = True
         await asyncio.sleep(0)
 
 ########################################################################### end spectrum data
@@ -71,12 +70,10 @@ class LongmyndData:
     provider: str = ''
     service: str = ''
     status_msg: str = 'status message'
+    longmynd_running: bool = False
+    changed: bool = False
 
 longmynd_data = LongmyndData()
-
-# TODO: put these into LongmyndData
-longmynd_data_changed = False
-longmynd_locked = True
 
 import random # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
 
@@ -88,14 +85,13 @@ MODE = [
 ]
 
 async def read_longmynd_data():
-    global running, longmynd_data_changed, longmynd_locked
-    longmynd_locked = True
+    global running
     while running:
         await asyncio.sleep(1) # temp delay to simulate data reading
-        if longmynd_locked:
+        if longmynd_data.longmynd_running:
             longmynd_data.frequency = '10491.551'
             longmynd_data.symbol_rate = '1500'
-            longmynd_data.mode = MODE[0]
+            longmynd_data.mode = MODE[2]
             longmynd_data.constellation = 'QPSK'
             longmynd_data.fec = '4/5'
             longmynd_data.codecs = 'H264 MP3'
@@ -120,12 +116,13 @@ async def read_longmynd_data():
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
             longmynd_data.status_msg = 'offline'
-        longmynd_data_changed = True
-        await asyncio.sleep(1)
+        # TODO: set longmynd_data.changed accordingly
+        longmynd_data.changed = True
+        await asyncio.sleep(0)
+    stop_longmynd()
 
 def start_longmynd(frequency, rate_list):
-    global longmynd_locked
-    if longmynd_locked:
+    if longmynd_data.longmynd_running:
         stop_longmynd
     # assemble the command line arguments
     # params = ["-i", TS_IP, TS_Port, "-S", "0.6", requestKHzStr, allSrs]
@@ -139,17 +136,14 @@ def start_longmynd(frequency, rate_list):
     params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, allSrs]
     # TODO: execute longmynd with args see: https://youtu.be/VlfLqG_qjx0
     #time.sleep(2)
-    longmynd_locked = True
-    #self.status_msg = '{0}'.format(params)
+    longmynd_data.longmynd_running = True
 
-def stop_longmynd(self):
-    global longmynd_locked
-    if not longmynd_locked:
+def stop_longmynd():
+    if not longmynd_data.longmynd_running:
         return
     #self.status_msg = 'stopping longmynd'
-    longmynd_locked = False
+    longmynd_data.longmynd_running = False
     #time.sleep(2)
-    #self.status_msg = 'longmynd stopped'
 
 ########################################################################### end longmynd data
 
@@ -305,20 +299,20 @@ async def main_window():
         event, values = window.read(timeout=10)
         if event == '-SHUTDOWN-':
             if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-                lm.stop_longmynd()
+                stop_longmynd()
                 running = False
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
-        if spectrum_data_changed:
+        if spectrum_data.changed:
             update_graph()
-            spectrum_data_changed = False
+            spectrum_data.changed = False
         if bp.changed:
             update_control()
             bp.changed = False
-        if longmynd_data_changed:
+        if longmynd_data.changed:
             update_longmynd_status()
-            longmynd_data_changed = False
+            longmynd_data.changed = False
         await asyncio.sleep(0)
 
 async def main(): # TODO: could we call 
