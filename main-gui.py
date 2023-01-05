@@ -27,7 +27,7 @@ class SpectrumData:
 
 spectrum_data = SpectrumData()
 
-async def get_spectrum_data():
+async def read_spectrum_data():
     global running, spectrum_data_changed
     BATC_SPECTRUM_URI = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
     websocket = await websockets.connect(BATC_SPECTRUM_URI)
@@ -48,6 +48,7 @@ async def get_spectrum_data():
             spectrum_data.beacon_level += spectrum_data.points[i][1]
         spectrum_data.beacon_level //= 20.0
         spectrum_data_changed = True
+        await asyncio.sleep(0)
 
 # LAYOUT ----------------------------------------
 
@@ -214,24 +215,18 @@ async def main_window():
             spectrum_data_changed = False
         await asyncio.sleep(0)
 
-async def read_lm_status():
+async def read_lm_status(): # TODO: could we call lm.read_status() directly?
     global running
     while running:
         lm.read_status()
         update_status()
         await asyncio.sleep(1)
 
-async def read_spectrum_data(): # TODO: could we call get_spectrum_data() directly?
-    global running
-    while running:
-        await get_spectrum_data()
-        await asyncio.sleep(0)
-
 async def main(): # TODO: could we call 
     await asyncio.gather(
         main_window(),
-        read_lm_status(),
-        read_spectrum_data(), # TODO: could we call get_spectrum_data() directly?
+        read_lm_status(),  # TODO: could we call lm.read_status() directly?
+        read_spectrum_data(),
     )
     print('all tasks have closed')
     window.close()
