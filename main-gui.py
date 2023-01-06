@@ -158,7 +158,7 @@ sg.theme('Black')
 
 MYSCRCOLOR = '#111111'
 MYBUTCOLORS = ('#FFFFFF','#222222')
-MYDISABLEDBTCOLORS = ('#444444',None)
+MYDISABLEDBUTCOLORS = ('#444444',None)
 
 def text_data(name, key):
     return sg.Text(name, size=11), sg.Text(' ', size=9, key=key, text_color='orange')
@@ -180,15 +180,15 @@ spectrum_layout = [
 ]
 
 tune_layout = [
-        sg.Column([
-            button_selector('-BD-', '-BV-', '-BU-', 8),
-        ]),
-        sg.Column([
-            button_selector('-SD-', '-SV-', '-SU-', 5),
-        ]),
-        sg.Column([
-            button_selector('-FD-', '-FV-', '-FU-', 12),
-        ]),
+    sg.Column([
+        button_selector('-BD-', '-BV-', '-BU-', 8),
+    ]),
+    sg.Column([
+        button_selector('-SD-', '-SV-', '-SU-', 5),
+    ]),
+    sg.Column([
+        button_selector('-FD-', '-FV-', '-FU-', 12),
+    ]),
 ]
 
 status_layout = [
@@ -212,9 +212,9 @@ status_layout = [
         text_data('Service', '-SERVICE-'),
     ]),
     sg.Column([
-        [sg.Button(' TUNE ', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False)],
+        [sg.Button(' TUNE ', key='-TUNE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBUTCOLORS, disabled=False)],
         [sg.Text(' ')],
-        [sg.Button(' Mute ', key='-MUTE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBTCOLORS, disabled=False)],
+        [sg.Button(' Mute ', key='-MUTE-', border_width=0, button_color=MYBUTCOLORS, mouseover_colors=MYBUTCOLORS, disabled_button_color=MYDISABLEDBUTCOLORS, disabled=False)],
     ]),
 ]
 
@@ -304,9 +304,8 @@ async def main_ui():
     while running:
         event, values = window.read(timeout=1)
         if event == '-SHUTDOWN-':
-            if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-                #stop_longmynd()
-                running = False
+            #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
+            running = False
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
@@ -323,7 +322,7 @@ async def main_ui():
     window.close()
     del window
 
-async def main(): # TODO: could we call 
+async def main(): 
     await asyncio.gather(
         main_ui(),
         read_spectrum_data(),
