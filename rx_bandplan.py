@@ -5,7 +5,7 @@ TUNED_MARKER = [
     # last Int16 represents 10499.475 MHz
     # spectrum with = 10499.475 - 10490.500 = 8.975 Mhz
     # width between channels = 0.25 MHz
-    103, # '10491.50 / 00'
+    103, # '10491.50 / 00' beacon
     230, # '10492.75 / 01'
     256, # '10493.00 / 02'
     281, # '10493.25 / 03'
@@ -136,12 +136,6 @@ class BandPlan():
         self._change_band()
         self._update_variables()
 
-    def _update_variables(self):
-        self.band = BAND_LIST[self._b_index]
-        self.frequency = self._curr_frequency_list[self._f_index]
-        self.symbol_rate = self._curr_symbol_rate_list[self._s_index]
-        self.changed = True
-
     def _change_band(self):
         if self._b_index == BEACON_BAND_LIST_INDEX:
             self._curr_frequency_list = BEACON_FREQUENCY_LIST
@@ -164,7 +158,14 @@ class BandPlan():
             self._curr_symbol_rate_list = V_NARROW_SYMBOL_RATE_LIST
             self._s_index = self._prev_v_narrow_s_index
             
+    def _update_variables(self):
+        self.band = BAND_LIST[self._b_index]
+        self.frequency = self._curr_frequency_list[self._f_index]
+        self.symbol_rate = self._curr_symbol_rate_list[self._s_index]
+        self.changed = True
+
     def dec_band(self):
+        # TODO: there should be a check to see if the band is changed
         self._prev_b_index = self._b_index
         if self._b_index > 0:
             self._b_index -= 1
