@@ -13,15 +13,6 @@ TEST_GRAPH = False
 
 import websockets
 
-# Each scan sends a block of 1844 bytes
-# This is 922 16-bit samples in low-high format
-# The last two 16-bit samples are zero
-# Sample zero is at 10490.500MHz
-# Each sample represents 10000 / 1024 = 9.765625kHz
-# Sample 919 is at 10499.475MHz
-# The noise floor value is around 10000
-# The peak of the beacon is around 40000
-
 from dataclasses import dataclass
 
 @dataclass
@@ -31,6 +22,15 @@ class SpectrumData:
     changed: bool = False
 
 spectrum_data = SpectrumData()
+
+# Each scan sends a block of 1844 bytes
+# This is 922 16-bit samples in low-high format
+# The last two 16-bit samples are zero
+# Sample zero is at 10490.500MHz
+# Each sample represents 10000 / 1024 = 9.765625kHz
+# Sample 919 is at 10499.475MHz
+# The noise floor value is around 10000
+# The peak of the beacon is around 40000
 
 async def read_spectrum_data():
     global running
@@ -151,6 +151,17 @@ def stop_longmynd():
     #time.sleep(2)
 
 ########################################################################### end longmynd data
+
+########################################################################### begin send ts to hdmi
+
+async def send_ts_to_hdmi():
+    global running
+    while running:
+        # ...
+        await asyncio.sleep(0.020)
+    
+
+########################################################################### end send ts to hdmi
 
 # LAYOUT ----------------------------------------
 
@@ -297,7 +308,7 @@ def update_graph(spectrum_graph):
 # MAIN ------------------------------------------
 
 async def main_ui():
-    global running  #, spectrum_data_changed, longmynd_data_changed
+    global running
     window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
     window.set_cursor('none')
     graph = window['graph']
@@ -327,6 +338,7 @@ async def main():
         main_ui(),
         read_spectrum_data(),
         read_longmynd_data(),
+        send_ts_to_hdmi(),
     )
 
 if __name__ == '__main__':
