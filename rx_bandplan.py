@@ -121,6 +121,14 @@ WIDE_BAND_LIST_INDEX = 1
 NARROW_BAND_LIST_INDEX = 2
 V_NARROW_BAND_LIST_INDEX = 3
 
+INITIAL_B           = 2 # narrow
+INITIAL_WIDE_S      = 1 # 500
+INITIAL_WIDE_F      = 2 # chan 15
+INITIAL_NARROW_S    = 3 # 333
+INITIAL_NARROW_F    = 13 # chan 27
+INITIAL_V_NARROW_S  = 3 # 66
+INITIAL_V_NARROW_F  = 0 # chan 01
+
 class BandPlan():
     def __init__(self):
         self._b_index = 0
