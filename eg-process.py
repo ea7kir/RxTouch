@@ -9,8 +9,9 @@ from dataclasses import dataclass
 
 @dataclass
 class SpectrumData:
-    points = [(0,0)] * 919
-    beacon_level = 0.0
+    points = [(int(0),int(0))] * 920 # to ensure the last point is (0,0)
+    beacon_level:int = 0
+    changed:bool = False
 
 @dataclass
 class LmStatus:
@@ -55,7 +56,7 @@ def ui(connection1, connection2):
 def  my_process_1(connection):
     spectrum_item = SpectrumData()
     while True:
-        sleep(0.3)
+        sleep(0.001)
         #print(f'This is my_process_1: {spectrum_item.beacon_level}', flush=True)
         connection.send(spectrum_item)
         spectrum_item.beacon_level += 1
@@ -63,19 +64,37 @@ def  my_process_1(connection):
 def  my_process_2(connection):
     lm_item = LmStatus()
     while True:
-        sleep(1.0)
+        sleep(0.001)
         #print('This is my_process_2', flush=True)
         connection.send(lm_item)
         lm_item.null_ratio += 1
 
 def  my_process_3():
+    x = 0
     while True:
-        sleep(3.0)
+        x += 1
+        sleep(0.001)
         #print('This is my_process_3', flush=True)
 
 def  my_process_4():
+    x = 0
     while True:
-        sleep(1.0)
+        x += 1
+        sleep(0.001)
+        #print('This is my_process_4', flush=True)
+
+def  my_process_5():
+    x = 0
+    while True:
+        x += 1
+        sleep(0.001)
+        #print('This is my_process_3', flush=True)
+
+def  my_process_6():
+    x = 0
+    while True:
+        x += 1
+        sleep(0.001)
         #print('This is my_process_4', flush=True)
 
 # protect the entry point
@@ -86,16 +105,22 @@ if __name__ == '__main__':
     process1 = Process(target=my_process_1, args=(conn1b,))
     process2 = Process(target=my_process_2, args=(conn2b,))
     process3 = Process(target=my_process_3)
-    process4 = Process(target=my_process_4)
+    #process4 = Process(target=my_process_4)
+    #process5 = Process(target=my_process_5)
+    #process6 = Process(target=my_process_6)
     # start the process
     process1.start()
     process2.start()
     process3.start()
-    process4.start()
+    #process4.start()
+    #process5.start()
+    #process6.start()
     # wait for the process to finish
     print('Waiting for the process to finish')
     ui(conn1a, conn2a)
     process1.kill()
     process2.kill()
     process3.kill()
-    process4.kill()
+    #process4.kill()
+    #process5.kill()
+    #process6.kill()
