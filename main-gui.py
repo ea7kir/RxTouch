@@ -1,25 +1,25 @@
 """RxTouch"""
 
 import PySimpleGUI as sg
-import asyncio
 from rx_bandplan import bandplan as bp
 from rx_bandplan import TUNED_MARKER
 
-running = True
+from time import sleep
+from multiprocessing import Process
+from multiprocessing import Pipe
 
 TEST_GRAPH = False
 
 ########################################################################### begin spectrum data
 
+import asyncio
 import websockets
 
-from dataclasses import dataclass
-
-@dataclass
 class SpectrumData:
-    points = [(int(0),int(0))] * 920 # to ensure the last point is (0,0)
-    beacon_level:int = 0
-    changed: bool = False
+    def __init__(self):
+        self.points = [(int(0),int(0))] * 920 # to ensure the last point is (0,0)
+        self.beacon_level:int = 0
+        self.changed: bool = False
 
 spectrum_data = SpectrumData()
 
@@ -32,56 +32,53 @@ spectrum_data = SpectrumData()
 # The noise floor value is around 10000
 # The peak of the beacon is around 40000
 
-async def read_spectrum_data():
-    global running
-    BATC_SPECTRUM_URI = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
-    websocket = await websockets.connect(BATC_SPECTRUM_URI)
-    while running:
-        recvd_data = await websocket.recv()
-        if len(recvd_data) != 1844:
-            print('rcvd_data != 1844')
-            continue
-        j = 1
-        for i in range(0, 1836, 2):
-            uint_16: int = int(recvd_data[i]) + (int(recvd_data[i+1] << 8))
-            spectrum_data.points[j] = (j, uint_16)
-            j += 1
-        spectrum_data.points[919] = (919, 0)
-        # calculate the average beacon peak level where beacon center is 103
-        spectrum_data.beacon_level = 0
-        for i in range(93, 113): # should be range(73, 133), but this works better
-            spectrum_data.beacon_level += spectrum_data.points[i][1]
-        spectrum_data.beacon_level //= 20.0
-        spectrum_data.changed = True
-        #await asyncio.sleep(0)
-    await websocket.close()
+def process_read_spectrum_data(send_spectrum_data):
+    async def handle():
+        url = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
+        async with websockets.connect(url) as websocket:
+            spectrum_data = SpectrumData()
+            while True:
+                recvd_data = await websocket.recv()
+                if len(recvd_data) != 1844:
+                    print('rcvd_data != 1844')
+                    continue
+                j = 1
+                for i in range(0, 1836, 2):
+                    uint_16: int = int(recvd_data[i]) + (int(recvd_data[i+1] << 8))
+                    spectrum_data.points[j] = (j, uint_16)
+                    j += 1
+                spectrum_data.points[919] = (919, 0)
+                # calculate the average beacon peak level where beacon center is 103
+                spectrum_data.beacon_level = 0
+                for i in range(93, 113): # should be range(73, 133), but this works better
+                    spectrum_data.beacon_level += spectrum_data.points[i][1]
+                spectrum_data.beacon_level //= 20
+                send_spectrum_data.send(spectrum_data)
+
+    asyncio.get_event_loop().run_until_complete(handle())
 
 ########################################################################### end spectrum data
 
 ########################################################################### begin longmynd data
 
-#from dataclasses import dataclass
-
-@dataclass
-class LongmyndData:
-    frequency: int = 0
-    symbol_rate: int = 0
-    constellation: str = ''
-    fec: str = ''
-    codecs: str = ''
-    db_mer: float = 0
-    db_margin: float = 0
-    dbm_power: int = 0
-    null_ratio: int = 0
-    provider: str = ''
-    service: str = ''
-    status_msg: str = 'status message'
-    longmynd_running: bool = False
-    changed: bool = False
-
-longmynd_data = LongmyndData()
-
 import random # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
+
+class LongmyndData:
+    def __init__(self):
+        self.frequency: int = 0
+        self.symbol_rate: int = 0
+        self.constellation: str = ''
+        self.fec: str = ''
+        self.codecs: str = ''
+        self.db_mer: float = 0
+        self.db_margin: float = 0
+        self.dbm_power: int = 0
+        self.null_ratio: int = 0
+        self.provider: str = ''
+        self.service: str = ''
+        self.status_msg: str = 'status message'
+        self.longmynd_running: bool = False
+        self.changed: bool = False
 
 MODE = [
     'Seaching',
@@ -90,10 +87,10 @@ MODE = [
     'DVB-S2',
 ]
 
-async def read_longmynd_data():
-    global running
-    while running:
-        await asyncio.sleep(1.0) # temp delay to simulate data reading
+def process_read_longmynd_data(send_longmynd_data):
+    longmynd_data = LongmyndData()
+    while True:
+        sleep(1.0) # temp delay to simulate data reading
         if longmynd_data.longmynd_running:
             longmynd_data.frequency = '10491.551'
             longmynd_data.symbol_rate = '1500'
@@ -122,9 +119,7 @@ async def read_longmynd_data():
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
             longmynd_data.status_msg = 'offline'
-        # TODO: set longmynd_data.changed accordingly
-        longmynd_data.changed = True
-        #await asyncio.sleep(0)
+        send_longmynd_data.send(longmynd_data)
     stop_longmynd()
 
 def start_longmynd(frequency, rate_list):
@@ -154,11 +149,10 @@ def stop_longmynd():
 
 ########################################################################### begin send ts to hdmi
 
-async def send_ts_to_hdmi():
-    global running
-    while running:
+def process_ts_to_hdmi():
+    while True:
         # ...
-        await asyncio.sleep(0.020)
+        sleep(0.020)
     
 
 ########################################################################### end send ts to hdmi
@@ -253,12 +247,12 @@ dispatch_dictionary = {
 
 # UPDATE FUNCTIONS ------------------------------
 
-def update_control(window):
+def update_control(window, bp):
     window['-BV-'].update(bp.band)
     window['-FV-'].update(bp.frequency)
     window['-SV-'].update(bp.symbol_rate)
 
-def update_longmynd_status(window):
+def update_longmynd_status(window, longmynd_data):
     window['-FREQUENCY-'].update(longmynd_data.frequency)
     window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
     window['-MODE-'].update(longmynd_data.mode)
@@ -274,75 +268,82 @@ def update_longmynd_status(window):
     window['-SERVICE-'].update(longmynd_data.service)
     window['-STATUS_BAR-'].update(longmynd_data.status_msg)
 
-def update_graph(spectrum_graph):
+def update_graph(graph, spectrum_data):
     # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
-    spectrum_graph.erase()
+    graph.erase()
     # draw graticule
     c = 0
     for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
         if c == 5:
-            spectrum_graph.draw_text('5dB', (13,y), color='#444444')
-            spectrum_graph.draw_line((40, y), (918, y), color='#444444')
+            graph.draw_text('5dB', (13,y), color='#444444')
+            graph.draw_line((40, y), (918, y), color='#444444')
         elif c == 10:
-            spectrum_graph.draw_text('10dB', (17,y), color='#444444')
-            spectrum_graph.draw_line((40, y), (918, y), color='#444444')
+            graph.draw_text('10dB', (17,y), color='#444444')
+            graph.draw_line((40, y), (918, y), color='#444444')
         elif c == 15:
-            spectrum_graph.draw_text('15dB', (17,y), color='#444444')
-            spectrum_graph.draw_line((40, y), (918, y), color='#444444')
+            graph.draw_text('15dB', (17,y), color='#444444')
+            graph.draw_line((40, y), (918, y), color='#444444')
         else:
-            spectrum_graph.draw_line((0, y), (918, y), color='#222222')
+            graph.draw_line((0, y), (918, y), color='#222222')
         c += 1
     # draw tuned marker
     x = bp.selected_frequency_marker()
-    spectrum_graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
+    graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
 
     if TEST_GRAPH:
-        spectrum_graph.draw_line((0, 0), (459, 0xFFFF), color='red', width=1)
-        spectrum_graph.draw_line((459, 0xFFFF), (918, 0), color='red', width=1)
+        graph.draw_line((0, 0), (459, 0xFFFF), color='red', width=1)
+        graph.draw_line((459, 0xFFFF), (918, 0), color='red', width=1)
     else:
         # draw beacon level
-        spectrum_graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
+        graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
         # draw spectrum
-        spectrum_graph.draw_polygon(spectrum_data.points, fill_color='green')
+        graph.draw_polygon(spectrum_data.points, fill_color='green')
 
 # MAIN ------------------------------------------
 
-async def main_ui():
-    global running
+def main_gui(recv_spectrum_data, recv_longmynd_data):
     window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=MYSCRCOLOR, use_default_focus=False, finalize=True)
     window.set_cursor('none')
     graph = window['graph']
-    while running:
+    while True:
         event, values = window.read(timeout=1)
         if event == '-SHUTDOWN-':
             #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-            running = False
+            break
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
-        if spectrum_data.changed:
-            update_graph(graph)
-            spectrum_data.changed = False
         if bp.changed:
-            update_control(window)
+            update_control(window, bp)
             bp.changed = False
-        if longmynd_data.changed:
-            update_longmynd_status(window)
-            longmynd_data.changed = False
-        await asyncio.sleep(0.2)
+        while recv_spectrum_data.poll():
+            spectrum_data = recv_spectrum_data.recv()
+            update_graph(graph, spectrum_data)
+        while recv_longmynd_data.poll():
+            longmynd_data = recv_longmynd_data.recv()
+            update_longmynd_status(window, longmynd_data)
     window.close()
     del window
 
-async def main(): 
-    await asyncio.gather(
-        main_ui(),
-        read_spectrum_data(),
-        read_longmynd_data(),
-        send_ts_to_hdmi(),
-    )
-
 if __name__ == '__main__':
-    asyncio.run(main())
+    recv_spectrum_data, send_spectrum_data = Pipe()
+    recv_longmynd_data, send_longmynd_data = Pipe()
+    # create the process
+    p_read_spectrum_data = Process(target=process_read_spectrum_data, args=(send_spectrum_data,))
+    p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(send_longmynd_data,))
+    # TODO: add process for TS to HDMI
+    #p_process_ts_to_hdmi = Process(target=process_ts_to_hdmi, args(1,))
+    # start the process
+    p_read_spectrum_data.start()
+    p_read_longmynd_data.start()
+    #p_process_ts_to_hdmi.start()
+    # main ui
+    main_gui(recv_spectrum_data, recv_longmynd_data)
+    # kill 
+    p_read_spectrum_data.kill()
+    p_read_longmynd_data.kill()
+    #p_process_ts_to_hdmi.kill()
+    # shutdown
     print('about to shut down')
     #import subprocess
     #subprocess.check_call(['sudo', 'poweroff'])
