@@ -2,7 +2,6 @@
 
 import PySimpleGUI as sg
 from rx_bandplan import bandplan as bp
-from rx_bandplan import TUNED_MARKER
 
 from time import sleep
 from multiprocessing import Process
@@ -19,9 +18,6 @@ class SpectrumData:
     def __init__(self):
         self.points = [(int(0),int(0))] * 920 # to ensure the last point is (0,0)
         self.beacon_level:int = 0
-        self.changed: bool = False
-
-spectrum_data = SpectrumData()
 
 # Each scan sends a block of 1844 bytes
 # This is 922 16-bit samples in low-high format
@@ -77,8 +73,7 @@ class LongmyndData:
         self.provider: str = ''
         self.service: str = ''
         self.status_msg: str = 'status message'
-        self.longmynd_running: bool = False
-        self.changed: bool = False
+        self.longmynd_running: bool = True
 
 MODE = [
     'Seaching',
