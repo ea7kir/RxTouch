@@ -7,7 +7,6 @@ from process_spectrum import process_read_spectrum_data, SpectrumData
 from process_longmynd import process_read_longmynd_data, LongmyndData
 from process_video_ts import process_video_ts
 
-from time import sleep
 from multiprocessing import Process
 from multiprocessing import Pipe
 
