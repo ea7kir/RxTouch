@@ -3,154 +3,13 @@
 import PySimpleGUI as sg
 from rx_bandplan import bandplan as bp
 
+from process_spectrum import process_read_spectrum_data, SpectrumData
+from process_longmynd import process_read_longmynd_data, LongmyndData
+from process_video_ts import process_video_ts
+
 from time import sleep
 from multiprocessing import Process
 from multiprocessing import Pipe
-
-TEST_GRAPH = False
-
-########################################################################### begin spectrum data
-
-import asyncio
-import websockets
-
-class SpectrumData:
-    def __init__(self):
-        self.points = [(int(0),int(0))] * 920 # to ensure the last point is (0,0)
-        self.beacon_level:int = 0
-
-# Each scan sends a block of 1844 bytes
-# This is 922 16-bit samples in low-high format
-# The last two 16-bit samples are zero
-# Sample zero is at 10490.500MHz
-# Each sample represents 10000 / 1024 = 9.765625kHz
-# Sample 919 is at 10499.475MHz
-# The noise floor value is around 10000
-# The peak of the beacon is around 40000
-
-def process_read_spectrum_data(send_spectrum_data):
-    async def handle():
-        url = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
-        async with websockets.connect(url) as websocket:
-            spectrum_data = SpectrumData()
-            while True:
-                recvd_data = await websocket.recv()
-                if len(recvd_data) != 1844:
-                    print('rcvd_data != 1844')
-                    continue
-                j = 1
-                for i in range(0, 1836, 2):
-                    uint_16: int = int(recvd_data[i]) + (int(recvd_data[i+1] << 8))
-                    spectrum_data.points[j] = (j, uint_16)
-                    j += 1
-                spectrum_data.points[919] = (919, 0)
-                # calculate the average beacon peak level where beacon center is 103
-                spectrum_data.beacon_level = 0
-                for i in range(93, 113): # should be range(73, 133), but this works better
-                    spectrum_data.beacon_level += spectrum_data.points[i][1]
-                spectrum_data.beacon_level //= 20
-                send_spectrum_data.send(spectrum_data)
-
-    asyncio.get_event_loop().run_until_complete(handle())
-
-########################################################################### end spectrum data
-
-########################################################################### begin longmynd data
-
-import random # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
-
-class LongmyndData:
-    def __init__(self):
-        self.frequency: int = 0
-        self.symbol_rate: int = 0
-        self.constellation: str = ''
-        self.fec: str = ''
-        self.codecs: str = ''
-        self.db_mer: float = 0
-        self.db_margin: float = 0
-        self.dbm_power: int = 0
-        self.null_ratio: int = 0
-        self.provider: str = ''
-        self.service: str = ''
-        self.status_msg: str = 'status message'
-        self.longmynd_running: bool = True
-
-MODE = [
-    'Seaching',
-    'Locked',
-    'DVB-S',
-    'DVB-S2',
-]
-
-def process_read_longmynd_data(send_longmynd_data):
-    longmynd_data = LongmyndData()
-    while True:
-        sleep(1.0) # temp delay to simulate data reading
-        if longmynd_data.longmynd_running:
-            longmynd_data.frequency = '10491.551'
-            longmynd_data.symbol_rate = '1500'
-            longmynd_data.mode = MODE[2]
-            longmynd_data.constellation = 'QPSK'
-            longmynd_data.fec = '4/5'
-            longmynd_data.codecs = 'H264 MP3'
-            longmynd_data.db_mer = '8.9'
-            longmynd_data.db_margin = '4.1'
-            longmynd_data.dbm_power = '-60'
-            longmynd_data.null_ratio = random.randint(40, 60) # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
-            longmynd_data.provider = 'A71A'
-            longmynd_data.service = 'QARS'
-            longmynd_data.status_msg = 'online'
-        else:
-            longmynd_data.frequency = '-'
-            longmynd_data.symbol_rate = '-'
-            longmynd_data.mode = '-'
-            longmynd_data.constellation = '-'
-            longmynd_data.fec = '-'
-            longmynd_data.codecs = '-'
-            longmynd_data.db_mer = '-'
-            longmynd_data.db_margin = '-'
-            longmynd_data.dbm_power = '-'
-            longmynd_data.null_ratio = 0
-            longmynd_data.provider = '-'
-            longmynd_data.service = '-'
-            longmynd_data.status_msg = 'offline'
-        send_longmynd_data.send(longmynd_data)
-    stop_longmynd()
-
-def start_longmynd(frequency, rate_list):
-    stop_longmynd()
-    # assemble the command line arguments
-    # params = ["-i", TS_IP, TS_Port, "-S", "0.6", requestKHzStr, allSrs]
-    OFFSET = 9750000
-    TS_IP = '192.168.1.36'
-    TS_PORT = '7777'
-    requestKHzStr = str(float(frequency) * 1000 - OFFSET)
-    allSrs = rate_list[0]
-    for i in range(1, len(rate_list)):
-        allSrs += f',{rate_list[i]}'
-    params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, allSrs]
-    # TODO: execute longmynd with args see: https://youtu.be/VlfLqG_qjx0
-    #time.sleep(2)
-    longmynd_data.longmynd_running = True
-
-def stop_longmynd():
-    if not longmynd_data.longmynd_running:
-        return
-    #self.status_msg = 'stopping longmynd'
-    longmynd_data.longmynd_running = False
-    #time.sleep(2)
-
-########################################################################### end longmynd data
-
-########################################################################### begin send ts to hdmi
-
-def process_ts_to_hdmi():
-    while True:
-        # ...
-        sleep(0.020)
-    
-
-########################################################################### end send ts to hdmi
 
 # LAYOUT ----------------------------------------
 
@@ -230,7 +89,8 @@ layout = [
 def tune():
     # callout to longmynd
     frequency, rate_list = bp.fequency_and_rate_list()
-    start_longmynd(frequency, rate_list)
+    # TODO: send a start message to process_read_longmynd_data
+    # to call process_read_longmynd_data.start(frequency, rate_list)
 
 dispatch_dictionary = {
     # Lookup dictionary that maps button to function to call
@@ -284,15 +144,10 @@ def update_graph(graph, spectrum_data):
     # draw tuned marker
     x = bp.selected_frequency_marker()
     graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
-
-    if TEST_GRAPH:
-        graph.draw_line((0, 0), (459, 0xFFFF), color='red', width=1)
-        graph.draw_line((459, 0xFFFF), (918, 0), color='red', width=1)
-    else:
-        # draw beacon level
-        graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
-        # draw spectrum
-        graph.draw_polygon(spectrum_data.points, fill_color='green')
+    # draw beacon level
+    graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
+    # draw spectrum
+    graph.draw_polygon(spectrum_data.points, fill_color='green')
 
 # MAIN ------------------------------------------
 
@@ -323,21 +178,21 @@ def main_gui(recv_spectrum_data, recv_longmynd_data):
 if __name__ == '__main__':
     recv_spectrum_data, send_spectrum_data = Pipe()
     recv_longmynd_data, send_longmynd_data = Pipe()
+    recv_video_ts, send_video_ts = Pipe()
     # create the process
     p_read_spectrum_data = Process(target=process_read_spectrum_data, args=(send_spectrum_data,))
     p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(send_longmynd_data,))
-    # TODO: add process for TS to HDMI
-    #p_process_ts_to_hdmi = Process(target=process_ts_to_hdmi, args(1,))
+    p_process_video_ts = Process(target=process_video_ts, args=(recv_video_ts, send_video_ts))
     # start the process
     p_read_spectrum_data.start()
     p_read_longmynd_data.start()
-    #p_process_ts_to_hdmi.start()
+    p_process_video_ts.start()
     # main ui
     main_gui(recv_spectrum_data, recv_longmynd_data)
     # kill 
     p_read_spectrum_data.kill()
     p_read_longmynd_data.kill()
-    #p_process_ts_to_hdmi.kill()
+    p_process_video_ts.kill()
     # shutdown
     print('about to shut down')
     #import subprocess
