@@ -1,0 +1,5 @@
+#!/bin/bash
+cd /home/pi/RxTouch
+source env/bin/activate
+export DISPLAY=:0
+python main_gui.py
