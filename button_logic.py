@@ -1,4 +1,4 @@
-# rx_bandplan.py
+#import
 
 TUNED_MARKER = [
     # first Int16 represents 10490.500 MHz
@@ -129,7 +129,7 @@ INITIAL_NARROW_F    = 13 # chan 27
 INITIAL_V_NARROW_S  = 3 # 66
 INITIAL_V_NARROW_F  = 0 # chan 01
 
-class BandPlan():
+class ButtonLogic:
     def __init__(self):
         self._b_index = 0
         self._f_index = 0
@@ -219,5 +219,5 @@ class BandPlan():
         i = int(self.frequency[10:])
         return TUNED_MARKER[i]
 
-bandplan = BandPlan()
+button_logic = ButtonLogic()
 
