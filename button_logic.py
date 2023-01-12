@@ -174,7 +174,6 @@ class ButtonLogic:
 
     def dec_band(self):
         # TODO: there should be a check to see if the band is changed
-        self._prev_b_index = self._b_index
         if self._b_index > 0:
             self._b_index -= 1
             self._change_band()
