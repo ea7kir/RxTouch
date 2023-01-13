@@ -109,13 +109,24 @@ WIDE_BAND_LIST_INDEX = 1
 NARROW_BAND_LIST_INDEX = 2
 VERY_NARROW_BAND_LIST_INDEX = 3
 
-INITIAL_BAND                        = 2 # narrow
+INITIAL_BAND                        = 0 # beacon
+INITIAL_BEACON_FREQUENCY            = 0
+INITIAL_BEACON_SYMBOL_RATE          = 0
 INITIAL_WIDE_SYMBOL_RATE            = 0 # AUTO
 INITIAL_WIDE_FREQUENCY              = 1 # chan 9
 INITIAL_NARROW_SYMBOL_RATE          = 3 # 333
 INITIAL_NARROW_FREQUENCY            = 13 # chan 27
 INITIAL_VERY_NARROW_SYMBOL_RATE     = 3 # 66
 INITIAL_VERY_NARROW_FREQUENCY       = 13 # chan 14
+
+class BeaconIndex:
+    band = BEACON_BAND_LIST_INDEX
+    frequency = INITIAL_BEACON_FREQUENCY
+    symbol_rate = INITIAL_BEACON_SYMBOL_RATE
+    frequency_list = BEACON_FREQUENCY_LIST
+    max_frequency_index = len(BEACON_FREQUENCY_LIST) - 1
+    symbol_rate_list = BEACON_SYMBOL_RATE_LIST
+    max_symbol_rate_list = len(BEACON_SYMBOL_RATE_LIST) - 1
 
 class WideIndex:
     band = WIDE_BAND_LIST_INDEX
@@ -144,7 +155,12 @@ class VeryNarrowIndex:
     symbol_rate_list = VERY_NARROW_SYMBOL_RATE_LIST
     max_symbol_rate_list = len(VERY_NARROW_SYMBOL_RATE_LIST) - 1
 
-index = [ WideIndex, NarrowIndex, VeryNarrowIndex ]
+index = [ BeaconIndex, WideIndex, NarrowIndex, VeryNarrowIndex ]
+
+class BeaconValue:
+    band = BAND_LIST[BeaconIndex.band]
+    frequency = BEACON_FREQUENCY_LIST[BeaconIndex.frequency]
+    symbol_rate = BEACON_SYMBOL_RATE_LIST[BeaconIndex.symbol_rate]
 
 class  WideValue:
     band = BAND_LIST[WideIndex.band]
@@ -161,7 +177,7 @@ class VeryNarrowValue:
     frequency = VERY_NARROW_FREQUENCY_LIST[VeryNarrowIndex.frequency]
     symbol_rate = VERY_NARROW_SYMBOL_RATE_LIST[VeryNarrowIndex.symbol_rate]
 
-value = [ WideValue, NarrowValue, VeryNarrowValue ]
+value = [ BeaconValue, WideValue, NarrowValue, VeryNarrowValue ]
 
 curr_band = INITIAL_BAND
 curr_value = value[curr_band]
