@@ -36,10 +36,7 @@ TUNED_MARKER = [
 ]
 
 BAND_LIST = [
-    'Beacon',
-    'Wide',
-    'Narrow',
-    'V.Narrow',
+    'Beacon','Wide','Narrow','V.Narrow',
 ]
 BEACON_FREQUENCY_LIST = [
     '10491.50 / 00',
@@ -63,9 +60,9 @@ NARROW_FREQUENCY_LIST = [
     '10497.75 / 21',
     '10498.25 / 23',
     '10498.75 / 25',
-    '10499.25 / 27', # _f_index 13
+    '10499.25 / 27', # index 13
 ]
-V_NARROW_FREQUENCY_LIST = [
+VERY_NARROW_FREQUENCY_LIST = [
     '10492.75 / 01',
     '10493.00 / 02',
     '10493.25 / 03',
@@ -79,7 +76,7 @@ V_NARROW_FREQUENCY_LIST = [
     '10495.25 / 11',
     '10495.50 / 12',
     '10495.75 / 13',
-    '10496.00 / 14',
+    '10496.00 / 14', index 13
     '10496.25 / 15',
     '10496.50 / 16',
     '10496.75 / 17',
@@ -98,125 +95,117 @@ BEACON_SYMBOL_RATE_LIST = [
     '1500',
 ]
 WIDE_SYMBOL_RATE_LIST = [
-    'AUTO',
-    '500',
-    '1000',
-    '1500',
+    'AUTO','500','1000','1500',
 ]
 NARROW_SYMBOL_RATE_LIST = [
-    'AUTO',
-    '125',
-    '250',
-    '333',
+    'AUTO','125','250','333',
 ]
-V_NARROW_SYMBOL_RATE_LIST = [
-    'AUTO',
-    '25',
-    '33',
-    '66',
+VERY_NARROW_SYMBOL_RATE_LIST = [
+    'AUTO','25','33','66',
 ]
 
 BEACON_BAND_LIST_INDEX = 0
 WIDE_BAND_LIST_INDEX = 1
 NARROW_BAND_LIST_INDEX = 2
-V_NARROW_BAND_LIST_INDEX = 3
+VERY_NARROW_BAND_LIST_INDEX = 3
 
-INITIAL_B           = 2 # narrow
-INITIAL_WIDE_S      = 1 # 500
-INITIAL_WIDE_F      = 2 # chan 15
-INITIAL_NARROW_S    = 3 # 333
-INITIAL_NARROW_F    = 13 # chan 27
-INITIAL_V_NARROW_S  = 3 # 66
-INITIAL_V_NARROW_F  = 0 # chan 01
+INITIAL_BAND                        = 2 # narrow
+INITIAL_WIDE_SYMBOL_RATE            = 0 # AUTO
+INITIAL_WIDE_FREQUENCY              = 1 # chan 9
+INITIAL_NARROW_SYMBOL_RATE          = 3 # 333
+INITIAL_NARROW_FREQUENCY            = 13 # chan 27
+INITIAL_VERY_NARROW_SYMBOL_RATE     = 3 # 66
+INITIAL_VERY_NARROW_FREQUENCY       = 13 # chan 14
 
-class ButtonLogic:
-    def __init__(self):
-        self._b_index = 0
-        self._f_index = 0
-        self._s_index = 0
-        self._prev_band = 0
-        self._prev_wide_f_index = 0
-        self._prev_wide_s_index = 0
-        self._prev_narrow_f_index = 0
-        self._prev_narrow_s_index = 0
-        self._prev_v_narrow_f_index = 0
-        self._prev_v_narrow_s_index = 0
-        self._change_band()
-        self._update_variables()
+class WideIndex:
+    band = WIDE_BAND_LIST_INDEX
+    frequency = INITIAL_WIDE_FREQUENCY
+    symbol_rate = INITIAL_WIDE_SYMBOL_RATE
+    frequency_list = WIDE_FREQUENCY_LIST
+    max_frequency_index = len(WIDE_FREQUENCY_LIST) - 1
+    symbol_rate_list = WIDE_SYMBOL_RATE_LIST
+    max_symbol_rate_list = len(WIDE_SYMBOL_RATE_LIST) - 1
 
-    def _change_band(self):
-        if self._b_index == BEACON_BAND_LIST_INDEX:
-            self._curr_frequency_list = BEACON_FREQUENCY_LIST
-            self._f_index = 0
-            self._curr_symbol_rate_list = BEACON_SYMBOL_RATE_LIST
-            self._s_index = 0
-        elif self._b_index == WIDE_BAND_LIST_INDEX:
-            self._curr_frequency_list = WIDE_FREQUENCY_LIST
-            self._f_index = self._prev_wide_f_index
-            self._curr_symbol_rate_list = WIDE_SYMBOL_RATE_LIST
-            self._s_index = self._prev_wide_s_index
-        elif self._b_index == NARROW_BAND_LIST_INDEX:
-            self._curr_frequency_list = NARROW_FREQUENCY_LIST
-            self._f_index = self._prev_narrow_f_index
-            self._curr_symbol_rate_list = NARROW_SYMBOL_RATE_LIST
-            self._s_index = self._prev_narrow_s_index
-        elif self._b_index == V_NARROW_BAND_LIST_INDEX:
-            self._curr_frequency_list = V_NARROW_FREQUENCY_LIST
-            self._f_index = self._prev_v_narrow_f_index
-            self._curr_symbol_rate_list = V_NARROW_SYMBOL_RATE_LIST
-            self._s_index = self._prev_v_narrow_s_index
-            
-    def _update_variables(self):
-        self.band = BAND_LIST[self._b_index]
-        self.frequency = self._curr_frequency_list[self._f_index]
-        self.symbol_rate = self._curr_symbol_rate_list[self._s_index]
-        self.changed = True
+class NarrowIndex:
+    band = NARROW_BAND_LIST_INDEX
+    frequency = INITIAL_NARROW_FREQUENCY
+    symbol_rate = INITIAL_NARROW_SYMBOL_RATE
+    frequency_list = NARROW_FREQUENCY_LIST
+    max_frequency_index = len(NARROW_FREQUENCY_LIST) - 1
+    symbol_rate_list = NARROW_SYMBOL_RATE_LIST
+    max_symbol_rate_list = len(NARROW_SYMBOL_RATE_LIST) - 1
 
-    def dec_band(self):
-        # TODO: there should be a check to see if the band is changed
-        if self._b_index > 0:
-            self._b_index -= 1
-            self._change_band()
-            self._update_variables()
+class VeryNarrowIndex:
+    band = VERY_NARROW_BAND_LIST_INDEX
+    frequency = INITIAL_VERY_NARROW_FREQUENCY
+    symbol_rate = INITIAL_VERY_NARROW_SYMBOL_RATE
+    frequency_list = VERY_NARROW_FREQUENCY_LIST
+    max_frequency_index = len(VERY_NARROW_FREQUENCY_LIST) - 1
+    symbol_rate_list = VERY_NARROW_SYMBOL_RATE_LIST
+    max_symbol_rate_list = len(VERY_NARROW_SYMBOL_RATE_LIST) - 1
 
-    def inc_band(self):
-        if self._b_index < len(BAND_LIST) - 1:
-            self._b_index += 1
-            self._change_band()
-            self._update_variables()
+index = [ WideIndex, NarrowIndex, VeryNarrowIndex ]
 
-    def dec_frequency(self):
-        if self._f_index > 0:
-            self._f_index -= 1
-            self._update_variables()
+class  WideValue:
+    band = BAND_LIST[WideIndex.band]
+    frequency = WIDE_FREQUENCY_LIST[WideIndex.frequency]
+    symbol_rate = WIDE_SYMBOL_RATE_LIST[WideIndex.symbol_rate]
 
-    def inc_frequency(self):
-        if self._f_index < len(self._curr_frequency_list) - 1:
-            self._f_index += 1
-            self._update_variables()
+class NarrowValue:
+    band = BAND_LIST[NarrowIndex.band]
+    frequency = NARROW_FREQUENCY_LIST[NarrowIndex.frequency]
+    symbol_rate = NARROW_SYMBOL_RATE_LIST[NarrowIndex.symbol_rate]
 
-    def dec_symbol_rate(self):
-        if self._s_index > 0:
-            self._s_index -= 1
-            self._update_variables()
+class VeryNarrowValue:
+    band = BAND_LIST[VeryNarrowIndex.band]
+    frequency = VERY_NARROW_FREQUENCY_LIST[VeryNarrowIndex.frequency]
+    symbol_rate = VERY_NARROW_SYMBOL_RATE_LIST[VeryNarrowIndex.symbol_rate]
 
-    def inc_symbol_rate(self):
-        if self._s_index < len(self._curr_symbol_rate_list) - 1:
-            self._s_index += 1
-            self._update_variables()
+value = [ WideValue, NarrowValue, VeryNarrowValue ]
 
-    def fequency_and_rate_list(self):
-        rate_list:str = []
-        if self.symbol_rate == 'AUTO':
-            for i in range(1, len(self._curr_symbol_rate_list)):
-                rate_list.append(self._curr_symbol_rate_list[i])
-        else:
-            rate_list = [self.symbol_rate]
-        return self.frequency[:8], rate_list
+curr_band = INITIAL_BAND
+curr_value = value[curr_band]
+curr_index = index[curr_band]
+max_band_list = len(BAND_LIST) - 1 # TODO: messy!  try integrating band into the Index classes
 
-    def selected_frequency_marker(self):
-        i = int(self.frequency[10:])
-        return TUNED_MARKER[i]
+def inc_band():
+    global curr_band, max_band_list, curr_value, curr_index
+    if curr_band < max_band_list:
+        curr_band += 1
+        curr_value = value[curr_band]
+        curr_index = index[curr_band]
 
-button_logic = ButtonLogic()
+def dec_band():
+    global curr_band, curr_value, curr_index
+    if curr_band > 0:
+        curr_band -= 1
+        curr_value = value[curr_band]
+        curr_index = index[curr_band]
+    
+def inc_frequency():
+    global curr_value, curr_index
+    if curr_index.frequency < curr_index.max_frequency_index:
+        curr_index.frequency += 1
+        curr_value.frequency = curr_index.frequency_list[curr_index.frequency]
 
+def dec_frequency():
+    global curr_value, curr_index
+    if curr_index.frequency > 0:
+        curr_index.frequency -= 1
+        curr_value.frequency = curr_index.frequency_list[curr_index.frequency]
+    
+def inc_symbol_rate():
+    global curr_value, curr_index
+    if curr_index.symbol_rate < curr_index.max_symbol_rate_list:
+        curr_index.symbol_rate += 1
+        curr_value.symbol_rate = curr_index.symbol_rate_list[curr_index.symbol_rate]
+
+def dec_symbol_rate():
+    global curr_value, curr_index
+    if curr_index.symbol_rate > 0:
+        curr_index.symbol_rate -= 1
+        curr_value.symbol_rate = curr_index.symbol_rate_list[curr_index.symbol_rate]
+    
+def selected_frequency_marker():
+    i = int(curr_value.frequency[10:])
+    return TUNED_MARKER[i]
