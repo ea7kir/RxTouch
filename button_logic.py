@@ -225,3 +225,18 @@ def dec_symbol_rate():
 def selected_frequency_marker():
     i = int(curr_value.frequency[10:])
     return TUNED_MARKER[i]
+
+class TuneArgs:
+    frequency = ''
+    symbol_rate = ''
+
+def tune_args():
+    global curr_value, curr_index
+    TuneArgs.frequency = curr_value.frequency[:8]
+    if curr_value.symbol_rate == 'AUTO':
+        TuneArgs.symbol_rate = curr_index.symbol_rate_list[1]
+        for i in range(2, curr_index.max_symbol_rate_list + 1):
+            TuneArgs.symbol_rate += f',{curr_index.symbol_rate_list[i]}'
+    else:
+        TuneArgs.symbol_rate = curr_value.symbol_rate
+    return TuneArgs

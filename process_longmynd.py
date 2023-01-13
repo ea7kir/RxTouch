@@ -55,6 +55,8 @@ def process_read_longmynd_data(send_longmynd_data):
         longmynd_data.status_msg = 'longmynd is running'
         longmynd_data.longmynd_running = True
 
+    longmynd_data.longmynd_running = True # TEMP for testing
+
     while True:
         sleep(1.0) # temp delay to simulate data reading
         if longmynd_data.longmynd_running:

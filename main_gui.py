@@ -118,13 +118,12 @@ def main_gui(recv_spectrum_data, recv_longmynd_data):
             tune_active = not tune_active
             if tune_active:
                 window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
-                frequency, rate_list = button_logic.fequency_and_rate_list()
-                window['-STATUS_BAR-'].update(f'longmynd {frequency} {rate_list}')
-                # TODO: send a start message to process_read_longmynd_data
-                # to call process_read_longmynd_data.start(frequency, rate_list)
+                tune_args = button_logic.tune_args()
+                # TODO: send tune_args to process_read_longmynd_data.start(tune_args)
+                window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
             else:
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                window['-STATUS_BAR-'].update('longmynd offline')
+                window['-STATUS_BAR-'].update('stop (or invalid display)')
         if event == '-MUTE-':
             mute_active = not mute_active
             if mute_active:
