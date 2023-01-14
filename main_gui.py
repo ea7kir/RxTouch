@@ -4,7 +4,7 @@ from multiprocessing import Process
 from multiprocessing import Pipe
 
 import PySimpleGUI as sg
-import button_logic
+import control_status as cs
 
 from process_spectrum import process_read_spectrum_data, SpectrumData
 from process_longmynd import process_read_longmynd_data, LongmyndData
@@ -93,9 +93,9 @@ def display_initial_values():
 
 dispatch_dictionary = {
     # Lookup dictionary that maps button to function to call
-    '-BD-':button_logic.dec_band, '-BU-':button_logic.inc_band, 
-    '-FD-':button_logic.dec_frequency, '-FU-':button_logic.inc_frequency, 
-    '-SD-':button_logic.dec_symbol_rate, '-SU-':button_logic.inc_symbol_rate,
+    '-BD-':cs.dec_band, '-BU-':cs.inc_band, 
+    '-FD-':cs.dec_frequency, '-FU-':cs.inc_frequency, 
+    '-SD-':cs.dec_symbol_rate, '-SU-':cs.inc_symbol_rate,
     '-DISPLAY_INITIAL_VALUES-':display_initial_values,
 }
 
@@ -113,23 +113,23 @@ def main_gui(recv_spectrum_data, longmynd1):
         event, values = window.read(timeout=100)
         if event == '-SHUTDOWN-':
             #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-            longmynd1.send('STOP')
+            longmynd1.send('STOP') # NOTE: maybe this needs time to complete
             break
         if event == '-TUNE-':
             tune_active = not tune_active
             if tune_active:
                 window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
-                tune_args = button_logic.tune_args()
+                tune_args = cs.tune_args()
                 print(f'tune_args has : {tune_args.frequency}, {tune_args.symbol_rate}')
                 # TODO: send tune_args to process_read_longmynd_data.start(tune_args)
                 longmynd1.send(tune_args)
-                #window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
-                window['-STATUS_BAR-'].update(longmynd.status_msg)
+                window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
+                #window['-STATUS_BAR-'].update(longmynd_data.status_msg)
             else:
                 longmynd1.send('STOP')
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                #window['-STATUS_BAR-'].update('stop (or invalid display)')
-                window['-STATUS_BAR-'].update(longmynd.status_msg)
+                window['-STATUS_BAR-'].update('stop (or invalid display)')
+                #window['-STATUS_BAR-'].update(longmynd_data.status_msg)
         if event == '-MUTE-':
             mute_active = not mute_active
             if mute_active:
@@ -139,9 +139,9 @@ def main_gui(recv_spectrum_data, longmynd1):
         if event in dispatch_dictionary:
             func_to_call = dispatch_dictionary[event]
             func_to_call()
-            window['-BV-'].update(button_logic.curr_value.band)
-            window['-FV-'].update(button_logic.curr_value.frequency)
-            window['-SV-'].update(button_logic.curr_value.symbol_rate)
+            window['-BV-'].update(cs.curr_value.band)
+            window['-FV-'].update(cs.curr_value.frequency)
+            window['-SV-'].update(cs.curr_value.symbol_rate)
         if recv_spectrum_data.poll():
             spectrum_data = recv_spectrum_data.recv()
             while recv_spectrum_data.poll():
@@ -164,7 +164,7 @@ def main_gui(recv_spectrum_data, longmynd1):
                     graph.draw_line((0, y), (918, y), color='#222222')
                 c += 1
             # draw tuned marker
-            x = button_logic.selected_frequency_marker()
+            x = cs.selected_frequency_marker()
             graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
             # draw beacon level
             graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)

@@ -237,7 +237,7 @@ def tune_args():
     if curr_value.symbol_rate == 'AUTO':
         tune_args.symbol_rate = curr_index.symbol_rate_list[1]
         for i in range(2, curr_index.max_symbol_rate_list + 1):
-            tune_args.symbol_rate += f' {curr_index.symbol_rate_list[i]}'
+            tune_args.symbol_rate += f',{curr_index.symbol_rate_list[i]}'
     else:
         tune_args.symbol_rate = curr_value.symbol_rate
     return tune_args

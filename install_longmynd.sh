@@ -8,3 +8,4 @@ make
 
 mkfifo longmynd_main_status
 
+mkfifo longmynd_main_ts
