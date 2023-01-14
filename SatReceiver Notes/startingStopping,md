@@ -1,0 +1,48 @@
+## Starting & Stopping
+
+We need SatReceiver to always start when the Raspberry Pi boots...
+
+Copy `SatReceiver.service` to `/etc/systemd/system/` and enable, or just reboot.
+
+```
+sudo cp /home/pirec/SatReceiver/Resources/SatReceiver.service /etc/systemd/system/SatReceiver.service
+sudo chmod 644 /etc/systemd/system/SatReceiver.service
+sudo systemctl daemon-reload
+sudo systemctl enable SatReceiver
+sudo systemctl start SatReceiver
+```
+
+To stop SatReceiver
+
+`sudo systemctl stop SatReceiver`
+
+To start SatReceiver
+
+`sudo systemctl start SatReceiver`
+
+To check the status of SatReceiver
+
+`sudo systemctl status SatReceiver`
+
+To disable SatReceiver on every reboot
+
+`sudo systemctl disable SatReceiver`
+
+To enable SatReceiver on every reboot
+
+`sudo systemctl enable SatReceiver`
+
+For more information `man systemctl`
+
+To edit (if needed)
+
+```
+sudo nano /etc/systemd/system/SatReceiver.service
+```
+
+We also need to have longmynd start and stop
+
+```
+cd
+cp cp ~/SatReceiver/Resources/startLongmynd.sh ~/
+chmod +x startLongmynd.sh

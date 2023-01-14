@@ -29,36 +29,80 @@ MODE = [
 # print(p.stdout)
 # print(p.returncode)
 
-def process_read_longmynd_data(send_longmynd_data):
+#import subprocess
+import os
+
+"""
+The process module allow you to spawn new processes,
+connect to their input/output/error pipes, and obtain their return codes.
+eg: df -h
+subprocess.Popen
+"""
+
+def process_read_longmynd_data(longmynd2):
     longmynd_data = LongmyndData()
 
-    def stop():
+    def run_command(cmd):
+        print(f'WILL RUN ({cmd})', flush=True)
+#        p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+#        out, err = p1.communicate()
+#        print(f'start out: {out}', flush=True)
+#        print(f'start err: {err}', flush=True)
+#        if p1.returncode == 0:
+#            print('start command : success', flush=True)
+#        else:
+#            print('start command : failed', flush=True)
+        longmynd_data.longmynd_running = True
+        result = os.system(cmd)
+        print(f'result = {result}', flush=True)
+
+    def stop_longmynd():
         if not longmynd_data.longmynd_running:
             return
-        longmynd_data.status_msg = 'longmynd not running'
+        print('WILL STOP')
+        cmd = '/usr/bin/killall longmynd'
+#        p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+#        out, err = p2.communicate()
+#        print(f'stop out: {out}', flush=True)
+#        print(f'stop err: {err}', flush=True)
+#        if p2.returncode == 0:
+#            print('stop command : success', flush=True)
+#        else:
+#            print('stop command : failed', flush=True)
+#        longmynd_data.status_msg = 'longmynd has stopped'
+        run_command(cmd)
         longmynd_data.longmynd_running = False
+        #print(longmynd_data.status_msg, flush=True)
 
-    def start(frequency, rate_list):
+    # cd /home/pi/RxTouch/longmynd
+    # /home/pi/RxTouch/longmynd/longmynd -i 192.168.1.41 7777 -S 0.6 741500 1500 &
+
+    def start_longmynd(frequency, rate_list):
+        print('WILL START')
         stop_longmynd()
         # assemble the command line arguments
         # params = ["-i", TS_IP, TS_Port, "-S", "0.6", requestKHzStr, allSrs]
         OFFSET = 9750000
-        TS_IP = '192.168.1.36'
+        TS_IP = '192.168.1.41' # Apple TV at office.local
         TS_PORT = '7777'
         requestKHzStr = str(float(frequency) * 1000 - OFFSET)
-        allSrs = rate_list[0]
-        for i in range(1, len(rate_list)):
-            allSrs += f',{rate_list[i]}'
-        params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, allSrs]
-        # TODO: execute longmynd with args see: https://youtu.be/VlfLqG_qjx0
-        #time.sleep(2)
-        longmynd_data.status_msg = 'longmynd is running'
+        params = ['-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, rate_list]
+        cmd = f'cd /home/pi/RxTouch/longmynd; ./longmynd -i {TS_IP} {TS_PORT} -S 0.6 {requestKHzStr} {rate_list}'
+        run_command(cmd)
+        longmynd_data.status_msg = f'longmynd is running : {cmd}'
         longmynd_data.longmynd_running = True
+        #print(longmynd_data.status_msg, flush=True)
 
-    longmynd_data.longmynd_running = True # TEMP for testing
+    #longmynd_data.longmynd_running = True # TEMP for testing
 
     while True:
         sleep(1.0) # temp delay to simulate data reading
+        if longmynd2.poll():
+            tune_args = longmynd2.recv()
+            if tune_args == 'STOP':
+                stop_longmynd() 
+            else:
+                start_longmynd(tune_args.frequency, tune_args.symbol_rate)
         if longmynd_data.longmynd_running:
             longmynd_data.frequency = '10491.551'
             longmynd_data.symbol_rate = '1500'
@@ -87,5 +131,5 @@ def process_read_longmynd_data(send_longmynd_data):
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
             longmynd_data.status_msg = 'offline'
-        send_longmynd_data.send(longmynd_data)
+        longmynd2.send(longmynd_data)
     stop()

@@ -101,7 +101,7 @@ dispatch_dictionary = {
 
 # MAIN ------------------------------------------
 
-def main_gui(recv_spectrum_data, recv_longmynd_data):
+def main_gui(recv_spectrum_data, longmynd1):
     window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
     window.set_cursor('none')
     graph = window['graph']
@@ -113,17 +113,23 @@ def main_gui(recv_spectrum_data, recv_longmynd_data):
         event, values = window.read(timeout=100)
         if event == '-SHUTDOWN-':
             #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
+            longmynd1.send('STOP')
             break
         if event == '-TUNE-':
             tune_active = not tune_active
             if tune_active:
                 window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
                 tune_args = button_logic.tune_args()
+                print(f'tune_args has : {tune_args.frequency}, {tune_args.symbol_rate}')
                 # TODO: send tune_args to process_read_longmynd_data.start(tune_args)
-                window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
+                longmynd1.send(tune_args)
+                #window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
+                window['-STATUS_BAR-'].update(longmynd.status_msg)
             else:
+                longmynd1.send('STOP')
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                window['-STATUS_BAR-'].update('stop (or invalid display)')
+                #window['-STATUS_BAR-'].update('stop (or invalid display)')
+                window['-STATUS_BAR-'].update(longmynd.status_msg)
         if event == '-MUTE-':
             mute_active = not mute_active
             if mute_active:
@@ -164,10 +170,10 @@ def main_gui(recv_spectrum_data, recv_longmynd_data):
             graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
             # draw spectrum
             graph.draw_polygon(spectrum_data.points, fill_color='green')
-        if recv_longmynd_data.poll():
-            longmynd_data = recv_longmynd_data.recv()
-            while recv_longmynd_data.poll():
-                _ = recv_longmynd_data.recv()
+        if longmynd1.poll():
+            longmynd_data = longmynd1.recv()
+            while longmynd1.poll():
+                _ = longmynd1.recv()
             window['-FREQUENCY-'].update(longmynd_data.frequency)
             window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
             window['-MODE-'].update(longmynd_data.mode)
@@ -186,18 +192,18 @@ def main_gui(recv_spectrum_data, recv_longmynd_data):
 
 if __name__ == '__main__':
     recv_spectrum_data, send_spectrum_data = Pipe()
-    recv_longmynd_data, send_longmynd_data = Pipe()
+    longmynd1, longmynd2 = Pipe(duplex=True)
     recv_video_ts, send_video_ts = Pipe()
     # create the process
     p_read_spectrum_data = Process(target=process_read_spectrum_data, args=(send_spectrum_data,))
-    p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(send_longmynd_data,))
+    p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(longmynd2,))
     p_process_video_ts = Process(target=process_video_ts, args=(recv_video_ts, send_video_ts))
     # start the process
     p_read_spectrum_data.start()
     p_read_longmynd_data.start()
     p_process_video_ts.start()
     # main ui
-    main_gui(recv_spectrum_data, recv_longmynd_data)
+    main_gui(recv_spectrum_data, longmynd1)
     # kill 
     p_read_spectrum_data.kill()
     p_read_longmynd_data.kill()

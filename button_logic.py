@@ -232,11 +232,12 @@ class TuneArgs:
 
 def tune_args():
     global curr_value, curr_index
-    TuneArgs.frequency = curr_value.frequency[:8]
+    tune_args = TuneArgs()
+    tune_args.frequency = curr_value.frequency[:8]
     if curr_value.symbol_rate == 'AUTO':
-        TuneArgs.symbol_rate = curr_index.symbol_rate_list[1]
+        tune_args.symbol_rate = curr_index.symbol_rate_list[1]
         for i in range(2, curr_index.max_symbol_rate_list + 1):
-            TuneArgs.symbol_rate += f',{curr_index.symbol_rate_list[i]}'
+            tune_args.symbol_rate += f' {curr_index.symbol_rate_list[i]}'
     else:
-        TuneArgs.symbol_rate = curr_value.symbol_rate
-    return TuneArgs
+        tune_args.symbol_rate = curr_value.symbol_rate
+    return tune_args
