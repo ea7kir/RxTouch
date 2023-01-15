@@ -16,7 +16,7 @@ class LongmyndData:
     null_ratio: int = 0
     provider: str = ''
     service: str = ''
-    status_msg: str = 'xxx'
+    status_msg: str = ''
     longmynd_running: bool = False
 
 """
@@ -44,9 +44,31 @@ def process_read_longmynd_data(longmynd2):
     pidCache = {}
     pidCacheFault = False
 
-    def setPIDs(cache):
-        # TODO: figure this one out
+    def setPIDs(newval): ####### HAS NOT UPDATED TO GITHUB ##########################
         pass
+        #codecmap = {
+        #     2:rydeplayer.sources.common.CodecEnum.MP2,
+        #     3:rydeplayer.sources.common.CodecEnum.MP3,
+        #     4:rydeplayer.sources.common.CodecEnum.MP3,
+        #    15:rydeplayer.sources.common.CodecEnum.AAC,
+        #    16:rydeplayer.sources.common.CodecEnum.H263,
+        #    27:rydeplayer.sources.common.CodecEnum.H264,
+        #    32:rydeplayer.sources.common.CodecEnum.MPA,
+        #    36:rydeplayer.sources.common.CodecEnum.H265,
+        #    129:rydeplayer.sources.common.CodecEnum.AC3,
+        #    }
+        #newPIDs = {}
+        #for pid, codec in newval.items():
+        #    if codec in codecmap:
+        #        newPIDs[pid] = codecmap[codec]
+        #    else:
+        #        newPIDs[pid] = str(codec)+"?"
+        #if self.pids != newPIDs:
+        #    self.pids = newPIDs
+        #    self.onChangeFire()
+        #    return True
+        #else:
+        #   return False
 
     """ WAITING FOR
 
