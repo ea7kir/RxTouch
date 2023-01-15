@@ -44,7 +44,7 @@ def process_read_longmynd_data(longmynd2):
     pidCache = {}
     pidCacheFault = False
 
-    def setPIDs(newval): ####### HAS NOT UPDATED TO GITHUB ##########################
+    def setPIDs(newval):
         pass
         #codecmap = {
         #     2:rydeplayer.sources.common.CodecEnum.MP2,
