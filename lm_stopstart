@@ -1,9 +1,9 @@
 #!/bin/bash
 #/usr/bin/sudo killall -w longmynd > /dev/null 2>&1
-/usr/bin/sudo killall -w -s SIGINT longmynd > /dev/null 2>&1
+#/usr/bin/sudo killall -w -s SIGINT longmynd > /dev/null 2>&1
 
 #/usr/bin/sudo killall -w -s SIGINT longmynd > /dev/null 2>&1
-#sleep(1)
+#sleep 1
 #/usr/bin/sudo killall -w longmynd > /dev/null 2>&1
 cd /home/pi/RxTouch/longmynd
 /usr/bin/sudo /home/pi/RxTouch/longmynd/longmynd "$1" "$2" "$3" "$4" "$5" "$6" "$7" > /dev/null 2>&1 &

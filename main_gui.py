@@ -118,19 +118,17 @@ def main_gui(recv_spectrum_data, longmynd1):
             window['-STATUS_BAR-'].update(longmynd_data.status_msg)
             # TODO: a delay is neccessary, but I need to find a better way
             #       or dind a way to know when kill has completed
-            sleep(0.5)
+            sleep(1.5)
             break
         if event == '-TUNE-':
-            tune_active = not tune_active
+            tune_active = not tune_active # move this to get auto beacon at startup
             if tune_active:
                 window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
                 tune_args = cs.tune_args()
                 longmynd1.send(tune_args)
-                window['-STATUS_BAR-'].update(longmynd_data.status_msg)
             else:
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                #longmynd1.send('STOP')
-                window['-STATUS_BAR-'].update(longmynd_data.status_msg)
+                longmynd1.send('STOP')
         if event == '-MUTE-':
             mute_active = not mute_active
             if mute_active:
@@ -188,6 +186,7 @@ def main_gui(recv_spectrum_data, longmynd1):
             window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio)
             window['-PROVIDER-'].update(longmynd_data.provider)
             window['-SERVICE-'].update(longmynd_data.service)
+            window['-STATUS_BAR-'].update(longmynd_data.status_msg)
     window.close()
     del window
 
