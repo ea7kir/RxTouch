@@ -19,8 +19,6 @@ class LongmyndData:
     status_msg: str = 'xxx'
     longmynd_running: bool = False
 
-# MODES: 'Seaching' 'Locked' 'DVB-S' 'DVB-S2'
-
 """
 Example to receive the beacon:
 cd /home/pi/RxTouch/longmynd
@@ -31,12 +29,36 @@ def process_read_longmynd_data(longmynd2):
     LM_STOP_START_SCRIPT = '/home/pi/RxTouch/lm_stopstart'
     LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
     LM_STATUS_PIPE  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
+
+    OFFSET = 9750000
+
     longmynd_data = LongmyndData()
 
     # x_Ryde line7 05
     statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
-    hasPIDs = False # I don't think this should go here !!!!!!!!!!!!!!
+    # TODO:  I don't think these should go here !!!!!!!!!!!!!!
+    hasPIDs = False
+    pidCacheWait = True
+    pidCachePair = (None, None)
+    pidCache = {}
+    pidCacheFault = False
+
+    def setPIDs(cache):
+        # TODO: figure this one out
+        pass
+
+    """ WAITING FOR
+
+        PIDs
+        Constellation
+        FEC
+        Codecs
+        db Margin
+        dBm Margin
+
+        formating
+    """
 
     while True:
         if longmynd2.poll():
@@ -65,12 +87,9 @@ def process_read_longmynd_data(longmynd2):
                 if line[0] != '$':
                     continue
 
-            
                 rawtype, rawval = line[1:].rstrip().split(',',1)
                 msgtype = int(rawtype)
                 
-                #print(f'->{msgtype}, {rawval}', flush=True)
-                # MODES: 'Seaching' 'Locked' 'DVB-S' 'DVB-S2'
                 # x_Ryde line 497
                 if msgtype == 1: # State
                     if int(rawval) == 0: # initialising
@@ -83,20 +102,27 @@ def process_read_longmynd_data(longmynd2):
                         longmynd_data.mode = 'DVBS-S'
                     elif int(rawval) == 4: # locked on a DVB-S2 signal
                         longmynd_data.mode = 'DVBS-S2'
-                    #else:
-                    #    longmynd_data.mode = '???'
-                    #if not hasPIDs:
+
+                    if not hasPIDs:
                     #    self.tunerStatus.setPIDs(self.pidCache)
-                    #self.hasPIDs = False
+                        setPIDs(pidCache)
+                    hasPIDs = False
+
                     #if self.lastState != self.changeRefState : # if the signal parameters have changed
                     #    self.stateMonotonic += 1
                     #    self.changeRefState = copy.deepcopy(self.lastState)
                     #self.lastState['state'] = int(rawval)
-                    #if int(rawval) < 3: # if it is not locked, reset some state
+
+                    if int(rawval) < 3: # if it is not locked, reset some state
                     #    self.lastState['provider'] = ""
                     #    self.lastState['service'] = ""
                     #    self.lastState['modcode'] = None
                     #    self.lastState['pids'] = {}
+                        longmynd_data.provider = '-'
+                        longmynd_data.service = '-'
+                        #longmynd_data.
+                        #longmynd_data.
+
                     #if self.lastState != self.changeRefState : # if the signal parameters have changed
                     #    self.stateMonotonic += 1
                     #    self.changeRefState = copy.deepcopy(self.lastState)
@@ -113,9 +139,8 @@ def process_read_longmynd_data(longmynd2):
                 #    currentBand = self.activeConfig.getBand()
                 #    self.tunerStatus.setFreq(currentBand.mapTuneToReq(int(rawval)))
                     cf = float(rawval)
-                    OFFSET = 9750000
                     frequency = (cf + OFFSET) / 1000
-                    longmynd_data.frequency = frequency # TODO: format as 12345.78
+                    longmynd_data.frequency = frequency # TODO: format as #####.##
                 elif msgtype == 7: # I Constellation
                     pass
                 elif msgtype == 8: # Q Constellation
@@ -123,7 +148,7 @@ def process_read_longmynd_data(longmynd2):
                 elif msgtype == 9: # Symbol Rate
                     #self.tunerStatus.setSR(float(rawval)/1000)
                     #print(f'->{msgtype}, {rawval}', flush=True)
-                    longmynd_data.symbol_rate = str(float(rawval)/1000)
+                    longmynd_data.symbol_rate = str(float(rawval)/1000) # TODO: format as .#
                 elif msgtype == 10: # Viterbi Error Rate
                     pass
                 elif msgtype == 11: # BER
@@ -131,7 +156,7 @@ def process_read_longmynd_data(longmynd2):
                 elif msgtype == 12: # MER
                     #print(f'-> {msgtype}, {rawval}', flush=True)
                     #self.tunerStatus.setMer(float(rawval)/10)
-                    longmynd_data.db_mer = f'{float(rawval)/10}'
+                    longmynd_data.db_mer = f'{float(rawval)/10}' # TODO: format as .#
                 elif msgtype == 13: # Service Provider
                     #print(f'-> {msgtype}, {rawval}', flush=True)
                     longmynd_data.provider = str(rawval)
@@ -140,10 +165,12 @@ def process_read_longmynd_data(longmynd2):
                     longmynd_data.service = str(rawval)
                 elif msgtype == 15: # Null Ratio
                     longmynd_data.null_ratio = int(rawval)
-                elif msgtype == 16: # ES PID
-                    pass
-                elif msgtype == 17: # ES TYPE
-                    pass
+
+                ### elif msgtype == 16: # ES PID
+                ###     pass
+                ### elif msgtype == 17: # ES TYPE
+                ###     pass
+
                 elif msgtype == 18: # MODCOD
                 #    self.tunerStatus.setModcode(int(rawval))
                 #    self.lastState['modcode'] = int(rawval)
@@ -168,23 +195,45 @@ def process_read_longmynd_data(longmynd2):
                 elif msgtype == 27: # AGC2 Gain
                 #    self.tunerStatus.setAGC2(int(rawval))
                     pass
-                    
-                #sleep(1.1) # temp delay to simulate data reading
-                #longmynd_data.frequency = '?' # 99999.999
-                #longmynd_data.symbol_rate = '?' # 1500
-                #longmynd_data.mode = '?' # DVB-S2
-                longmynd_data.constellation = '?' # QPSK
-                longmynd_data.fec = '?' # 9/9
-                longmynd_data.codecs = '?' # H264 ACC
-                #longmynd_data.db_mer = '?' # 8.9
-                longmynd_data.db_margin = '?' # 9.9
-                longmynd_data.dbm_power = '-' # -99
-                #longmynd_data.null_ratio = random.randint(40, 60) # ONLY NEEDED TO SIMULATE DATA DURING DEVELOPMENT
-                #longmynd_data.provider = '?' # A71A
-                #longmynd_data.service = '?' # QARS
+
+                # PID list accumulator
+                if msgtype == 16: # ES PID
+                    hasPIDs = True
+                    pidCacheWait = False
+                    if pidCachePair[0] == None:
+                        pidCachePair = (int(rawval), pidCachePair[1])
+                        if pidCachePair[1] != None:
+                            pidCache[pidCachePair[0]] = pidCachePair[1]
+                            pidCachePair = (None, None)
+                    else:
+                        pidCacheFault = True
+                        print('pid cache fault', flush=True)
+                elif msgtype == 17: # ES Type
+                    hasPIDs = True
+                    pidCacheWait = False
+                    if pidCachePair[1] == None:
+                        pidCachePair = (pidCachePair[0], int(rawval))
+                        if pidCachePair[0] != None:
+                            pidCache[pidCachePair[0]] = pidCachePair[1]
+                            pidCachePair = (None, None)
+                    else:
+                        pidCacheFault = True
+                        print('pid cache fault', flush=True)
+                # update pid status once we have them all (uness there was a fault)
+                elif not pidCacheWait:
+                    if not pidCacheFault:
+                        #lastState['pids'] = pidCache
+                        #tunerStatus.setPIDs(pidCache)
+                        # ???
+                        setPIDs(pidCache)
+                    pidCacheFault = False
+                    pidCacheWait = True
+                    pidCache = {}
+                    pidCachePair= (None, None)
+
+                # TODO: if changed:
                 longmynd2.send(longmynd_data)
         else:
-            sleep(0.5) # temp delay to simulate data reading
             longmynd_data.frequency = '-'
             longmynd_data.symbol_rate = '-'
             longmynd_data.mode = '-'
@@ -199,3 +248,4 @@ def process_read_longmynd_data(longmynd2):
             longmynd_data.service = '-'
             longmynd_data.status_msg = '-'
             longmynd2.send(longmynd_data)
+            sleep(0.5) # temp delay to simulate data reading
