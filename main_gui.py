@@ -2,6 +2,7 @@
 
 from multiprocessing import Process
 from multiprocessing import Pipe
+from time import sleep
 
 import PySimpleGUI as sg
 import control_status as cs
@@ -114,22 +115,25 @@ def main_gui(recv_spectrum_data, longmynd1):
         if event == '-SHUTDOWN-':
             #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
             longmynd1.send('STOP') # NOTE: maybe this needs time to complete
+            window['-STATUS_BAR-'].update(longmynd_data.status_msg)
+            # TODO: a delay is neccessary, but I need to find a better way
+            #       or dind a way to know when kill has completed
+            sleep(0.5)
             break
         if event == '-TUNE-':
             tune_active = not tune_active
             if tune_active:
                 window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
                 tune_args = cs.tune_args()
-                print(f'tune_args has : {tune_args.frequency}, {tune_args.symbol_rate}')
-                # TODO: send tune_args to process_read_longmynd_data.start(tune_args)
+                #print(f'tune_args has : {tune_args.frequency}, {tune_args.symbol_rate}')
                 longmynd1.send(tune_args)
-                window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
-                #window['-STATUS_BAR-'].update(longmynd_data.status_msg)
+                #window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
+                window['-STATUS_BAR-'].update(longmynd_data.status_msg)
             else:
-                longmynd1.send('STOP')
+                #longmynd1.send('STOP')
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                window['-STATUS_BAR-'].update('stop (or invalid display)')
-                #window['-STATUS_BAR-'].update(longmynd_data.status_msg)
+                #window['-STATUS_BAR-'].update('stop (or invalid display)')
+                window['-STATUS_BAR-'].update(longmynd_data.status_msg)
         if event == '-MUTE-':
             mute_active = not mute_active
             if mute_active:

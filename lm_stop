@@ -1,0 +1,5 @@
+#!/bin/bash
+/usr/bin/sudo killall -w longmynd > /dev/null 2>&1
+#/usr/bin/sudo killall -w -s SIGINT longmynd > /dev/null 2>&1
+sleep 1
+exit 0
