@@ -125,14 +125,11 @@ def main_gui(recv_spectrum_data, longmynd1):
             if tune_active:
                 window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
                 tune_args = cs.tune_args()
-                #print(f'tune_args has : {tune_args.frequency}, {tune_args.symbol_rate}')
                 longmynd1.send(tune_args)
-                #window['-STATUS_BAR-'].update(f'start: {tune_args.frequency},{tune_args.symbol_rate}')
                 window['-STATUS_BAR-'].update(longmynd_data.status_msg)
             else:
-                #longmynd1.send('STOP')
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                #window['-STATUS_BAR-'].update('stop (or invalid display)')
+                #longmynd1.send('STOP')
                 window['-STATUS_BAR-'].update(longmynd_data.status_msg)
         if event == '-MUTE-':
             mute_active = not mute_active
