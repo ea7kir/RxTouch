@@ -50,16 +50,16 @@ $ pyenv versions
 
 	* system (set by /home/pi/.pyenv/version)
 
-$ pyenv install 3.11.0
+$ pyenv install 3.11.1
 
 $ pyenv versions
 
 	* system (set by /home/pi/.pyenv/version)
-	3.11.0
+	3.11.1
 
-pyenv global 3.11.0
+pyenv global 3.11.1
 
-	* system 3.11.0 (set by /home/pi/.pyenv/version)
+	* system 3.11.1 (set by /home/pi/.pyenv/version)
 	3.9.2
 
 -------------------
