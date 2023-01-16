@@ -15,7 +15,7 @@ class LongmyndData:  # TODO: most values could be None
     db_mer: str = ''
     db_margin: str = ''
     dbm_power: str = ''
-    null_ratio: int = 0
+    null_ratio: str = ''
     provider: str = ''
     service: str = ''
     status_msg: str = ''
@@ -267,7 +267,7 @@ def process_read_longmynd_data(longmynd2):
                         longmynd_data.null_ratio = int(rawval)
                     case 16: # ES PID
                         es_pid = rawval
-                        print(f'PID = {rawval}')
+                        #print(f'PID = {rawval}')
                     case 17: # ES TYPE
                         match es_pid:
                             case '257':
@@ -278,8 +278,8 @@ def process_read_longmynd_data(longmynd2):
                                 audio_codec = ES_258.get(rawval)
                                 if audio_codec is None:
                                     audio_codec = f'{rawval}?'
-                            case _:
-                                print(f'PID = {es_pid}, TYPE = {rawval}')
+                            #case _:
+                            #    print(f'PID = {es_pid}, TYPE = {rawval}')
                         longmynd_data.codecs = f'{video_codec} {audio_codec}'
                     case 18: # MODCOD
                     #    self.tunerStatus.setModcode(int(rawval))
@@ -317,7 +317,7 @@ def process_read_longmynd_data(longmynd2):
             longmynd_data.db_mer = '-'
             longmynd_data.db_margin = '-'
             longmynd_data.dbm_power = '-'
-            longmynd_data.null_ratio = 0
+            longmynd_data.null_ratio = '-'
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
             longmynd_data.status_msg = '-'
