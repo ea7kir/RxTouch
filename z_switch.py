@@ -2,7 +2,7 @@
 
 #lang = input("What's the programming language you want to learn? ")
 
-lang = 'PHP'
+lang = 'XXX'
 
 match lang:
     case "JavaScript":
@@ -19,6 +19,7 @@ match lang:
 
     case "Java":
         print("You can become a mobile app developer")
-    case _:
-        print("The language doesn't matter, what matters is solving problems.")
+#    case _:
+#        print("The language doesn't matter, what matters is solving problems.")
 
+print('here')
