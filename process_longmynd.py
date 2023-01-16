@@ -37,38 +37,82 @@ def process_read_longmynd_data(longmynd2):
     # x_Ryde line7 05
     statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
-    # TODO:  I don't think these should go here !!!!!!!!!!!!!!
-    hasPIDs = False
-    pidCacheWait = True
-    pidCachePair = (None, None)
-    pidCache = {}
-    pidCacheFault = False
+    ES_257 = {
+        '2': 'MPEG-2',
+        '16': 'H.263',
+        '27': 'H.264',
+        '36': 'H.265',
+    }
 
-    def setPIDs(newval):
-        pass
-        #codecmap = {
-        #     2:rydeplayer.sources.common.CodecEnum.MP2,
-        #     3:rydeplayer.sources.common.CodecEnum.MP3,
-        #     4:rydeplayer.sources.common.CodecEnum.MP3,
-        #    15:rydeplayer.sources.common.CodecEnum.AAC,
-        #    16:rydeplayer.sources.common.CodecEnum.H263,
-        #    27:rydeplayer.sources.common.CodecEnum.H264,
-        #    32:rydeplayer.sources.common.CodecEnum.MPA,
-        #    36:rydeplayer.sources.common.CodecEnum.H265,
-        #    129:rydeplayer.sources.common.CodecEnum.AC3,
-        #    }
-        #newPIDs = {}
-        #for pid, codec in newval.items():
-        #    if codec in codecmap:
-        #        newPIDs[pid] = codecmap[codec]
-        #    else:
-        #        newPIDs[pid] = str(codec)+"?"
-        #if self.pids != newPIDs:
-        #    self.pids = newPIDs
-        #    self.onChangeFire()
-        #    return True
-        #else:
-        #   return False
+    ES_258 = {
+        '3': 'MP3',
+        '4': 'MP3',
+        '15': 'ACC',
+        '32': 'MPA',
+        '129': 'AC3',
+    }
+
+    videoCodec = '-'
+    audioCodec = '-'
+    ES_PID = None
+
+#    # TODO:  I don't think these should go here !!!!!!!!!!!!!!
+#    hasPIDs = False
+#    pidCacheWait = True
+#    pidCachePair = (None, None)
+#    pidCache = {}
+#    pidCacheFault = False
+#
+#    # my new variables
+#    ES_PIDs = {}
+#    ES_Types = {}
+#
+#    import enum
+#    class CodecEnum(enum.Enum):
+#        MP2  = (enum.auto(), "MPEG-2")
+#        MP3  = (enum.auto(), "MP3")
+#        AAC  = (enum.auto(), "AAC")
+#        H263 = (enum.auto(), "H.263")
+#        H264 = (enum.auto(), "H.264")
+#        MPA  = (enum.auto(), "MPA")
+#        H265 = (enum.auto(), "H.265")
+#        AC3  = (enum.auto(), "AC3")
+#
+#        def __init__(self, enum, longName):
+#            self.longName = longName
+#        def __str__(self):
+#            return self.longName
+#
+#    def setPIDs(newval):
+#        print(newval, flush=True)
+#        #pass
+#        codecmap = {
+#             2:CodecEnum.MP2,
+#             3:CodecEnum.MP3,
+#             4:CodecEnum.MP3,
+#            15:CodecEnum.AAC,
+#            16:CodecEnum.H263,
+#            27:CodecEnum.H264,
+#            32:CodecEnum.MPA,
+#            36:CodecEnum.H265,
+#            129:CodecEnum.AC3,
+#            }
+#        newPIDs = {}
+#        for pid, codec in newval.items():
+#            if codec in codecmap:
+#                newPIDs[pid] = codecmap[codec]
+#                #videoCodec = codecmap[codec]
+#                #print('T', newPIDs[pid], flush=True)
+#            else:
+#                newPIDs[pid] = str(codec)+"?"
+#                #print('F', newPIDs[pid], flush=True)
+#        #print(newPIDs[0], newPIDs[1])
+#        #if pids != newPIDs:
+#        #    pids = newPIDs
+#        #    onChangeFire()
+#        #    return True
+#        #else:
+#        #   return False
 
     """ WAITING FOR
 
@@ -125,10 +169,10 @@ def process_read_longmynd_data(longmynd2):
                     elif int(rawval) == 4: # locked on a DVB-S2 signal
                         longmynd_data.mode = 'DVBS-S2'
 
-                    if not hasPIDs:
-                    #    self.tunerStatus.setPIDs(self.pidCache)
-                        setPIDs(pidCache)
-                    hasPIDs = False
+#                    if not hasPIDs:
+#                    #    self.tunerStatus.setPIDs(self.pidCache)
+#                        setPIDs(pidCache)
+#                    hasPIDs = False
 
                     #if self.lastState != self.changeRefState : # if the signal parameters have changed
                     #    self.stateMonotonic += 1
@@ -188,11 +232,19 @@ def process_read_longmynd_data(longmynd2):
                 elif msgtype == 15: # Null Ratio
                     longmynd_data.null_ratio = int(rawval)
 
-                ### elif msgtype == 16: # ES PID
-                ###     pass
-                ### elif msgtype == 17: # ES TYPE
-                ###     pass
-
+                elif msgtype == 16: # ES PID
+                    ES_PID = rawval
+                elif msgtype == 17: # ES TYPE
+                    if ES_PID == '257':
+                        videoCodec = ES_257.get(rawval)
+                        if videoCodec is None:
+                            videoCodec = '?'
+                    elif ES_PID == '258':
+                        audioCodec = ES_258.get(rawval)
+                        if audioCodec is None:
+                            audioCodec = '?'
+                    longmynd_data.codecs = f'{videoCodec} {audioCodec}'
+                    
                 elif msgtype == 18: # MODCOD
                 #    self.tunerStatus.setModcode(int(rawval))
                 #    self.lastState['modcode'] = int(rawval)
@@ -218,40 +270,46 @@ def process_read_longmynd_data(longmynd2):
                 #    self.tunerStatus.setAGC2(int(rawval))
                     pass
 
-                # PID list accumulator
-                if msgtype == 16: # ES PID
-                    hasPIDs = True
-                    pidCacheWait = False
-                    if pidCachePair[0] == None:
-                        pidCachePair = (int(rawval), pidCachePair[1])
-                        if pidCachePair[1] != None:
-                            pidCache[pidCachePair[0]] = pidCachePair[1]
-                            pidCachePair = (None, None)
-                    else:
-                        pidCacheFault = True
-                        print('pid cache fault', flush=True)
-                elif msgtype == 17: # ES Type
-                    hasPIDs = True
-                    pidCacheWait = False
-                    if pidCachePair[1] == None:
-                        pidCachePair = (pidCachePair[0], int(rawval))
-                        if pidCachePair[0] != None:
-                            pidCache[pidCachePair[0]] = pidCachePair[1]
-                            pidCachePair = (None, None)
-                    else:
-                        pidCacheFault = True
-                        print('pid cache fault', flush=True)
-                # update pid status once we have them all (uness there was a fault)
-                elif not pidCacheWait:
-                    if not pidCacheFault:
-                        #lastState['pids'] = pidCache
-                        #tunerStatus.setPIDs(pidCache)
-                        # ???
-                        setPIDs(pidCache)
-                    pidCacheFault = False
-                    pidCacheWait = True
-                    pidCache = {}
-                    pidCachePair= (None, None)
+#                if len(ES_PIDs) == 2 and len(ES_Types) == 2:
+#                    print(ES_PIDs, ES_Types, flush=True)
+
+
+#                # PID list accumulator
+#                if msgtype == 16: # ES PID
+#                    print(f'16 ES PID = {rawval}')
+#                    hasPIDs = True
+#                    pidCacheWait = False
+#                    if pidCachePair[0] == None:
+#                        pidCachePair = (int(rawval), pidCachePair[1])
+#                        if pidCachePair[1] != None:
+#                            pidCache[pidCachePair[0]] = pidCachePair[1]
+#                            pidCachePair = (None, None)
+#                    else:
+#                        pidCacheFault = True
+#                        print('pid cache fault', flush=True)
+#                elif msgtype == 17: # ES Type
+#                    print(f'16 ES Type = {rawval}')
+#                    hasPIDs = True
+#                    pidCacheWait = False
+#                    if pidCachePair[1] == None:
+#                        pidCachePair = (pidCachePair[0], int(rawval))
+#                        if pidCachePair[0] != None:
+#                            pidCache[pidCachePair[0]] = pidCachePair[1]
+#                            pidCachePair = (None, None)
+#                    else:
+#                        pidCacheFault = True
+#                        print('pid cache fault', flush=True)
+#                # update pid status once we have them all (uness there was a fault)
+#                elif not pidCacheWait:
+#                    if not pidCacheFault:
+#                        #lastState['pids'] = pidCache
+#                        #tunerStatus.setPIDs(pidCache)
+#                        # ???
+#                        setPIDs(pidCache)
+#                    pidCacheFault = False
+#                    pidCacheWait = True
+#                    pidCache = {}
+#                    pidCachePair= (None, None)
 
                 # TODO: if changed:
                 longmynd2.send(longmynd_data)
