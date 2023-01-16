@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-import random # ONLY NEEDED TO SIMULATE DATA VALUES DURING DEVELOPMENT
+#import random # ONLY NEEDED TO SIMULATE DATA VALUES DURING DEVELOPMENT
 from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 
 class LongmyndData:
@@ -29,16 +29,14 @@ def process_read_longmynd_data(longmynd2):
     LM_STOP_START_SCRIPT = '/home/pi/RxTouch/lm_stopstart'
     LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
     LM_STATUS_PIPE  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
-
     OFFSET = 9750000
 
     longmynd_data = LongmyndData()
 
-    # x_Ryde line7 05
     statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
     ES_257 = {
-        '2': 'MPEG-2',
+        '2': 'MPEG-2', # TODO: too wide for display column
         '16': 'H.263',
         '27': 'H.264',
         '36': 'H.265',
@@ -52,76 +50,22 @@ def process_read_longmynd_data(longmynd2):
         '129': 'AC3',
     }
 
-    videoCodec = '-'
-    audioCodec = '-'
-    ES_PID = None
+    video_codec = '-'
+    audio_codec = '-'
+    es_pid = None
+    agc1 = None
+    agc2 = None
+    agc_changed = False
 
-#    # TODO:  I don't think these should go here !!!!!!!!!!!!!!
-#    hasPIDs = False
-#    pidCacheWait = True
-#    pidCachePair = (None, None)
-#    pidCache = {}
-#    pidCacheFault = False
-#
-#    # my new variables
-#    ES_PIDs = {}
-#    ES_Types = {}
-#
-#    import enum
-#    class CodecEnum(enum.Enum):
-#        MP2  = (enum.auto(), "MPEG-2")
-#        MP3  = (enum.auto(), "MP3")
-#        AAC  = (enum.auto(), "AAC")
-#        H263 = (enum.auto(), "H.263")
-#        H264 = (enum.auto(), "H.264")
-#        MPA  = (enum.auto(), "MPA")
-#        H265 = (enum.auto(), "H.265")
-#        AC3  = (enum.auto(), "AC3")
-#
-#        def __init__(self, enum, longName):
-#            self.longName = longName
-#        def __str__(self):
-#            return self.longName
-#
-#    def setPIDs(newval):
-#        print(newval, flush=True)
-#        #pass
-#        codecmap = {
-#             2:CodecEnum.MP2,
-#             3:CodecEnum.MP3,
-#             4:CodecEnum.MP3,
-#            15:CodecEnum.AAC,
-#            16:CodecEnum.H263,
-#            27:CodecEnum.H264,
-#            32:CodecEnum.MPA,
-#            36:CodecEnum.H265,
-#            129:CodecEnum.AC3,
-#            }
-#        newPIDs = {}
-#        for pid, codec in newval.items():
-#            if codec in codecmap:
-#                newPIDs[pid] = codecmap[codec]
-#                #videoCodec = codecmap[codec]
-#                #print('T', newPIDs[pid], flush=True)
-#            else:
-#                newPIDs[pid] = str(codec)+"?"
-#                #print('F', newPIDs[pid], flush=True)
-#        #print(newPIDs[0], newPIDs[1])
-#        #if pids != newPIDs:
-#        #    pids = newPIDs
-#        #    onChangeFire()
-#        #    return True
-#        #else:
-#        #   return False
+    def calculated_dbm_power(agc1, agc2):
+        return '-'
 
     """ WAITING FOR
 
-        PIDs
         Constellation
         FEC
-        Codecs
-        db Margin
-        dBm Margin
+        dB Margin       SignalReport uses Modulation/mode & MER 
+        dBm Power
 
         formating
     """
@@ -186,8 +130,12 @@ def process_read_longmynd_data(longmynd2):
                     #    self.lastState['pids'] = {}
                         longmynd_data.provider = '-'
                         longmynd_data.service = '-'
-                        #longmynd_data.
-                        #longmynd_data.
+                        video_codec = '-'
+                        audio_codec = '-'
+                        es_pid = None
+                        longmynd_data.codecs = '-'
+                        longmynd_data.constellation = '-'
+                        longmynd_data.null_ratio = 0
 
                     #if self.lastState != self.changeRefState : # if the signal parameters have changed
                     #    self.stateMonotonic += 1
@@ -231,24 +179,22 @@ def process_read_longmynd_data(longmynd2):
                     longmynd_data.service = str(rawval)
                 elif msgtype == 15: # Null Ratio
                     longmynd_data.null_ratio = int(rawval)
-
                 elif msgtype == 16: # ES PID
-                    ES_PID = rawval
+                    es_pid = rawval
                 elif msgtype == 17: # ES TYPE
-                    if ES_PID == '257':
-                        videoCodec = ES_257.get(rawval)
-                        if videoCodec is None:
-                            videoCodec = '?'
-                    elif ES_PID == '258':
-                        audioCodec = ES_258.get(rawval)
-                        if audioCodec is None:
-                            audioCodec = '?'
-                    longmynd_data.codecs = f'{videoCodec} {audioCodec}'
-                    
+                    if es_pid == '257':
+                        video_codec = ES_257.get(rawval)
+                        if video_codec is None:
+                            video_codec = f'{rawval}?'
+                    elif es_pid == '258':
+                        audio_codec = ES_258.get(rawval)
+                        if audio_codec is None:
+                            audio_codec = f'{rawval}?'
+                    longmynd_data.codecs = f'{video_codec} {audio_codec}'
                 elif msgtype == 18: # MODCOD
                 #    self.tunerStatus.setModcode(int(rawval))
                 #    self.lastState['modcode'] = int(rawval)
-                    pass
+                    mode_code = int(rawval)
                 elif msgtype == 19: # Short Frames
                     pass
                 elif msgtype == 20: # Pilot Symbols
@@ -265,51 +211,12 @@ def process_read_longmynd_data(longmynd2):
                     pass
                 elif msgtype == 26: # AGC1 Gain
                 #    self.tunerStatus.setAGC1(int(rawval))
-                    pass
+                    agc1 = int(rawval)
+                    longmynd_data.dbm_power = calculated_dbm_power(agc1, agc2)
                 elif msgtype == 27: # AGC2 Gain
                 #    self.tunerStatus.setAGC2(int(rawval))
-                    pass
-
-#                if len(ES_PIDs) == 2 and len(ES_Types) == 2:
-#                    print(ES_PIDs, ES_Types, flush=True)
-
-
-#                # PID list accumulator
-#                if msgtype == 16: # ES PID
-#                    print(f'16 ES PID = {rawval}')
-#                    hasPIDs = True
-#                    pidCacheWait = False
-#                    if pidCachePair[0] == None:
-#                        pidCachePair = (int(rawval), pidCachePair[1])
-#                        if pidCachePair[1] != None:
-#                            pidCache[pidCachePair[0]] = pidCachePair[1]
-#                            pidCachePair = (None, None)
-#                    else:
-#                        pidCacheFault = True
-#                        print('pid cache fault', flush=True)
-#                elif msgtype == 17: # ES Type
-#                    print(f'16 ES Type = {rawval}')
-#                    hasPIDs = True
-#                    pidCacheWait = False
-#                    if pidCachePair[1] == None:
-#                        pidCachePair = (pidCachePair[0], int(rawval))
-#                        if pidCachePair[0] != None:
-#                            pidCache[pidCachePair[0]] = pidCachePair[1]
-#                            pidCachePair = (None, None)
-#                    else:
-#                        pidCacheFault = True
-#                        print('pid cache fault', flush=True)
-#                # update pid status once we have them all (uness there was a fault)
-#                elif not pidCacheWait:
-#                    if not pidCacheFault:
-#                        #lastState['pids'] = pidCache
-#                        #tunerStatus.setPIDs(pidCache)
-#                        # ???
-#                        setPIDs(pidCache)
-#                    pidCacheFault = False
-#                    pidCacheWait = True
-#                    pidCache = {}
-#                    pidCachePair= (None, None)
+                    agc2 = int(rawval)
+                    longmynd_data.dbm_power = calculated_dbm_power(agc1, agc2)
 
                 # TODO: if changed:
                 longmynd2.send(longmynd_data)
@@ -328,4 +235,4 @@ def process_read_longmynd_data(longmynd2):
             longmynd_data.service = '-'
             longmynd_data.status_msg = '-'
             longmynd2.send(longmynd_data)
-            sleep(0.5) # temp delay to simulate data reading
+            sleep(0.5) # delay to simulate data reading
