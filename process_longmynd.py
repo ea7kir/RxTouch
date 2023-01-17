@@ -40,28 +40,27 @@ def process_read_longmynd_data(longmynd2):
 
     statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
-# TODO: the following PID decdoding is no workin properly
-# ES PID = 257, ES TYPE = 15 and ES PID = 256, ES TYPE = 36
-# So 2 tables are NOT better than 1
+    def codec_type_name(type_str):
+        match type_str:
+            case '2': return 'MPEG-2' # TODO: too wide for display column
+            case '3': return 'MP3'
+            case '4': return 'MP3'
+            case '15': return 'ACC'
+            case '16': return 'H.263'
+            case '27': return 'H.264'
+            case '32': return 'MPA'
+            case '36': return 'H.265'
+            case '129': return 'AC3'
+        return '-'
 
-    ES_257 = {
-        '2': 'MPEG-2', # TODO: too wide for display column
-        '16': 'H.263',
-        '27': 'H.264',
-        '36': 'H.265',
-    }
+    # ES starting pair
+    class EsPair:
+        one = [False, None]
+        two = [False, None]
 
-    ES_258 = {
-        '3': 'MP3',
-        '4': 'MP3',
-        '15': 'ACC',
-        '32': 'MPA',
-        '129': 'AC3',
-    }
-
+    es_pair = EsPair()
     video_codec = '-'
     audio_codec = '-'
-    es_pid = None
     agc1 = None
     agc2 = None
     agc_changed = False
@@ -176,6 +175,7 @@ def process_read_longmynd_data(longmynd2):
 
 
     while True:
+        
         if longmynd2.poll():
             tune_args = longmynd2.recv()
             if tune_args == 'STOP':
@@ -198,7 +198,6 @@ def process_read_longmynd_data(longmynd2):
             for line in lines:
                 if line[0] != '$':
                     continue
-
                 rawtype, rawval = line[1:].rstrip().split(',',1)
                 msgtype = int(rawtype)
 
@@ -234,74 +233,81 @@ def process_read_longmynd_data(longmynd2):
                             es_pid = None
                             longmynd_data.codecs = '-'
                             longmynd_data.constellation = '-'
-                            longmynd_data.null_ratio = 0
-                    case  2: # LNA Gain
+                            longmynd_data.null_ratio = '-'
+                    case 2: # LNA Gain - On devices that have LNA Amplifiers this represents the two gain sent as N, where n = (lna_gain<<5) | lna_vgo. Though not actually linear, n can be usefully treated as a single byte representing the gain of the amplifier
                         pass
-                    case 3: # Puncture Rate
+                    case 3: # Puncture Rate - During a search this is the pucture rate that is being trialled. When locked this is the pucture rate detected in the stream. Sent as a single value, n, where the pucture rate is n/(n+1)
                         pass
-                    case 4: # I Symbol Power
+                    case 4: # I Symbol Power - Measure of the current power being seen in the I symbols
                         pass
-                    case 5: # Q Symbol Power
+                    case 5: # Q Symbol Power - Measure of the current power being seen in the Q symbols
                         pass
-                    case 6: # Carrier Frequency
+                    case 6: # Carrier Frequency - During a search this is the carrier frequency being trialled. When locked this is the Carrier Frequency detected in the stream. Sent in KHz
                         cf = float(rawval)
                         frequency = (cf + OFFSET) / 1000
                         longmynd_data.frequency = frequency # TODO: format as #####.##
-                    case 7: # I Constellation
+                    case 7: # I Constellation - Single signed byte representing the voltage of a sampled I point
                         pass
-                    case 8: # Q Constellation
+                    case 8: # Q Constellation - Single signed byte representing the voltage of a sampled Q point
                         pass
-                    case 9: # Symbol Rate
+                    case 9: # Symbol Rate - During a search this is the symbol rate being trialled.  When locked this is the symbol rate detected in the stream
                         longmynd_data.symbol_rate = str(float(rawval)/1000) # TODO: format as .#
-                    case 10: # Viterbi Error Rate
+                    case 10: # Viterbi Error Rate - Viterbi correction rate as a percentage * 100
                         pass
-                    case 11: # BER
+                    case 11: # BER - Bit Error Rate as a Percentage * 100
                         pass
-                    case 12: # MER
+                    case 12: # MER - Modulation Error Ratio in dB * 10
                         longmynd_data.db_mer = f'{float(rawval)/10}' # TODO: format as .#
-                    case 13: # Service Provider
+                    case 13: # Service Provider - TS Service Provider Name
                         longmynd_data.provider = str(rawval)
-                    case 14: # 
+                    case 14: # Service Provider Service - TS Service Name
                         longmynd_data.service = str(rawval)
-                    case 15: # Null Ratio
+                    case 15: # Null Ratio - Ratio of Nulls in TS as percentage
                         longmynd_data.null_ratio = int(rawval)
-                    case 16: # ES PID
-                        es_pid = rawval
-                        #print(f'PID = {rawval}')
-                    case 17: # ES TYPE
-                        match es_pid:
-                            case '257':
-                                video_codec = ES_257.get(rawval)
-                                if video_codec is None:
-                                    video_codec = f'{rawval}?'
-                            case '258':
-                                audio_codec = ES_258.get(rawval)
-                                if audio_codec is None:
-                                    audio_codec = f'{rawval}?'
-                            #case _:
-                            #    print(f'PID = {es_pid}, TYPE = {rawval}')
-                        longmynd_data.codecs = f'{video_codec} {audio_codec}'
-                    case 18: # MODCOD
+                    case 16: # The PID numbers themselves are fairly arbitrary, will vary based on the transmitted signal and don't really mean anything in a single program multiplex.
+                        # In the status stream 16 and 17 always come in pairs, 16 is the PID and 17 is the type for that PID, e.g.
+                        # This means that PID 257 is of type 27 which you look up in the table to be H.264 and PID 258 is type 3 which the table says is MP3.
+                        # $16,257 == PID 257 is of type 27 which you look up in the table to be H.264
+                        # $17,27  meaning H.264
+                        # $16,258 == PID 258 is type 3 which the table says is MP3
+                        # $17,3   maeaning MP3
+                        # The PID numbers themselves are fairly arbitrary, will vary based on the transmitted signal and don't really mean anything in a single program multiplex.
+                        if not es_pair.one[0]:
+                           es_pair.one[0] = True
+                        elif not es_pair.two[0]:
+                            es_pair.two[0] = True
+                    case 17: # ES TYPE - Elementary Stream Type (repeated as pair with 16 for each ES)
+                        if es_pair.one[0] and not es_pair.two[0]:
+                            es_pair.one[0] = True
+                            es_pair.one[1] = rawval
+                        elif es_pair.two[0]:
+                            es_pair.two[0] = True
+                            es_pair.two[1] = rawval
+                        if es_pair.one[0] and es_pair.two[0]:
+                            longmynd_data.codecs = f'{codec_type_name(es_pair.one[1])} {codec_type_name(es_pair.two[1])}'
+                            es_pair.one = [False, None]
+                            es_pair.two = [False, None]
+                    case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
                     #    self.tunerStatus.setModcode(int(rawval))
                         mode_code = int(rawval)
-                    case 19: # Short Frames
+                    case 19: # Short Frames - 1 if received signal is using Short Frames, 0 otherwise (DVB-S2 only)
                         pass
-                    case 20: # Pilot Symbols
+                    case 20: # Pilot Symbols - 1 if received signal is using Pilot Symbols, 0 otherwise (DVB-S2 only)
                         pass
-                    case 21: # LDPC Error Count
+                    case 21: # LDPC Error Count - LDPC Corrected Errors in last frame (DVB-S2 only)
                         pass
-                    case 22: # BCH Error Count
+                    case 22: # BCH Error Count - BCH Corrected Errors in last frame (DVB-S2 only)
                         pass
-                    case 23: # BCH Uncorrected
+                    case 23: # BCH Uncorrected - 1 if some BCH-detected errors were not able to be corrected, 0 otherwise (DVB-S2 only)
                         pass
-                    case 24: # LNB Voltage Enabled
+                    case 24: # LNB Voltage Enabled - 1 if LNB Voltage Supply is enabled, 0 otherwise (LNB Voltage Supply requires add-on board)
                         pass
-                    case 25: # LNB H Polarisation
+                    case 25: # LNB H Polarisation - 1 if LNB Voltage Supply is configured for Horizontal Polarisation (18V), 0 otherwise (LNB Voltage Supply requires add-on board)
                         pass
-                    case 26: # AGC1 Gain
+                    case 26: # AGC1 Gain - Gain value of AGC1 (0: Signal too weak, 65535: Signal too strong)
                         agc1 = int(rawval)
                         longmynd_data.dbm_power = calculated_dbm_power(agc1, agc2)
-                    case 27: # AGC2 Gain
+                    case 27: # AGC2 Gain - Gain value of AGC2 (0: Minimum Gain, 65535: Maximum Gain)
                         agc2 = int(rawval)
                         longmynd_data.dbm_power = calculated_dbm_power(agc1, agc2)
 
