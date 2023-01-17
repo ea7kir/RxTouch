@@ -41,11 +41,15 @@ def process_read_longmynd_data(longmynd2):
     statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
     class EsPair:
-        one = [False, None]
-        two = [False, None]
+        has_1st_pid = False
+        has_2nd_pid = False
+        the_1st_type = None
+        the_2nd_type = None
+
         def __init__(self):
             pass
-        def _name(self, type_str):
+
+        def codec(self, type_str):
             match type_str:
                 case '2': return 'MPEG-2' # TODO: too wide for display column
                 case '3': return 'MP3'
@@ -57,12 +61,12 @@ def process_read_longmynd_data(longmynd2):
                 case '36': return 'H.265'
                 case '129': return 'AC3'
             return '-'
-        @property
-        def name_1(self):
-            return self._name(self.one[1])
-        @property
-        def name_2(self):
-            return self._name(self.two[1])
+
+        def reset(self):
+            has_1st_pid = False
+            has_2nd_pid = False
+            the_1st_type = None
+            the_2nd_type = None
 
 
     es_pair = EsPair()
@@ -279,21 +283,18 @@ def process_read_longmynd_data(longmynd2):
                         # $16,258 == PID 258 is type 3 which the table says is MP3
                         # $17,3   maeaning MP3
                         # The PID numbers themselves are fairly arbitrary, will vary based on the transmitted signal and don't really mean anything in a single program multiplex.
-                        if not es_pair.one[0]:
-                           es_pair.one[0] = True
-                        elif not es_pair.two[0]:
-                            es_pair.two[0] = True
+                        if not es_pair.has_1st_pid:
+                            es_pair.has_1st_pid = True
+                        elif not es_pair.has_2nd_pid:
+                            es_pair.has_2nd_pid = True
                     case 17: # ES TYPE - Elementary Stream Type (repeated as pair with 16 for each ES)
-                        if es_pair.one[0] and not es_pair.two[0]:
-                            es_pair.one[0] = True
-                            es_pair.one[1] = rawval
-                        elif es_pair.two[0]:
-                            es_pair.two[0] = True
-                            es_pair.two[1] = rawval
-                        if es_pair.one[0] and es_pair.two[0]:
-                            longmynd_data.codecs = f'{es_pair.name_1} {es_pair.name_2}'
-                            es_pair.one = [False, None]
-                            es_pair.two = [False, None]
+                        if es_pair.has_1st_pid and not es_pair.has_2nd_pid:
+                            es_pair.the_1st_type = rawval
+                        elif es_pair.has_2nd_pid:
+                            es_pair.the_2nd_type = rawval
+                        if es_pair.has_1st_pid and es_pair.has_2nd_pid:
+                            longmynd_data.codecs = f'{es_pair.codec(es_pair.the_1st_type)} {es_pair.codec(es_pair.the_2nd_type)}'
+                            es_pair.reset()
                     case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
                     #    self.tunerStatus.setModcode(int(rawval))
                         mode_code = int(rawval)
