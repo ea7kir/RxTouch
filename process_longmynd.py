@@ -321,7 +321,9 @@ def process_read_longmynd_data(longmynd2):
 
                 # TODO: if changed:
                 longmynd2.send(longmynd_data)
+
         else:
+            
             longmynd_data.frequency = '-'
             longmynd_data.symbol_rate = '-'
             longmynd_data.mode = '-'
