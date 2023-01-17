@@ -20,6 +20,12 @@ $ sudo reboot
 
 $ sudo apt install git -y
 
+SEE: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
+
+$ git config --global user.name "ea7kir"
+$ git config --global user.email "mikenaylorspain@icloud.com"
+$ git config --global init.defaultBranch main
+
 -------------------
 
 1) INSTALL PYENV
@@ -44,7 +50,7 @@ $ exec $SHELL
 
 2) INSTALL PYTHON
 
-$ apt install wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev -y
+$ sudo apt install wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev -y
 
 $ pyenv global system
 
@@ -70,21 +76,21 @@ pyenv global 3.11.1
 
 $ pip install --upgrade pip
 
+#######################################################
+
+5) INSTALL PYSIMPLEGUI & PyYAML - NOT NEEDED FOR ROOF
+
+$ pip install pysimplegui websockets PyYAML
+
 -------------------
 
-5) INSTALL PYSIMPLEGUI & PyYAML
-
-$ pip install pysimplegui websockes PyYAML
-
--------------------
-
-6) INSTALL A GUI
+6) INSTALL A GUI - NOT NEEDED FOR ROOF
 
 $ sudo apt install raspberrypi-ui-mods
 
 -------------------
 
-7) RUN PASPI-CONFIG
+7) RUN PASPI-CONFIG - NOT NEEDED FOR ROOF
 
 $ sudo rasps-config
 
@@ -95,15 +101,3 @@ $ sudo rasps-config
 #########################################################
 
 Clone my repo in VSCODE
-
-SEE: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
-
-$ git config --global user.name "ea7kir"
-$ git config --global user.email "mikenaylorspain@icloud.com"
-$ git config --global init.defaultBranch main
-
-
-
-
-
-
