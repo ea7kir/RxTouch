@@ -40,23 +40,30 @@ def process_read_longmynd_data(longmynd2):
 
     statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
-    def codec_type_name(type_str):
-        match type_str:
-            case '2': return 'MPEG-2' # TODO: too wide for display column
-            case '3': return 'MP3'
-            case '4': return 'MP3'
-            case '15': return 'ACC'
-            case '16': return 'H.263'
-            case '27': return 'H.264'
-            case '32': return 'MPA'
-            case '36': return 'H.265'
-            case '129': return 'AC3'
-        return '-'
-
-    # ES starting pair
     class EsPair:
         one = [False, None]
         two = [False, None]
+        def __init__(self):
+            pass
+        def _name(self, type_str):
+            match type_str:
+                case '2': return 'MPEG-2' # TODO: too wide for display column
+                case '3': return 'MP3'
+                case '4': return 'MP3'
+                case '15': return 'ACC'
+                case '16': return 'H.263'
+                case '27': return 'H.264'
+                case '32': return 'MPA'
+                case '36': return 'H.265'
+                case '129': return 'AC3'
+            return '-'
+        @property
+        def name_1(self):
+            return self._name(self.one[1])
+        @property
+        def name_2(self):
+            return self._name(self.two[1])
+
 
     es_pair = EsPair()
     video_codec = '-'
@@ -284,7 +291,7 @@ def process_read_longmynd_data(longmynd2):
                             es_pair.two[0] = True
                             es_pair.two[1] = rawval
                         if es_pair.one[0] and es_pair.two[0]:
-                            longmynd_data.codecs = f'{codec_type_name(es_pair.one[1])} {codec_type_name(es_pair.two[1])}'
+                            longmynd_data.codecs = f'{es_pair.name_1} {es_pair.name_2}'
                             es_pair.one = [False, None]
                             es_pair.two = [False, None]
                     case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
