@@ -174,6 +174,8 @@ def process_read_longmynd_data(longmynd2):
         def compute_db_margin(self, state, mer, fec, constellation):
             if mer == '-' or fec == '-' or constellation == '-':
                 return '-'
+            if mer == None or fec == None or constellation == None:
+                return '-'
             self.state = state
             self.mer = mer
             self.fec = fec
