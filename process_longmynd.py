@@ -1,3 +1,6 @@
+""" WAITING FOR
+    TODO: rewrite of calculated_dbm_power(agc_pair)
+"""
 import subprocess
 import os
 
@@ -105,8 +108,6 @@ def process_read_longmynd_data(longmynd2):
         ]
         state = None
         modcode = None
-        #_fec = 'F'
-        #_constellation = 'C'
         def __init__(self):
             pass
         def constellation_fec(self): # TODO: why can the result be '-', '?'
@@ -119,8 +120,6 @@ def process_read_longmynd_data(longmynd2):
         def reset(self):
             self.state = None
             self.modcode = None
-            #self._fec = '-'
-            #self._constellation = '-'
 
 ################################################################
 
@@ -202,22 +201,10 @@ def process_read_longmynd_data(longmynd2):
 
     db_margin_pair = DbMarginPair()
     
-    """ WAITING FOR
-
-        TODO: rewrite of calculated_dbm_power(agc_pair)
-
-        Constellation
-        FEC
-        dB Margin       SignalReport uses Modulation/mode & MER 
-
-        ? if not tuned (eg 'searching'), why does Symbol Rate display a value
-        ? if not tuned(eg 'searching'), why does dm MER display 0.0
-    """
 ################################################################
 
     def calculated_dbm_power(agc_pair): # returns dbm_power
-        # NOTE: this is the Ryde vesion!
-        # TODO: rewrite using match/case instead of bisect()
+        # TODO: Ryde Version, so rewrite using match/case instead of bisect()
         agc1_dict = OrderedDict() # collections.OrderedDict()
         agc1_dict[1] = -70
         agc1_dict[10] = -69
@@ -463,7 +450,6 @@ def process_read_longmynd_data(longmynd2):
                         agc_pair.agc2 = int(rawval)
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
 
-                # TODO: if changed:
                 longmynd2.send(longmynd_data)
 
         else:
