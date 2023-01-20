@@ -173,11 +173,24 @@ def process_read_longmynd_data(longmynd2):
         def __init__(self):
             pass
         def compute_db_margin(self, state, mer, fec, constellation):
+            if mer == '-' or fec == '-' or constellation == '-':
+                return '-'
             self.state = state
             self.mer = mer
             self.fec = fec
             self.constellation = constellation
-            return 'margin'
+            match self.state:
+                case 'S':
+                    key = f'DVB-S {self.fec}'
+            match self.state:
+                case 'S2':
+                    key = f'DVB-S2 {self.constellation} {self.fec}'
+                case '_':
+                    return '-'
+            float_mer = float(self.mer)
+            float_threshold = self.MOD_THRESHOLD[key]
+            db_margin = float_mer - float_threshold
+            return 'D {:.1f}'.format(db_margin)
         def reset(self):
             self.state = None
             self.mer = None
@@ -373,20 +386,20 @@ def process_read_longmynd_data(longmynd2):
                     case 6: # Carrier Frequency - During a search this is the carrier frequency being trialled. When locked this is the Carrier Frequency detected in the stream. Sent in KHz
                         cf = float(rawval)
                         frequency = (cf + OFFSET) / 1000
-                        longmynd_data.frequency = frequency # TODO: format as #####.##
+                        longmynd_data.frequency = '{:.2f}'.format(frequency)
                     case 7: # I Constellation - Single signed byte representing the voltage of a sampled I point
                         pass
                     case 8: # Q Constellation - Single signed byte representing the voltage of a sampled Q point
                         pass
                     case 9: # Symbol Rate - During a search this is the symbol rate being trialled.  When locked this is the symbol rate detected in the stream
-                        longmynd_data.symbol_rate = str(float(rawval)/1000) # TODO: format as .#
+                        longmynd_data.symbol_rate = '{:.1f}'.format(float(rawval)/1000)
                     case 10: # Viterbi Error Rate - Viterbi correction rate as a percentage * 100
                         pass
                     case 11: # BER - Bit Error Rate as a Percentage * 100
                         pass
                     case 12: # MER - Modulation Error Ratio in dB * 10
                         if rawval != '0':
-                            longmynd_data.db_mer = f'{float(rawval)/10}' # TODO: format as .#
+                            longmynd_data.db_mer = '{:.1f}'.format(float(rawval)/10)
                         else:
                             longmynd_data.db_mer = '-'
                     case 13: # Service Provider - TS Service Provider Name
