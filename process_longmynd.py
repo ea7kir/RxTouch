@@ -48,10 +48,8 @@ def process_read_longmynd_data(longmynd2):
         has_2nd_pid = False
         the_1st_type = None
         the_2nd_type = None
-
         def __init__(self):
             pass
-
         def codec(self, type_str):
             match type_str:
                 case '2': return 'MPEG-2' # TODO: too wide for display column
@@ -64,35 +62,36 @@ def process_read_longmynd_data(longmynd2):
                 case '36': return 'H.265'
                 case '129': return 'AC3'
             return '-'
-
         def reset(self):
-            has_1st_pid = False
-            has_2nd_pid = False
-            the_1st_type = None
-            the_2nd_type = None
-
+            self.has_1st_pid = False
+            self.has_2nd_pid = False
+            self.the_1st_type = None
+            self.the_2nd_type = None
 
     es_pair = EsPair()
-    video_codec = '-'
-    audio_codec = '-'
-    agc1 = None
-    agc2 = None
-    agc_changed = False
+    
+    class AgcPair:
+        agc1 = None
+        agc2 = None
+        def __init__(self):
+            pass
+        def reset(self):        # NOTE: not currently used
+            self.agc1 = None
+            self.agc2 = None
 
-    def calculated_dbm_power(agc1, agc2):
-        return '-'
-
+    agc_pair = AgcPair()
+    
     """ WAITING FOR
 
-        Codecs          fails if PID is not 257 and 258
         Constellation
         FEC
         dB Margin       SignalReport uses Modulation/mode & MER 
 
-        formating
+        ? if not tuned (eg 'searching'), why does Symbol Rate display a value
+        ? if not tuned(eg 'searching'), why does dm MER display 0.0
     """
 
-    def calculated_dbm_power(agc1, agc2):
+    def calculated_dbm_power(agc_pair):
         agc1_dict = OrderedDict() # collections.OrderedDict()
         agc1_dict[1] = -70
         agc1_dict[10] = -69
@@ -161,15 +160,15 @@ def process_read_longmynd_data(longmynd2):
         agc2_dict[2740] = -96
         agc2_dict[3200] = -97
 
-        if agc1 is None or agc2 is None:
+        if agc_pair.agc1 is None or agc_pair.agc2 is None:
             return '-'
 
-        if agc1 > 0:
+        if agc_pair.agc1 > 0:
             lookup_dict = agc1_dict
-            lookup_value = agc1
+            lookup_value = agc_pair.agc1
         else:
             lookup_dict = agc2_dict
-            lookup_value = agc2
+            lookup_value = agc_pair.agc2
 
         agc_keys = list(lookup_dict.keys())
 
@@ -242,9 +241,7 @@ def process_read_longmynd_data(longmynd2):
                         if int(rawval) < 3: # if it is not locked, reset some state
                             longmynd_data.provider = '-'
                             longmynd_data.service = '-'
-                            video_codec = '-'
-                            audio_codec = '-'
-                            es_pid = None
+                            es_pair.reset()
                             longmynd_data.codecs = '-'
                             longmynd_data.constellation = '-'
                             longmynd_data.null_ratio = '-'
@@ -316,11 +313,12 @@ def process_read_longmynd_data(longmynd2):
                     case 25: # LNB H Polarisation - 1 if LNB Voltage Supply is configured for Horizontal Polarisation (18V), 0 otherwise (LNB Voltage Supply requires add-on board)
                         pass
                     case 26: # AGC1 Gain - Gain value of AGC1 (0: Signal too weak, 65535: Signal too strong)
-                        agc1 = int(rawval)
-                        longmynd_data.dbm_power = calculated_dbm_power(agc1, agc2)
+                        # NOTE: may we should wait for the pair, as with 16 and 17
+                        agc_pair.agc1 = int(rawval)
+                        longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
                     case 27: # AGC2 Gain - Gain value of AGC2 (0: Minimum Gain, 65535: Maximum Gain)
-                        agc2 = int(rawval)
-                        longmynd_data.dbm_power = calculated_dbm_power(agc1, agc2)
+                        agc_pair.agc2 = int(rawval)
+                        longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
 
                 # TODO: if changed:
                 longmynd2.send(longmynd_data)
