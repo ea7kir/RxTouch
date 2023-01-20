@@ -1,6 +1,8 @@
 import subprocess
 import os
 
+import socket # only used to find ip of apple tv
+
 from collections import OrderedDict # for power levels
 import bisect  # for power levels
 
@@ -28,12 +30,13 @@ cd /home/pi/RxTouch/longmynd
 """
 
 def process_read_longmynd_data(longmynd2):
-    LM_STOP_START_SCRIPT = '/home/pi/RxTouch/lm_stopstart'
+    LM_START_SCRIPT = '/home/pi/RxTouch/lm_start'
     LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
     LM_STATUS_PIPE  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
 
     OFFSET = 9750000
-    TS_IP = '192.168.1.41' # Apple TV at office.local
+    TS_IP = socket.gethostbyname('office.local') # Apple TV at office.local
+    #TS_IP = '192.168.1.41' # Apple TV at office.local
     TS_PORT = '7777'
 
     longmynd_data = LongmyndData()
@@ -195,7 +198,7 @@ def process_read_longmynd_data(longmynd2):
                 longmynd_data.longmynd_running = False
             else:
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - OFFSET) )
-                args = [LM_STOP_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
                 longmynd_data.status_msg = f'tuned: {requestKHzStr}, {tune_args.symbol_rate}'
                 longmynd_data.longmynd_running = True

@@ -1,7 +1,0 @@
-SVR_Host: satserver.local
-SVR_Port: 8002
-TS_Host: office.local
-#TS_Host: lounge.local
-#TS_Host: iMac-2015.local
-#TS_Host: rx.local
-TS_Port: 7777
