@@ -96,6 +96,28 @@ $ sudo raspi-config
 
 	* SELECT 1 Sytem -> S5 Boot -> Auto Login -> B4 Desktop Auto Login
 
+-------------------
+
+8) INSTALL LONGMYND
+
+$ sudo apt -y install make gcc libusb-1.0-0-dev libasound2-dev
+
+$ cd RxTouch
+$ wget https://github.com/BritishAmateurTelevisionClub/longmynd/archive/refs/heads/master.zip
+$ unzip master.zip
+$ rm master.zip
+$ mv longmynd-master longmynd
+$ cd longmynd
+
+IT'S NOW NECCESSARY TO COMMENT LINE 22 IN THE Makefile
+
+$ make
+$ mkfifo longmynd_main_status
+$ mkfifo longmynd_main_ts
+$ cd
+
+-------------------
+
 # sudo reboot
 
 #########################################################
