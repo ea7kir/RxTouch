@@ -92,7 +92,7 @@ $ sudo apt install raspberrypi-ui-mods
 
 7) RUN PASPI-CONFIG - NOT NEEDED FOR ROOF
 
-$ sudo rasps-config
+$ sudo raspi-config
 
 	* SELECT 1 Sytem -> S5 Boot -> Auto Login -> B4 Desktop Auto Login
 

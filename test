@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /home/pi/RxTouch
+export DISPLAY=:1
+python main_gui.py
