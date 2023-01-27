@@ -49,6 +49,9 @@ echo
 echo "THIS IS NOT WORKING YET"
 # git clone https://github.com/ea7kir/RxTouch.git
 
+#chmod +x lm_start
+#chmod +x lm_stop
+
 echo
 echo "-------------------------------"
 echo "-- Compiling longmynd"
