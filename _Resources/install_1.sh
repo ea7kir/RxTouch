@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# to copy this file from Mac to Rpi, type
-# scp install_1.sh pi@rxtouch.local:.
-# and chmod +x install_1.sh
-
 echo "Installing RxTouch Part 1"
 
 echo
