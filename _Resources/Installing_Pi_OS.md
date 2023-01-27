@@ -1,6 +1,6 @@
-# Installing Pi OS from the Mac
+# Installing Pi OS
 
-NOTE: CURRENTLY REQUIRES PIOS BULLSEYE 64-BIT FULL DESKTOP VERSION
+NOTE: CURRENTLY REQUIRES PIOS BULLSEYE 64-BIT FULL DESKTOP
 
 ## Using Raspberry Pi Imager:
 
@@ -21,7 +21,27 @@ CONFIGURE:
 SAVE and WRITE
 ```
 
-Insert card and login, wait until the software update icon to appear,
-then proceed with updates and reboot.
+Insert the card and login. Wait for the software update icon to appear, and proceed to update and reboot.
 
-Login and copy this file to the Raspberry Pi and execute.
+## Login
+
+Clone the repro.
+
+```
+cd
+git clone https://github.com/ea7kir/RxTouch.git
+```
+
+Change permissions for the 3 install scrpits.
+
+```
+chmod +x RxTouch/_Resources/install_*
+```
+
+Exeute the 3 install scrpits in order.
+
+```
+./RxTouch/_Resources/install_1.sh
+./RxTouch/_Resources/install_2.sh
+./RxTouch/_Resources/install_3.sh
+```
