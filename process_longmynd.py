@@ -14,7 +14,7 @@ from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 # CLASS ###############################################################
 
 class LongmyndData:
-    state = '-' # TODO: could use this to reset VLC when going through 'Locked' to 'DVB-S' or 'DVB-S2'
+    state = 'stopped' # TODO: could use this to reset VLC when going through 'Locked' to 'DVB-S' or 'DVB-S2'
     frequency = '-'
     symbol_rate = '-'
     mode = '-'
@@ -81,6 +81,17 @@ def process_read_longmynd_data(pipe):
             self.the_1st_type = None
             self.the_2nd_type = None
 
+# CLASS ###############################################################
+
+    class AgcPair:
+        agc1 = None
+        agc2 = None
+        def __init__(self):
+            pass
+        def reset(self):        # NOTE: not currently used
+            self.agc1 = None
+            self.agc2 = None
+
 # FUNC ###############################################################
     def constellation_fec(state, modcod):
         MODCOD_DVB_S = [
@@ -101,8 +112,11 @@ def process_read_longmynd_data(pipe):
             case 'DVB-S':
                 return MODCOD_DVB_S[modcod]
             case 'DVB-S2':
+                if modcod == 0:
+                    print('Got modcod=0 "{MODCOD_DVB_S2[modcod]}", so returning "-"')
+                    return '-'
                 return MODCOD_DVB_S2[modcod]
-        return '_', '_'
+        return '-', '-'
 
 # FUNC ###############################################################
 
@@ -157,22 +171,12 @@ def process_read_longmynd_data(pipe):
                 key = f'DVB-S2 {constellation} {fec}'
             case '_':
                 return '-', '-'
-        #print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
+        if key == 'KEY':
+            print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
         float_threshold = MOD_THRESHOLD[key]
         float_mer = float(db_mer)
         db_margin = float_mer - float_threshold
         return state, 'D {:.1f}'.format(db_margin)
-
-# CLASS ###############################################################
-
-    class AgcPair:
-        agc1 = None
-        agc2 = None
-        def __init__(self):
-            pass
-        def reset(self):        # NOTE: not currently used
-            self.agc1 = None
-            self.agc2 = None
 
 # FUNC ###############################################################
 
@@ -274,7 +278,9 @@ def process_read_longmynd_data(pipe):
 
 ################################################################
 
-    longmynd_state = '-'
+    STOPPED = 'stopped'
+    STARTED = 'started'
+    longmynd_state = STOPPED
     es_pair = EsPair()
     agc_pair = AgcPair()
 
@@ -287,12 +293,14 @@ def process_read_longmynd_data(pipe):
             if tune_args == 'STOP':
                 args = LM_STOP_SCRIPT
                 p2 = subprocess.run(args)
+                longmynd_data.status_msg = STOPPED
                 longmynd_data.longmynd_running = False
             else:
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - OFFSET) )
                 args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                # TODO: OR args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
-                longmynd_data.status_msg = f'tuned: {requestKHzStr}, {tune_args.symbol_rate}'
+                longmynd_data.status_msg = STARTED #f'tuned: {requestKHzStr}, {tune_args.symbol_rate}'
                 longmynd_data.longmynd_running = True
 
         if longmynd_data.longmynd_running:
@@ -331,13 +339,13 @@ def process_read_longmynd_data(pipe):
                             es_pair.reset()
                             #longmynd_data.frequency = '-'
                             longmynd_data.symbol_rate = ''
-                            #longmynd_data.mode = '-'
+                            longmynd_data.mode = '-'
                             longmynd_data.constellation = '-'
                             longmynd_data.fec = '-'
                             longmynd_data.codecs = '-'
-                            #longmynd_data.db_mer = '-'
-                            #longmynd_data.db_margin = '-'
-                            #longmynd_data.dbm_power = '-'
+                            longmynd_data.db_mer = '-'
+                            longmynd_data.db_margin = '-'
+                            longmynd_data.dbm_power = '-'
                             longmynd_data.null_ratio = '-'
                             longmynd_data.null_ratio_bar = 0
                             longmynd_data.provider = '-'
@@ -425,11 +433,13 @@ def process_read_longmynd_data(pipe):
                         agc_pair.agc2 = int(rawval)
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
 
+                longmynd_data.status_msg = longmynd_state
+                longmynd_data.longmynd_running = True
                 pipe.send(longmynd_data)
 
         else:
             
-            longmynd_data.state = '-'
+            longmynd_data.state = STOPPED
             longmynd_data.frequency = '-'
             longmynd_data.symbol_rate = '-'
             longmynd_data.mode = '-'
@@ -442,7 +452,8 @@ def process_read_longmynd_data(pipe):
             longmynd_data.null_ratio = '-'
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
-            longmynd_data.status_msg = '-'
+            longmynd_data.status_msg = STOPPED
+            longmynd_data.longmynd_running = False
             pipe.send(longmynd_data)
             sleep(0.5) # delay to simulate data reading
 
