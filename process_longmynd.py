@@ -15,26 +15,29 @@ from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 
 class LongmyndData:
     state = '-' # TODO: could use this to reset VLC when going through 'Locked' to 'DVB-S' or 'DVB-S2'
-    frequency = ''
-    symbol_rate = ''
-    mode = ''
-    constellation = ''
-    fec = ''
-    codecs = ''
-    db_mer = ''
-    db_margin = ''
-    dbm_power = ''
-    null_ratio = ''
+    frequency = '-'
+    symbol_rate = '-'
+    mode = '-'
+    constellation = '-'
+    fec = '-'
+    codecs = '-'
+    db_mer = '-'
+    db_margin = '-'
+    dbm_power = '-'
+    null_ratio = '-'
     null_ratio_bar = 0
-    provider = ''
-    service = ''
-    status_msg = '' # TODO: remove if redundant
+    provider = '-'
+    service = '-'
+    status_msg = '-' # TODO: remove if redundant
     longmynd_running: bool = False # TODO: remove if redundant
 
 """
 Example to receive the beacon:
 cd /home/pi/RxTouch/longmynd
 /home/pi/RxTouch/longmynd/longmynd -i 192.168.1.41 7777 -S 0.6 741500 1500 &
+OR
+/home/pi/RxTouch/longmynd/longmynd -S 0.6 741500 1500 &
+    and start VLC with 'cvlc longmynd_main_ts
 """
 
 def process_read_longmynd_data(pipe):
@@ -326,13 +329,21 @@ def process_read_longmynd_data(pipe):
                         if int(rawval) < 3: # if it is not locked, reset some state
                             # TODO: at this point VLC should output 'NO VIDEO'
                             es_pair.reset()
-                            longmynd_data.provider = '-'
-                            longmynd_data.service = '-'
-                            longmynd_data.codecs = '-'
+                            #longmynd_data.frequency = '-'
+                            longmynd_data.symbol_rate = ''
+                            #longmynd_data.mode = '-'
                             longmynd_data.constellation = '-'
                             longmynd_data.fec = '-'
+                            longmynd_data.codecs = '-'
+                            #longmynd_data.db_mer = '-'
+                            #longmynd_data.db_margin = '-'
+                            #longmynd_data.dbm_power = '-'
                             longmynd_data.null_ratio = '-'
                             longmynd_data.null_ratio_bar = 0
+                            longmynd_data.provider = '-'
+                            longmynd_data.service = '-'
+                            #longmynd_data.status_msg = '' # TODO: remove if redundant
+                            #longmynd_data.longmynd_running: bool = False # TODO: remove if redundant
                     case 2: # LNA Gain - On devices that have LNA Amplifiers this represents the two gain sent as N, where n = (lna_gain<<5) | lna_vgo. Though not actually linear, n can be usefully treated as a single byte representing the gain of the amplifier
                         pass
                     case 3: # Puncture Rate - During a search this is the pucture rate that is being trialled. When locked this is the pucture rate detected in the stream. Sent as a single value, n, where the pucture rate is n/(n+1)
