@@ -11,19 +11,19 @@ import bisect  # for power levels
 
 from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 
-class LongmyndData:  # TODO: most values could be None
-    frequency: str = ''
-    symbol_rate: str = ''
-    constellation: str = ''
-    fec: str = ''
-    codecs: str = ''
-    db_mer: str = ''
-    db_margin: str = ''
-    dbm_power: str = ''
-    null_ratio: str = ''
-    provider: str = ''
-    service: str = ''
-    status_msg: str = ''
+class LongmyndData:
+    frequency = ''
+    symbol_rate = ''
+    constellation = ''
+    fec = ''
+    codecs = ''
+    db_mer = ''
+    db_margin = ''
+    dbm_power = ''
+    null_ratio = ''
+    provider = ''
+    service = ''
+    status_msg = ''
     longmynd_running: bool = False
 
 """
@@ -301,6 +301,7 @@ def process_read_longmynd_data(longmynd2):
 
         return lookup_dict[closest_key]
 
+# LOOP BEGIN ########################################################################################
 
     while True:
         
@@ -471,3 +472,5 @@ def process_read_longmynd_data(longmynd2):
             longmynd_data.status_msg = '-'
             longmynd2.send(longmynd_data)
             sleep(0.5) # delay to simulate data reading
+
+# LOOP END ########################################################################################
