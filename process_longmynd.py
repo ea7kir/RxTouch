@@ -14,6 +14,7 @@ from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 class LongmyndData:
     frequency = ''
     symbol_rate = ''
+    mode = ''
     constellation = ''
     fec = ''
     codecs = ''
@@ -21,6 +22,7 @@ class LongmyndData:
     db_margin = ''
     dbm_power = ''
     null_ratio = ''
+    null_ratio_bar = 0
     provider = ''
     service = ''
     status_msg = ''
@@ -73,23 +75,6 @@ def process_read_longmynd_data(longmynd2):
             self.the_1st_type = None
             self.the_2nd_type = None
 
-    es_pair = EsPair()
-    
-################################################################
-
-    class AgcPair:
-        agc1 = None
-        agc2 = None
-        def __init__(self):
-            pass
-        def reset(self):        # NOTE: not currently used
-            self.agc1 = None
-            self.agc2 = None
-
-################################################################
-
-    agc_pair = AgcPair()
-
 ################################################################
 
     class ModcodPair: # returns constellation, fec
@@ -106,28 +91,24 @@ def process_read_longmynd_data(longmynd2):
             ('16APSK', '8/9'), ('16APSK', '9/10'), ('32APSK', '3/4'), ('32APSK', '4/5'),
             ('32APSK', '5/6'), ('32APSK', '8/9'), ('32APSK', '9/10')
         ]
-        state = None
-        modcode = None
+        #state = None
+        #modcode = None
         def __init__(self):
             pass
-        def constellation_fec(self): # TODO: why can the result be '-', '?'
-            match self.state:
-                case 'S':
-                    return self.MODCOD_DVB_S[self.modecod]
-                case 'S2':
-                    return self.MODCOD_DVB_S2[self.modcod]
-            return 'A', 'B'
-        def reset(self):
-            self.state = None
-            self.modcode = None
+        def constellation_fec(self, state, modcod):
+            match state:
+                case 'DVB-S':
+                    return self.MODCOD_DVB_S[modcod]
+                case 'DVB-S2':
+                    return self.MODCOD_DVB_S2[modcod]
+            return '_', '_'
+#        def reset(self):
+#            self.state = None
+#            self.modcode = None
 
 ################################################################
 
-    modcod_pair = ModcodPair()
-    
-################################################################
-
-    class DbMarginPair: # returns db_margin
+    class DbMarginPair: # returns mode & db_margin
         # SignalReport uses Modulation/mode & MER
         MOD_THRESHOLD = {
             'DVB-S 1/2':          1.7,
@@ -165,44 +146,45 @@ def process_read_longmynd_data(longmynd2):
             'DVB-S2 32APSK 8/9':  15.7,
             'DVB-S2 32APSK 9/10': 16.1,
         }
-        state = None
-        mer = None
-        fec = None
-        constellation = None
         def __init__(self):
             pass
-        def compute_db_margin(self, state, mer, fec, constellation):
-            if mer == '-' or fec == '-' or constellation == '-':
-                return '-'
-            if mer == None or fec == None or constellation == None:
-                return '-'
-            self.state = state
-            self.mer = mer
-            self.fec = fec
-            self.constellation = constellation
-            match self.state:
-                case 'S':
-                    key = f'DVB-S {self.fec}'
-            match self.state:
-                case 'S2':
-                    key = f'DVB-S2 {self.constellation} {self.fec}'
-                case '_':
-                    return '-'
-            float_mer = float(self.mer)
-            float_threshold = self.MOD_THRESHOLD[key]
-            db_margin = float_mer - float_threshold
-            return 'D {:.1f}'.format(db_margin)
-        def reset(self):
-            self.state = None
-            self.mer = None
-            self.fec = None
-            self.constellation = None
 
+        def mode_margin(self, state, db_mer, fec, constellation):
+            if db_mer == '-' or fec == '-' or constellation == '-':
+                return '-', '-'
+            if db_mer == None or fec == None or constellation == None:
+                return '-', '-'
+            key = 'KEY'
+            match state:
+                case 'DVB-S':
+                    key = f'DVB-S {fec}'
+                case 'DVB-S2':
+                    key = f'DVB-S2 {constellation} {fec}'
+                case '_':
+                    return '-', '-'
+            #print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
+            float_threshold = self.MOD_THRESHOLD[key]
+            float_mer = float(db_mer)
+            db_margin = float_mer - float_threshold
+            return state, 'D {:.1f}'.format(db_margin)
+
+#        def reset(self):
+#            self.state = None
+#            self.mer = None
+#            self.fec = None
+#            self.constellation = None
 
 ################################################################
 
-    db_margin_pair = DbMarginPair()
-    
+    class AgcPair:
+        agc1 = None
+        agc2 = None
+        def __init__(self):
+            pass
+        def reset(self):        # NOTE: not currently used
+            self.agc1 = None
+            self.agc2 = None
+
 ################################################################
 
     def calculated_dbm_power(agc_pair): # returns dbm_power
@@ -301,6 +283,14 @@ def process_read_longmynd_data(longmynd2):
 
         return lookup_dict[closest_key]
 
+################################################################
+
+    longmynd_state = '-'
+    es_pair = EsPair()
+    agc_pair = AgcPair()
+    modcod_pair = ModcodPair()
+    db_margin_pair = DbMarginPair()
+
 # LOOP BEGIN ########################################################################################
 
     while True:
@@ -334,17 +324,17 @@ def process_read_longmynd_data(longmynd2):
                     case 1: # State
                         match int(rawval):
                             case 0: # initialising
-                                longmynd_data.mode = 'Initialising'
+                                longmynd_state = 'Initialising'
                             case 1: # searching
-                                longmynd_data.mode = 'Seaching'
+                                longmynd_state = 'Seaching'
                             case 2: # found headers
-                                longmynd_data.mode = 'Locked'
+                                longmynd_state = 'Locked'
                             case 3: # locked on a DVB-S signal
-                                longmynd_data.mode = 'DVBS-S'
-                                modcod_pair.state = 'S'
+                                longmynd_state = 'DVB-S'
+                                #modcod_pair.state = 'S'
                             case 4: # locked on a DVB-S2 signal
-                                longmynd_data.mode = 'DVBS-S2'
-                                modcod_pair.state = 'S2'
+                                longmynd_state = 'DVB-S2'
+                                # modcod_pair.state = 'S2'
 
                         #if not hasPIDs:
                         #    self.tunerStatus.setPIDs(self.pidCache)
@@ -361,10 +351,11 @@ def process_read_longmynd_data(longmynd2):
                             longmynd_data.service = '-'
                             es_pair.reset()
                             longmynd_data.codecs = '-'
-                            modcod_pair.reset()
+                            #modcod_pair.reset()
                             longmynd_data.constellation = '-'
                             longmynd_data.fec = '-'
                             longmynd_data.null_ratio = '-'
+                            longmynd_data.null_ratio_bar = 0
                     case 2: # LNA Gain - On devices that have LNA Amplifiers this represents the two gain sent as N, where n = (lna_gain<<5) | lna_vgo. Though not actually linear, n can be usefully treated as a single byte representing the gain of the amplifier
                         pass
                     case 3: # Puncture Rate - During a search this is the pucture rate that is being trialled. When locked this is the pucture rate detected in the stream. Sent as a single value, n, where the pucture rate is n/(n+1)
@@ -397,7 +388,8 @@ def process_read_longmynd_data(longmynd2):
                     case 14: # Service Provider Service - TS Service Name
                         longmynd_data.service = str(rawval)
                     case 15: # Null Ratio - Ratio of Nulls in TS as percentage
-                        longmynd_data.null_ratio = int(rawval)
+                        longmynd_data.null_ratio = rawval
+                        longmynd_data.null_ratio_bar = int(rawval)
                     case 16: # The PID numbers themselves are fairly arbitrary, will vary based on the transmitted signal and don't really mean anything in a single program multiplex.
                         # In the status stream 16 and 17 always come in pairs, 16 is the PID and 17 is the type for that PID, e.g.
                         # This means that PID 257 is of type 27 which you look up in the table to be H.264 and PID 258 is type 3 which the table says is MP3.
@@ -420,16 +412,11 @@ def process_read_longmynd_data(longmynd2):
                             es_pair.reset()
                     case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
                     #    self.tunerStatus.setModcode(int(rawval))
-                        modcod_pair.modcod = int(rawval)
-                        longmynd_data.constellation, longmynd_data.fec = modcod_pair.constellation_fec()
+                        #modcod_pair.modcod = int(rawval)
+                        longmynd_data.constellation, longmynd_data.fec = modcod_pair.constellation_fec(longmynd_state, int(rawval))
 
-                        # TODO: move db_margin_pair.compute_db_margin into ModcodPair
-                        longmynd_data.db_margin = db_margin_pair.compute_db_margin(
-                            modcod_pair.state,
-                            longmynd_data.db_mer,
-                            longmynd_data.fec,
-                            longmynd_data.constellation
-                        )
+                        # TODO: move db_margin into ModcodPair
+                        longmynd_data.mode, longmynd_data.db_margin = db_margin_pair.mode_margin(longmynd_state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
 
                     case 19: # Short Frames - 1 if received signal is using Short Frames, 0 otherwise (DVB-S2 only)
                         pass

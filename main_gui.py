@@ -187,10 +187,7 @@ def main_gui(parent_spectrum_connection, parent_longmynd_connection):
             window['-DB_MARGIN-'].update(longmynd_data.db_margin)
             window['-DBM_POWER-'].update(longmynd_data.dbm_power)
             window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
-            if longmynd_data.null_ratio == '-':
-                window['-NULL_RATIO-BAR-'].UpdateBar(0)
-            else:
-                window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio)
+            window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
             window['-PROVIDER-'].update(longmynd_data.provider)
             window['-SERVICE-'].update(longmynd_data.service)
             window['-STATUS_BAR-'].update(longmynd_data.status_msg)
