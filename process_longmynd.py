@@ -14,7 +14,7 @@ from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 # CLASS ###############################################################
 
 class LongmyndData:
-    state = '-' # TODO: could use this to reset VLC when going through 'Locked'
+    state = '-' # TODO: could use this to reset VLC when going through 'Locked' to 'DVB-S' or 'DVB-S2'
     frequency = ''
     symbol_rate = ''
     mode = ''
@@ -78,9 +78,8 @@ def process_read_longmynd_data(pipe):
             self.the_1st_type = None
             self.the_2nd_type = None
 
-# CLASS ###############################################################
-# TODO: change to def constellation_fec(state, modcod):
-    class ModcodPair: # returns constellation, fec
+# FUNC ###############################################################
+    def constellation_fec(state, modcod):
         MODCOD_DVB_S = [
             ('QPSK', '1/2'), ('QPSK', '2/3'), ('QPSK', '3/4'), ('QPSK', '5/6'), ('QPSK', '7/8'),
         ]
@@ -94,15 +93,13 @@ def process_read_longmynd_data(pipe):
             ('16APSK', '8/9'), ('16APSK', '9/10'), ('32APSK', '3/4'), ('32APSK', '4/5'),
             ('32APSK', '5/6'), ('32APSK', '8/9'), ('32APSK', '9/10')
         ]
-        def __init__(self):
-            pass
-        def constellation_fec(self, state, modcod):
-            match state:
-                case 'DVB-S':
-                    return self.MODCOD_DVB_S[modcod]
-                case 'DVB-S2':
-                    return self.MODCOD_DVB_S2[modcod]
-            return '_', '_'
+
+        match state:
+            case 'DVB-S':
+                return MODCOD_DVB_S[modcod]
+            case 'DVB-S2':
+                return MODCOD_DVB_S2[modcod]
+        return '_', '_'
 
 # FUNC ###############################################################
 
@@ -147,8 +144,8 @@ def process_read_longmynd_data(pipe):
 
         if db_mer == '-' or fec == '-' or constellation == '-':
             return '-', '-'
-        if db_mer == None or fec == None or constellation == None:
-            return '-', '-'
+        #if db_mer == None or fec == None or constellation == None:
+        #    return '-', '-'
         key = 'KEY'
         match state:
             case 'DVB-S':
@@ -277,7 +274,6 @@ def process_read_longmynd_data(pipe):
     longmynd_state = '-'
     es_pair = EsPair()
     agc_pair = AgcPair()
-    modcod_pair = ModcodPair()
 
 # LOOP BEGIN ########################################################################################
 
@@ -318,9 +314,9 @@ def process_read_longmynd_data(pipe):
                             case 2: # found headers
                                 longmynd_state = 'Locked'
                             case 3: # locked on a DVB-S signal
-                                longmynd_state = 'DVB-S'
+                                longmynd_state = 'DVB-S'  # TODO: at this point VLC should be set to run
                             case 4: # locked on a DVB-S2 signal
-                                longmynd_state = 'DVB-S2'
+                                longmynd_state = 'DVB-S2'  # TODO: at this point VLC should be set to run
 
                         #if not hasPIDs:
                         #    self.tunerStatus.setPIDs(self.pidCache)
@@ -328,6 +324,7 @@ def process_read_longmynd_data(pipe):
                         #hasPIDs = False
 
                         if int(rawval) < 3: # if it is not locked, reset some state
+                            # TODO: at this point VLC should output 'NO VIDEO'
                             es_pair.reset()
                             longmynd_data.provider = '-'
                             longmynd_data.service = '-'
@@ -391,11 +388,8 @@ def process_read_longmynd_data(pipe):
                             longmynd_data.codecs = f'{es_pair.codec(es_pair.the_1st_type)} {es_pair.codec(es_pair.the_2nd_type)}'
                             es_pair.reset()
                     case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
-                    #    self.tunerStatus.setModcode(int(rawval))
-                        #modcod_pair.modcod = int(rawval)
-                        longmynd_data.constellation, longmynd_data.fec = modcod_pair.constellation_fec(longmynd_state, int(rawval))
-
-                        # TODO: move db_margin into ModcodPair
+                        longmynd_data.constellation, longmynd_data.fec = constellation_fec(longmynd_state, int(rawval))
+                        # TODO: move mode_margin() into constellation_fec()
                         longmynd_data.mode, longmynd_data.db_margin = mode_margin(longmynd_state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
 
                     case 19: # Short Frames - 1 if received signal is using Short Frames, 0 otherwise (DVB-S2 only)
@@ -424,6 +418,7 @@ def process_read_longmynd_data(pipe):
 
         else:
             
+            longmynd_data.state = '-'
             longmynd_data.frequency = '-'
             longmynd_data.symbol_rate = '-'
             longmynd_data.mode = '-'
