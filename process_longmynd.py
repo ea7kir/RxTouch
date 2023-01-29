@@ -93,7 +93,9 @@ def process_read_longmynd_data(pipe):
             self.agc2 = None
 
 # FUNC ###############################################################
-    def constellation_fec(state, modcod):
+
+    def constellation_fec(state, modcod): # returns (constellation, fec)
+
         MODCOD_DVB_S = [
             ('QPSK', '1/2'), ('QPSK', '2/3'), ('QPSK', '3/4'), ('QPSK', '5/6'), ('QPSK', '7/8'),
         ]
@@ -112,15 +114,15 @@ def process_read_longmynd_data(pipe):
             case 'DVB-S':
                 return MODCOD_DVB_S[modcod]
             case 'DVB-S2':
-                if modcod == 0:
-                    print('Got modcod=0 "{MODCOD_DVB_S2[modcod]}", so returning "-"')
-                    return '-'
+                #if modcod == 0:
+                #    print('Got modcod=0 "{MODCOD_DVB_S2[modcod]}", so returning ("-", "x")')  # TODO: but a better way would be to display it
+                #    return ('-', 'x')
                 return MODCOD_DVB_S2[modcod]
-        return '-', '-'
+        return ('-', '-')
 
 # FUNC ###############################################################
 
-    def mode_margin(state, db_mer, fec, constellation): # returns mode & db_margin
+    def mode_margin(state, db_mer, fec, constellation): # returns (mode, db_margin)
         # SignalReport uses Modulation/mode & MER
         MOD_THRESHOLD = {
             'DVB-S 1/2':          1.7,
@@ -160,23 +162,25 @@ def process_read_longmynd_data(pipe):
         }
 
         if db_mer == '-' or fec == '-' or constellation == '-':
-            return '-', '-'
+            return ('-', '-')
         #if db_mer == None or fec == None or constellation == None:
-        #    return '-', '-'
+        #    return ('-', '-')
         key = 'KEY'
         match state:
             case 'DVB-S':
                 key = f'DVB-S {fec}'
             case 'DVB-S2':
+                if constellation == 'DummyPL':
+                    return (state, 'x' )
                 key = f'DVB-S2 {constellation} {fec}'
             case '_':
-                return '-', '-'
+                return ('-', '-')
         if key == 'KEY':
             print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
         float_threshold = MOD_THRESHOLD[key]
         float_mer = float(db_mer)
         db_margin = float_mer - float_threshold
-        return state, 'D {:.1f}'.format(db_margin)
+        return (state, 'D {:.1f}'.format(db_margin))
 
 # FUNC ###############################################################
 
@@ -337,7 +341,7 @@ def process_read_longmynd_data(pipe):
                         if int(rawval) < 3: # if it is not locked, reset some state
                             # TODO: at this point VLC should output 'NO VIDEO'
                             es_pair.reset()
-                            #longmynd_data.frequency = '-'
+                            longmynd_data.frequency = '-'
                             longmynd_data.symbol_rate = ''
                             longmynd_data.mode = '-'
                             longmynd_data.constellation = '-'
