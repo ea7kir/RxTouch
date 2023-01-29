@@ -11,7 +11,10 @@ import bisect  # for power levels
 
 from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 
+# CLASS ###############################################################
+
 class LongmyndData:
+    state = '-' # TODO: could use this to reset VLC when going through 'Locked'
     frequency = ''
     symbol_rate = ''
     mode = ''
@@ -25,8 +28,8 @@ class LongmyndData:
     null_ratio_bar = 0
     provider = ''
     service = ''
-    status_msg = ''
-    longmynd_running: bool = False
+    status_msg = '' # TODO: remove if redundant
+    longmynd_running: bool = False # TODO: remove if redundant
 
 """
 Example to receive the beacon:
@@ -34,7 +37,7 @@ cd /home/pi/RxTouch/longmynd
 /home/pi/RxTouch/longmynd/longmynd -i 192.168.1.41 7777 -S 0.6 741500 1500 &
 """
 
-def process_read_longmynd_data(longmynd2):
+def process_read_longmynd_data(pipe):
     LM_START_SCRIPT = '/home/pi/RxTouch/lm_start'
     LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
     LM_STATUS_PIPE  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
@@ -48,7 +51,7 @@ def process_read_longmynd_data(longmynd2):
 
     statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
-################################################################
+# CLASS ###############################################################
 
     class EsPair:
         has_1st_pid = False
@@ -75,8 +78,8 @@ def process_read_longmynd_data(longmynd2):
             self.the_1st_type = None
             self.the_2nd_type = None
 
-################################################################
-
+# CLASS ###############################################################
+# TODO: change to def constellation_fec(state, modcod):
     class ModcodPair: # returns constellation, fec
         MODCOD_DVB_S = [
             ('QPSK', '1/2'), ('QPSK', '2/3'), ('QPSK', '3/4'), ('QPSK', '5/6'), ('QPSK', '7/8'),
@@ -91,8 +94,6 @@ def process_read_longmynd_data(longmynd2):
             ('16APSK', '8/9'), ('16APSK', '9/10'), ('32APSK', '3/4'), ('32APSK', '4/5'),
             ('32APSK', '5/6'), ('32APSK', '8/9'), ('32APSK', '9/10')
         ]
-        #state = None
-        #modcode = None
         def __init__(self):
             pass
         def constellation_fec(self, state, modcod):
@@ -102,13 +103,10 @@ def process_read_longmynd_data(longmynd2):
                 case 'DVB-S2':
                     return self.MODCOD_DVB_S2[modcod]
             return '_', '_'
-#        def reset(self):
-#            self.state = None
-#            self.modcode = None
 
-################################################################
+# FUNC ###############################################################
 
-    class DbMarginPair: # returns mode & db_margin
+    def mode_margin(state, db_mer, fec, constellation): # returns mode & db_margin
         # SignalReport uses Modulation/mode & MER
         MOD_THRESHOLD = {
             'DVB-S 1/2':          1.7,
@@ -146,35 +144,26 @@ def process_read_longmynd_data(longmynd2):
             'DVB-S2 32APSK 8/9':  15.7,
             'DVB-S2 32APSK 9/10': 16.1,
         }
-        def __init__(self):
-            pass
 
-        def mode_margin(self, state, db_mer, fec, constellation):
-            if db_mer == '-' or fec == '-' or constellation == '-':
+        if db_mer == '-' or fec == '-' or constellation == '-':
+            return '-', '-'
+        if db_mer == None or fec == None or constellation == None:
+            return '-', '-'
+        key = 'KEY'
+        match state:
+            case 'DVB-S':
+                key = f'DVB-S {fec}'
+            case 'DVB-S2':
+                key = f'DVB-S2 {constellation} {fec}'
+            case '_':
                 return '-', '-'
-            if db_mer == None or fec == None or constellation == None:
-                return '-', '-'
-            key = 'KEY'
-            match state:
-                case 'DVB-S':
-                    key = f'DVB-S {fec}'
-                case 'DVB-S2':
-                    key = f'DVB-S2 {constellation} {fec}'
-                case '_':
-                    return '-', '-'
-            #print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
-            float_threshold = self.MOD_THRESHOLD[key]
-            float_mer = float(db_mer)
-            db_margin = float_mer - float_threshold
-            return state, 'D {:.1f}'.format(db_margin)
+        #print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
+        float_threshold = MOD_THRESHOLD[key]
+        float_mer = float(db_mer)
+        db_margin = float_mer - float_threshold
+        return state, 'D {:.1f}'.format(db_margin)
 
-#        def reset(self):
-#            self.state = None
-#            self.mer = None
-#            self.fec = None
-#            self.constellation = None
-
-################################################################
+# CLASS ###############################################################
 
     class AgcPair:
         agc1 = None
@@ -185,7 +174,7 @@ def process_read_longmynd_data(longmynd2):
             self.agc1 = None
             self.agc2 = None
 
-################################################################
+# FUNC ###############################################################
 
     def calculated_dbm_power(agc_pair): # returns dbm_power
         # TODO: Ryde Version, so rewrite using match/case instead of bisect()
@@ -289,14 +278,13 @@ def process_read_longmynd_data(longmynd2):
     es_pair = EsPair()
     agc_pair = AgcPair()
     modcod_pair = ModcodPair()
-    db_margin_pair = DbMarginPair()
 
 # LOOP BEGIN ########################################################################################
 
     while True:
         
-        if longmynd2.poll():
-            tune_args = longmynd2.recv()
+        if pipe.poll():
+            tune_args = pipe.recv()
             if tune_args == 'STOP':
                 args = LM_STOP_SCRIPT
                 p2 = subprocess.run(args)
@@ -331,27 +319,19 @@ def process_read_longmynd_data(longmynd2):
                                 longmynd_state = 'Locked'
                             case 3: # locked on a DVB-S signal
                                 longmynd_state = 'DVB-S'
-                                #modcod_pair.state = 'S'
                             case 4: # locked on a DVB-S2 signal
                                 longmynd_state = 'DVB-S2'
-                                # modcod_pair.state = 'S2'
 
                         #if not hasPIDs:
                         #    self.tunerStatus.setPIDs(self.pidCache)
                         #    setPIDs(pidCache)
                         #hasPIDs = False
 
-                        #if self.lastState != self.changeRefState : # if the signal parameters have changed
-                        #    self.stateMonotonic += 1
-                        #    self.changeRefState = copy.deepcopy(self.lastState)
-                        #self.lastState['state'] = int(rawval)
-
                         if int(rawval) < 3: # if it is not locked, reset some state
+                            es_pair.reset()
                             longmynd_data.provider = '-'
                             longmynd_data.service = '-'
-                            es_pair.reset()
                             longmynd_data.codecs = '-'
-                            #modcod_pair.reset()
                             longmynd_data.constellation = '-'
                             longmynd_data.fec = '-'
                             longmynd_data.null_ratio = '-'
@@ -416,7 +396,7 @@ def process_read_longmynd_data(longmynd2):
                         longmynd_data.constellation, longmynd_data.fec = modcod_pair.constellation_fec(longmynd_state, int(rawval))
 
                         # TODO: move db_margin into ModcodPair
-                        longmynd_data.mode, longmynd_data.db_margin = db_margin_pair.mode_margin(longmynd_state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
+                        longmynd_data.mode, longmynd_data.db_margin = mode_margin(longmynd_state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
 
                     case 19: # Short Frames - 1 if received signal is using Short Frames, 0 otherwise (DVB-S2 only)
                         pass
@@ -440,7 +420,7 @@ def process_read_longmynd_data(longmynd2):
                         agc_pair.agc2 = int(rawval)
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
 
-                longmynd2.send(longmynd_data)
+                pipe.send(longmynd_data)
 
         else:
             
@@ -457,7 +437,7 @@ def process_read_longmynd_data(longmynd2):
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
             longmynd_data.status_msg = '-'
-            longmynd2.send(longmynd_data)
+            pipe.send(longmynd_data)
             sleep(0.5) # delay to simulate data reading
 
 # LOOP END ########################################################################################
