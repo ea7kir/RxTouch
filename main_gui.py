@@ -175,7 +175,10 @@ def main_gui(parent_spectrum_connection, parent_longmynd_connection):
             graph.draw_polygon(spectrum_data.points, fill_color='green')
         if parent_longmynd_connection.poll():
             longmynd_data = parent_longmynd_connection.recv()
+            count = 0
             while parent_longmynd_connection.poll():
+                count += 1
+                print(f'overflows: {count}')
                 _ = parent_longmynd_connection.recv()
             window['-FREQUENCY-'].update(longmynd_data.frequency)
             window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)

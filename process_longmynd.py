@@ -43,7 +43,7 @@ OR
 def process_read_longmynd_data(pipe):
     LM_START_SCRIPT = '/home/pi/RxTouch/lm_start'
     LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
-    LM_STATUS_PIPE  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
+    LM_STATUS_FIFO_NAME  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
 
     OFFSET = 9750000
     TS_IP = socket.gethostbyname('office.local') # Apple TV at office.local
@@ -52,7 +52,7 @@ def process_read_longmynd_data(pipe):
 
     longmynd_data = LongmyndData()
 
-    statusFIFOfd = os.fdopen(os.open(LM_STATUS_PIPE, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
+    lm_status_fifo_fd = os.fdopen(os.open(LM_STATUS_FIFO_NAME, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
 # CLASS ###############################################################
 
@@ -186,6 +186,25 @@ def process_read_longmynd_data(pipe):
 
     def calculated_dbm_power(agc_pair): # returns dbm_power
         # TODO: Ryde Version, so rewrite using match/case instead of bisect()
+        #   Examples https://stackoverflow.com/questions/57884270/how-to-create-a-switch-case-with-the-cases-being-intervals
+
+        #if agc_pair.agc1 == 0:
+        #    match agc_pair.agc1:
+        #        case range(2741, 3200): return str(-97)
+        #else:
+        #    pass
+        #
+        #if agc_pair.agc1 == 0:
+        #    cases = {
+        #        range(2741, 3200): str(-97),
+        #        }
+        #    value = {num: value for rng, value in cases.items() for num in rng}
+        #else:
+        #    pass
+        #
+        #return '-'
+        #
+        
         agc1_dict = OrderedDict() # collections.OrderedDict()
         agc1_dict[1] = -70
         agc1_dict[10] = -69
@@ -300,6 +319,7 @@ def process_read_longmynd_data(pipe):
                 longmynd_data.status_msg = STOPPED
                 longmynd_data.longmynd_running = False
             else:
+                lm_status_fifo_fd.flush()
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - OFFSET) )
                 args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 # TODO: OR args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
@@ -309,19 +329,18 @@ def process_read_longmynd_data(pipe):
 
         if longmynd_data.longmynd_running:
 
-            # x_Ryde line 491
-            lines = statusFIFOfd.readlines()
+            lines = lm_status_fifo_fd.readlines()
             if lines == []: 
                 continue
             for line in lines:
                 if line[0] != '$':
                     continue
-                rawtype, rawval = line[1:].rstrip().split(',',1)
-                msgtype = int(rawtype)
+                lm_id_str, lm_value = line[1:].rstrip().split(',',1)
+                lm_id = int(lm_id_str)
 
-                match msgtype:
+                match lm_id:
                     case 1: # State
-                        match int(rawval):
+                        match int(lm_value):
                             case 0: # initialising
                                 longmynd_state = 'Initialising'
                             case 1: # searching
@@ -338,7 +357,7 @@ def process_read_longmynd_data(pipe):
                         #    setPIDs(pidCache)
                         #hasPIDs = False
 
-                        if int(rawval) < 3: # if it is not locked, reset some state
+                        if int(lm_value) < 3: # if it is not locked, reset some state
                             # TODO: at this point VLC should output 'NO VIDEO'
                             es_pair.reset()
                             longmynd_data.frequency = '-'
@@ -356,16 +375,16 @@ def process_read_longmynd_data(pipe):
                             longmynd_data.service = '-'
                             #longmynd_data.status_msg = '' # TODO: remove if redundant
                             #longmynd_data.longmynd_running: bool = False # TODO: remove if redundant
-                    case 2: # LNA Gain - On devices that have LNA Amplifiers this represents the two gain sent as N, where n = (lna_gain<<5) | lna_vgo. Though not actually linear, n can be usefully treated as a single byte representing the gain of the amplifier
-                        pass
-                    case 3: # Puncture Rate - During a search this is the pucture rate that is being trialled. When locked this is the pucture rate detected in the stream. Sent as a single value, n, where the pucture rate is n/(n+1)
-                        pass
-                    case 4: # I Symbol Power - Measure of the current power being seen in the I symbols
-                        pass
-                    case 5: # Q Symbol Power - Measure of the current power being seen in the Q symbols
-                        pass
+                    #case 2: # LNA Gain - On devices that have LNA Amplifiers this represents the two gain sent as N, where n = (lna_gain<<5) | lna_vgo. Though not actually linear, n can be usefully treated as a single byte representing the gain of the amplifier
+                    #    pass
+                    #case 3: # Puncture Rate - During a search this is the pucture rate that is being trialled. When locked this is the pucture rate detected in the stream. Sent as a single value, n, where the pucture rate is n/(n+1)
+                    #    pass
+                    #case 4: # I Symbol Power - Measure of the current power being seen in the I symbols
+                    #    pass
+                    #case 5: # Q Symbol Power - Measure of the current power being seen in the Q symbols
+                    #    pass
                     case 6: # Carrier Frequency - During a search this is the carrier frequency being trialled. When locked this is the Carrier Frequency detected in the stream. Sent in KHz
-                        cf = float(rawval)
+                        cf = float(lm_value)
                         frequency = (cf + OFFSET) / 1000
                         longmynd_data.frequency = '{:.2f}'.format(frequency)
                     case 7: # I Constellation - Single signed byte representing the voltage of a sampled I point
@@ -373,23 +392,23 @@ def process_read_longmynd_data(pipe):
                     case 8: # Q Constellation - Single signed byte representing the voltage of a sampled Q point
                         pass
                     case 9: # Symbol Rate - During a search this is the symbol rate being trialled.  When locked this is the symbol rate detected in the stream
-                        longmynd_data.symbol_rate = '{:.1f}'.format(float(rawval)/1000)
-                    case 10: # Viterbi Error Rate - Viterbi correction rate as a percentage * 100
-                        pass
-                    case 11: # BER - Bit Error Rate as a Percentage * 100
-                        pass
+                        longmynd_data.symbol_rate = '{:.1f}'.format(float(lm_value)/1000)
+                    #case 10: # Viterbi Error Rate - Viterbi correction rate as a percentage * 100
+                    #    pass
+                    #case 11: # BER - Bit Error Rate as a Percentage * 100
+                    #    pass
                     case 12: # MER - Modulation Error Ratio in dB * 10
-                        if rawval != '0':
-                            longmynd_data.db_mer = '{:.1f}'.format(float(rawval)/10)
+                        if lm_value != '0':
+                            longmynd_data.db_mer = '{:.1f}'.format(float(lm_value)/10)
                         else:
                             longmynd_data.db_mer = '-'
                     case 13: # Service Provider - TS Service Provider Name
-                        longmynd_data.provider = str(rawval)
+                        longmynd_data.provider = lm_value
                     case 14: # Service Provider Service - TS Service Name
-                        longmynd_data.service = str(rawval)
+                        longmynd_data.service = lm_value
                     case 15: # Null Ratio - Ratio of Nulls in TS as percentage
-                        longmynd_data.null_ratio = rawval
-                        longmynd_data.null_ratio_bar = int(rawval)
+                        longmynd_data.null_ratio = lm_value
+                        longmynd_data.null_ratio_bar = int(lm_value)
                     case 16: # The PID numbers themselves are fairly arbitrary, will vary based on the transmitted signal and don't really mean anything in a single program multiplex.
                         # In the status stream 16 and 17 always come in pairs, 16 is the PID and 17 is the type for that PID, e.g.
                         # This means that PID 257 is of type 27 which you look up in the table to be H.264 and PID 258 is type 3 which the table says is MP3.
@@ -404,37 +423,37 @@ def process_read_longmynd_data(pipe):
                             es_pair.has_2nd_pid = True
                     case 17: # ES TYPE - Elementary Stream Type (repeated as pair with 16 for each ES)
                         if es_pair.has_1st_pid and not es_pair.has_2nd_pid:
-                            es_pair.the_1st_type = rawval
+                            es_pair.the_1st_type = lm_value
                         elif es_pair.has_2nd_pid:
-                            es_pair.the_2nd_type = rawval
+                            es_pair.the_2nd_type = lm_value
                         if es_pair.has_1st_pid and es_pair.has_2nd_pid:
                             longmynd_data.codecs = f'{es_pair.codec(es_pair.the_1st_type)} {es_pair.codec(es_pair.the_2nd_type)}'
                             es_pair.reset()
                     case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
-                        longmynd_data.constellation, longmynd_data.fec = constellation_fec(longmynd_state, int(rawval))
+                        longmynd_data.constellation, longmynd_data.fec = constellation_fec(longmynd_state, int(lm_value))
                         # TODO: move mode_margin() into constellation_fec()
                         longmynd_data.mode, longmynd_data.db_margin = mode_margin(longmynd_state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
 
-                    case 19: # Short Frames - 1 if received signal is using Short Frames, 0 otherwise (DVB-S2 only)
-                        pass
-                    case 20: # Pilot Symbols - 1 if received signal is using Pilot Symbols, 0 otherwise (DVB-S2 only)
-                        pass
-                    case 21: # LDPC Error Count - LDPC Corrected Errors in last frame (DVB-S2 only)
-                        pass
-                    case 22: # BCH Error Count - BCH Corrected Errors in last frame (DVB-S2 only)
-                        pass
-                    case 23: # BCH Uncorrected - 1 if some BCH-detected errors were not able to be corrected, 0 otherwise (DVB-S2 only)
-                        pass
-                    case 24: # LNB Voltage Enabled - 1 if LNB Voltage Supply is enabled, 0 otherwise (LNB Voltage Supply requires add-on board)
-                        pass
-                    case 25: # LNB H Polarisation - 1 if LNB Voltage Supply is configured for Horizontal Polarisation (18V), 0 otherwise (LNB Voltage Supply requires add-on board)
-                        pass
+                    #case 19: # Short Frames - 1 if received signal is using Short Frames, 0 otherwise (DVB-S2 only)
+                    #    pass
+                    #case 20: # Pilot Symbols - 1 if received signal is using Pilot Symbols, 0 otherwise (DVB-S2 only)
+                    #    pass
+                    #case 21: # LDPC Error Count - LDPC Corrected Errors in last frame (DVB-S2 only)
+                    #    pass
+                    #case 22: # BCH Error Count - BCH Corrected Errors in last frame (DVB-S2 only)
+                    #    pass
+                    #case 23: # BCH Uncorrected - 1 if some BCH-detected errors were not able to be corrected, 0 otherwise (DVB-S2 only)
+                    #    pass
+                    #case 24: # LNB Voltage Enabled - 1 if LNB Voltage Supply is enabled, 0 otherwise (LNB Voltage Supply requires add-on board)
+                    #    pass
+                    #case 25: # LNB H Polarisation - 1 if LNB Voltage Supply is configured for Horizontal Polarisation (18V), 0 otherwise (LNB Voltage Supply requires add-on board)
+                    #    pass
                     case 26: # AGC1 Gain - Gain value of AGC1 (0: Signal too weak, 65535: Signal too strong)
                         # NOTE: may we should wait for the pair, as with 16 and 17
-                        agc_pair.agc1 = int(rawval)
+                        agc_pair.agc1 = int(lm_value)
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
                     case 27: # AGC2 Gain - Gain value of AGC2 (0: Minimum Gain, 65535: Maximum Gain)
-                        agc_pair.agc2 = int(rawval)
+                        agc_pair.agc2 = int(lm_value)
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
 
                 longmynd_data.status_msg = longmynd_state
@@ -459,6 +478,6 @@ def process_read_longmynd_data(pipe):
             longmynd_data.status_msg = STOPPED
             longmynd_data.longmynd_running = False
             pipe.send(longmynd_data)
-            sleep(0.5) # delay to simulate data reading
+            sleep(1.0) # delay to simulate data reading
 
 # LOOP END ########################################################################################
