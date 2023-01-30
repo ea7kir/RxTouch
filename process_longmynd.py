@@ -29,7 +29,7 @@ class LongmyndData:
     provider = '-'
     service = '-'
     status_msg = '-' # TODO: remove if redundant
-    longmynd_running: bool = False # TODO: remove if redundant
+    #longmynd_running: bool = False # TODO: remove if redundant
 
 """
 Example to receive the beacon:
@@ -204,7 +204,7 @@ def process_read_longmynd_data(pipe):
         #
         #return '-'
         #
-        
+
         agc1_dict = OrderedDict() # collections.OrderedDict()
         agc1_dict[1] = -70
         agc1_dict[10] = -69
@@ -304,6 +304,7 @@ def process_read_longmynd_data(pipe):
     STOPPED = 'stopped'
     STARTED = 'started'
     longmynd_state = STOPPED
+    longmynd_running = False
     es_pair = EsPair()
     agc_pair = AgcPair()
 
@@ -317,17 +318,17 @@ def process_read_longmynd_data(pipe):
                 args = LM_STOP_SCRIPT
                 p2 = subprocess.run(args)
                 longmynd_data.status_msg = STOPPED
-                longmynd_data.longmynd_running = False
+                longmynd_running = False
             else:
                 lm_status_fifo_fd.flush()
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - OFFSET) )
                 args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 # TODO: OR args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
-                longmynd_data.status_msg = STARTED #f'tuned: {requestKHzStr}, {tune_args.symbol_rate}'
-                longmynd_data.longmynd_running = True
+                longmynd_state = STARTED #f'tuned: {requestKHzStr}, {tune_args.symbol_rate}'
+                longmynd_running = True
 
-        if longmynd_data.longmynd_running:
+        if longmynd_running:
 
             lines = lm_status_fifo_fd.readlines()
             if lines == []: 
@@ -361,7 +362,7 @@ def process_read_longmynd_data(pipe):
                             # TODO: at this point VLC should output 'NO VIDEO'
                             es_pair.reset()
                             longmynd_data.frequency = '-'
-                            longmynd_data.symbol_rate = ''
+                            longmynd_data.symbol_rate = '-'
                             longmynd_data.mode = '-'
                             longmynd_data.constellation = '-'
                             longmynd_data.fec = '-'
@@ -373,8 +374,6 @@ def process_read_longmynd_data(pipe):
                             longmynd_data.null_ratio_bar = 0
                             longmynd_data.provider = '-'
                             longmynd_data.service = '-'
-                            #longmynd_data.status_msg = '' # TODO: remove if redundant
-                            #longmynd_data.longmynd_running: bool = False # TODO: remove if redundant
                     #case 2: # LNA Gain - On devices that have LNA Amplifiers this represents the two gain sent as N, where n = (lna_gain<<5) | lna_vgo. Though not actually linear, n can be usefully treated as a single byte representing the gain of the amplifier
                     #    pass
                     #case 3: # Puncture Rate - During a search this is the pucture rate that is being trialled. When locked this is the pucture rate detected in the stream. Sent as a single value, n, where the pucture rate is n/(n+1)
@@ -457,7 +456,6 @@ def process_read_longmynd_data(pipe):
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
 
                 longmynd_data.status_msg = longmynd_state
-                longmynd_data.longmynd_running = True
                 pipe.send(longmynd_data)
 
         else:
@@ -473,10 +471,10 @@ def process_read_longmynd_data(pipe):
             longmynd_data.db_margin = '-'
             longmynd_data.dbm_power = '-'
             longmynd_data.null_ratio = '-'
+            longmynd_data.null_ratio_bar = 0
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
             longmynd_data.status_msg = STOPPED
-            longmynd_data.longmynd_running = False
             pipe.send(longmynd_data)
             sleep(1.0) # delay to simulate data reading
 
