@@ -15,7 +15,7 @@ class SpectrumData:
 # The noise floor value is around 10000
 # The peak of the beacon is around 40000
 
-#def process_read_spectrum_data(send_spectrum_data):
+#def process_read_spectrum_data(pipe):
 #    async def handle():
 #        url = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
 #        async with websockets.connect(url) as websocket:
@@ -36,11 +36,11 @@ class SpectrumData:
 #                for i in range(93, 113): # should be range(73, 133), but this works bet
 #                    spectrum_data.beacon_level += spectrum_data.points[i][1]
 #                spectrum_data.beacon_level //= 20
-#                send_spectrum_data.send(spectrum_data)
+#                pipe.send(spectrum_data)
 #
 #    asyncio.get_event_loop().run_until_complete(handle())
 
-def process_read_spectrum_data(send_spectrum_data):
+def process_read_spectrum_data(pipe):
     async def handle():
         url = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
         async with websockets.connect(url) as websocket:
@@ -61,6 +61,6 @@ def process_read_spectrum_data(send_spectrum_data):
                 for i in range(93, 113): # should be range(73, 133), but this works bet
                     spectrum_data.beacon_level += spectrum_data.points[i][1]
                 spectrum_data.beacon_level //= 20
-                send_spectrum_data.send(spectrum_data)
+                pipe.send(spectrum_data)
 
     asyncio.run(handle())

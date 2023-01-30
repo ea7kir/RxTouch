@@ -106,7 +106,7 @@ dispatch_dictionary = {
 
 # MAIN ------------------------------------------
 
-def main_gui(parent_spectrum_connection, parent_longmynd_connection):
+def main_gui(spectrum_pipe, longmynd_pipe):
     window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
     window.set_cursor('none')
     graph = window['graph']
@@ -118,7 +118,7 @@ def main_gui(parent_spectrum_connection, parent_longmynd_connection):
         event, values = window.read(timeout=100)
         if event == '-SHUTDOWN-':
             #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-            parent_longmynd_connection.send('STOP') # NOTE: maybe this needs time to complete
+            longmynd_pipe.send('STOP') # NOTE: maybe this needs time to complete
             window['-STATUS_BAR-'].update(longmynd_data.status_msg)
             # TODO: a delay is neccessary, but I need to find a better way
             #       or dind a way to know when kill has completed
@@ -129,10 +129,10 @@ def main_gui(parent_spectrum_connection, parent_longmynd_connection):
             if tune_active:
                 window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
                 tune_args = cs.tune_args()
-                parent_longmynd_connection.send(tune_args)
+                longmynd_pipe.send(tune_args)
             else:
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                parent_longmynd_connection.send('STOP')
+                longmynd_pipe.send('STOP')
         if event == '-MUTE-':
             mute_active = not mute_active
             if mute_active:
@@ -145,10 +145,10 @@ def main_gui(parent_spectrum_connection, parent_longmynd_connection):
             window['-BV-'].update(cs.curr_value.band)
             window['-FV-'].update(cs.curr_value.frequency)
             window['-SV-'].update(cs.curr_value.symbol_rate)
-        if parent_spectrum_connection.poll():
-            spectrum_data = parent_spectrum_connection.recv()
-            while parent_spectrum_connection.poll():
-                _ = parent_spectrum_connection.recv()
+        if spectrum_pipe.poll():
+            spectrum_data = spectrum_pipe.recv()
+            while spectrum_pipe.poll():
+                _ = spectrum_pipe.recv()
             # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
             graph.erase()
             # draw graticule
@@ -173,13 +173,13 @@ def main_gui(parent_spectrum_connection, parent_longmynd_connection):
             graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
             # draw spectrum
             graph.draw_polygon(spectrum_data.points, fill_color='green')
-        if parent_longmynd_connection.poll():
-            longmynd_data = parent_longmynd_connection.recv()
+        if longmynd_pipe.poll():
+            longmynd_data = longmynd_pipe.recv()
             count = 0
-            while parent_longmynd_connection.poll():
+            while longmynd_pipe.poll():
                 count += 1
-                print(f'overflows: {count}')
-                _ = parent_longmynd_connection.recv()
+                #print(f'overflows: {count}')
+                _ = longmynd_pipe.recv()
             window['-FREQUENCY-'].update(longmynd_data.frequency)
             window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
             window['-MODE-'].update(longmynd_data.mode)
@@ -198,19 +198,19 @@ def main_gui(parent_spectrum_connection, parent_longmynd_connection):
     del window
 
 if __name__ == '__main__':
-    parent_spectrum_connection, child_spectrum_connection = Pipe()
-    parent_longmynd_connection, child_longmynd_connection = Pipe()
-    parent_video_ts_connection, child_video_ts_connection = Pipe()
+    parent_spectrum_pipe, child_spectrum_pipe = Pipe()
+    parent_longmynd_pipe, child_longmynd_pipe = Pipe()
+    parent_video_ts_pipe, child_video_ts_pipe = Pipe()
     # create the process
-    p_read_spectrum_data = Process(target=process_read_spectrum_data, args=(child_spectrum_connection,))
-    p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(child_longmynd_connection,))
-    p_process_video_ts = Process(target=process_video_ts, args=(parent_video_ts_connection, child_video_ts_connection))
+    p_read_spectrum_data = Process(target=process_read_spectrum_data, args=(child_spectrum_pipe,))
+    p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(child_longmynd_pipe,))
+    p_process_video_ts = Process(target=process_video_ts, args=(child_video_ts_pipe,))
     # start the process
     p_read_spectrum_data.start()
     p_read_longmynd_data.start()
     p_process_video_ts.start()
     # main ui
-    main_gui(parent_spectrum_connection, parent_longmynd_connection)
+    main_gui(parent_spectrum_pipe, parent_longmynd_pipe)
     # kill 
     p_read_spectrum_data.kill()
     p_read_longmynd_data.kill()
