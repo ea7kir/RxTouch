@@ -42,28 +42,12 @@ pip install pysimplegui websockets PyYAML
 
 echo
 echo "-------------------------------"
-echo "-- Cloning RxTouch from github"
+echo "-- Install xinit"
 echo "-------------------------------"
 echo
 
-echo "THIS IS NOT WORKING YET"
-# git clone https://github.com/ea7kir/RxTouch.git
-
-#chmod +x lm_start
-#chmod +x lm_stop
-
-echo
-echo "-------------------------------"
-echo "-- Compiling longmynd"
-echo "-------------------------------"
-echo
-
-echo "THIS CAN'T BE DONE UNTIL WE'VE CLONED'"
-# cd RxTouch/longmynd
-# make
-# mkfifo longmynd_main_status
-# mkfifo longmynd_main_ts
-# cd
+sudo apt install xinit
+sudo apt autoremove
 
 echo
 echo "-------------------------------"
@@ -71,4 +55,19 @@ echo "-- Done"
 echo "-------------------------------"
 echo
 
-echo "Clone from VSCODE and make longmynd manually"
+echo "To run RxTouch from my Mac,"
+echo "edit /etc/X11/Xwrapper.config"
+echo "and change allowed_users = console to allowed_users = anybody"
+echo
+echo "Clone TxTouch from within VSCODE"
+echo "using: https://github.com/ea7kir/RxTouch.git"
+echo
+echo "Compile longmynd"
+echo "# cd RxTouch/longmynd"
+echo "# make"
+echo "# mkfifo longmynd_main_status"
+echo "# mkfifo longmynd_main_ts"
+echo "# cd .."
+echo
+echo "To run RxTouch, type: ./rxtouch"
+
