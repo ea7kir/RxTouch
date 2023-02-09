@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /home/pi/RxTouch
+export DISPLAY=:0
+sudo startx /home/pi/.pyenv/shims/python main_gui.py -- -layout Multihead
