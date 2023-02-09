@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+from device_constants import SPECTRUM_URL
 
 class SpectrumData:
     def __init__(self):
@@ -42,8 +43,7 @@ class SpectrumData:
 
 def process_read_spectrum_data(pipe):
     async def handle():
-        url = 'wss://eshail.batc.org.uk/wb/fft/fft_ea7kirsatcontroller'
-        async with websockets.connect(url) as websocket:
+        async with websockets.connect(SPECTRUM_URL) as websocket:
             spectrum_data = SpectrumData()
             while True:
                 recvd_data = await websocket.recv()

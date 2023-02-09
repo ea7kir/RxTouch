@@ -4,10 +4,14 @@
 import subprocess
 import os
 
-import socket # only used to find ip of apple tv
+#import socket # only used to find ip of apple tv
 
 from collections import OrderedDict # for power levels
 import bisect  # for power levels
+
+from device_constants import LM_START_SCRIPT, LM_STOP_SCRIPT
+from device_constants import LM_OFFSET, LM_STATUS_FIFO_NAME
+from device_constants import TS_IP, TS_PORT
 
 from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 
@@ -39,16 +43,14 @@ OR
 /home/pi/RxTouch/longmynd/longmynd -S 0.6 741500 1500 &
     and start VLC with 'cvlc longmynd_main_ts
 """
-
 def process_read_longmynd_data(pipe):
-    LM_START_SCRIPT = '/home/pi/RxTouch/lm_start'
-    LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
-    LM_STATUS_FIFO_NAME  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
-
-    OFFSET = 9750000
-    TS_IP = socket.gethostbyname('office.local') # Apple TV at office.local
-    #TS_IP = '192.168.1.41' # Apple TV at office.local
-    TS_PORT = '7777'
+#    LM_START_SCRIPT = '/home/pi/RxTouch/lm_start'
+#    LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
+#    LM_STATUS_FIFO_NAME  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
+#
+#    LM_OFFSET = 9750000
+#    TS_IP = socket.gethostbyname('office.local') # Apple TV
+#    TS_PORT = '7777'
 
     longmynd_data = LongmyndData()
 
@@ -321,7 +323,7 @@ def process_read_longmynd_data(pipe):
                 longmynd_running = False
             else:
                 lm_status_fifo_fd.flush()
-                requestKHzStr = str( int(float(tune_args.frequency) * 1000 - OFFSET) )
+                requestKHzStr = str( int(float(tune_args.frequency) * 1000 - LM_OFFSET) )
                 args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 # TODO: OR args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
@@ -384,7 +386,7 @@ def process_read_longmynd_data(pipe):
                     #    pass
                     case 6: # Carrier Frequency - During a search this is the carrier frequency being trialled. When locked this is the Carrier Frequency detected in the stream. Sent in KHz
                         cf = float(lm_value)
-                        frequency = (cf + OFFSET) / 1000
+                        frequency = (cf + LM_OFFSET) / 1000
                         longmynd_data.frequency = '{:.2f}'.format(frequency)
                     case 7: # I Constellation - Single signed byte representing the voltage of a sampled I point
                         pass

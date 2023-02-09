@@ -98,6 +98,9 @@ def display_initial_values():
 
 dispatch_dictionary = {
     # Lookup dictionary that maps button to function to call
+    # NOTE: the order could affect responsiveness, but maybe a disctionary lookup is just too slow
+    #'-TUNE-':cs.tune,
+    #'-MUTE-':cs.mute,
     '-BD-':cs.dec_band, '-BU-':cs.inc_band, 
     '-FD-':cs.dec_frequency, '-FU-':cs.inc_frequency, 
     '-SD-':cs.dec_symbol_rate, '-SU-':cs.inc_symbol_rate,
@@ -147,10 +150,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 graph.draw_polygon(spectrum_data.points, fill_color='green')
             if longmynd_pipe.poll():
                 longmynd_data = longmynd_pipe.recv()
-                count = 0
                 while longmynd_pipe.poll():
-                    count += 1
-                    #print(f'overflows: {count}')
                     _ = longmynd_pipe.recv()
                 window['-FREQUENCY-'].update(longmynd_data.frequency)
                 window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
@@ -166,7 +166,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-PROVIDER-'].update(longmynd_data.provider)
                 window['-SERVICE-'].update(longmynd_data.service)
                 window['-STATUS_BAR-'].update(longmynd_data.status_msg)
-        else:
+        else: # don't bother searching for __TIMEOUT__ events
             if event == '-SHUTDOWN-':
                 #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
                 longmynd_pipe.send('STOP') # NOTE: maybe this needs time to complete
@@ -175,6 +175,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 #       or dind a way to know when kill has completed
                 sleep(1.5)
                 break
+# TODO: move tune and mute to control_status
             if event == '-TUNE-':
                 tune_active = not tune_active # move this to get auto beacon at startup
                 if tune_active:
@@ -196,6 +197,9 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-BV-'].update(cs.curr_value.band)
                 window['-FV-'].update(cs.curr_value.frequency)
                 window['-SV-'].update(cs.curr_value.symbol_rate)
+                #window['-TUNE-'].update(button_color=cs.tune_button_color)
+                #window['-MUTE-'].update(button_color=cs.mute_button_color)
+
     window.close()
     del window
 

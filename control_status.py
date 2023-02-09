@@ -241,3 +241,35 @@ def tune_args():
     else:
         tune_args.symbol_rate = curr_value.symbol_rate
     return tune_args
+
+NORMAL_BUTTON_COLOR = ('#FFFFFF','#222222')
+DISABALED_BUTTON_COLOR = ('#444444',None)
+TUNE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#007700')
+MUTE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#FF0000')
+   
+tune_is_active = False
+mute_is_active = False
+tune_button_color = NORMAL_BUTTON_COLOR
+mute_button_color = NORMAL_BUTTON_COLOR
+
+def tune():
+    global tune_is_active
+    tune_is_active = not tune_is_active
+    if tune_is_active:
+        tune_button_color = TUNE_ACTIVE_BUTTON_COLOR
+        # activate_longmynd()
+    else:
+        tune_button_color = NORMAL_BUTTON_COLOR
+        # deactivate_longmynd()
+        
+def mute():
+    global mute_is_active
+    mute_is_active = not mute_is_active
+    if mute_is_active:
+        mute_button_color = MUTE_ACTIVE_BUTTON_COLOR
+        # activate_mute()
+    else:
+        mute_is_active = NORMAL_BUTTON_COLOR
+        # deactivate_mute()
+
+
