@@ -11,6 +11,8 @@ from process_spectrum import process_read_spectrum_data, SpectrumData
 from process_longmynd import process_read_longmynd_data, LongmyndData
 from process_video_ts import process_video_ts
 
+from device_manager import configure_devices, shutdown_devices
+
 # LAYOUT ----------------------------------------
 
 sg.theme('Black')
@@ -100,7 +102,7 @@ dispatch_dictionary = {
     # Lookup dictionary that maps button to function to call
     # NOTE: the order could affect responsiveness, but maybe a disctionary lookup is just too slow
     #'-TUNE-':cs.tune,
-    #'-MUTE-':cs.mute,
+    '-MUTE-':cs.mute,
     '-BD-':cs.dec_band, '-BU-':cs.inc_band, 
     '-FD-':cs.dec_frequency, '-FU-':cs.inc_frequency, 
     '-SD-':cs.dec_symbol_rate, '-SU-':cs.inc_symbol_rate,
@@ -185,12 +187,12 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 else:
                     window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
                     longmynd_pipe.send('STOP')
-            if event == '-MUTE-':
-                mute_active = not mute_active
-                if mute_active:
-                    window['-MUTE-'].update(button_color=MUTE_ACTIVE_BUTTON_COLOR)
-                else:
-                    window['-MUTE-'].update(button_color=NORMAL_BUTTON_COLOR)
+            #if event == '-MUTE-':
+            #    mute_active = not mute_active
+            #    if mute_active:
+            #        window['-MUTE-'].update(button_color=MUTE_ACTIVE_BUTTON_COLOR)
+            #    else:
+            #        window['-MUTE-'].update(button_color=NORMAL_BUTTON_COLOR)
             if event in dispatch_dictionary:
                 func_to_call = dispatch_dictionary[event]
                 func_to_call()
@@ -198,12 +200,15 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-FV-'].update(cs.curr_value.frequency)
                 window['-SV-'].update(cs.curr_value.symbol_rate)
                 #window['-TUNE-'].update(button_color=cs.tune_button_color)
-                #window['-MUTE-'].update(button_color=cs.mute_button_color)
+                window['-MUTE-'].update(button_color=cs.mute_button_color)
 
     window.close()
     del window
 
 if __name__ == '__main__':
+
+    configure_devices()
+
     parent_spectrum_pipe, child_spectrum_pipe = Pipe()
     parent_longmynd_pipe, child_longmynd_pipe = Pipe()
     parent_video_ts_pipe, child_video_ts_pipe = Pipe()
@@ -221,6 +226,9 @@ if __name__ == '__main__':
     p_read_spectrum_data.kill()
     p_read_longmynd_data.kill()
     p_process_video_ts.kill()
+
+    shutdown_devices()
+
     # shutdown
     print('about to shut down')
     #import subprocess

@@ -1,4 +1,4 @@
-#import
+from device_manager import activate_mute, deactivate_mute
 
 TUNED_MARKER = [
     # first Int16 represents 10490.500 MHz
@@ -253,7 +253,7 @@ tune_button_color = NORMAL_BUTTON_COLOR
 mute_button_color = NORMAL_BUTTON_COLOR
 
 def tune():
-    global tune_is_active
+    global tune_is_active, tune_button_color
     tune_is_active = not tune_is_active
     if tune_is_active:
         tune_button_color = TUNE_ACTIVE_BUTTON_COLOR
@@ -263,13 +263,13 @@ def tune():
         # deactivate_longmynd()
         
 def mute():
-    global mute_is_active
+    global mute_is_active, mute_button_color
     mute_is_active = not mute_is_active
     if mute_is_active:
         mute_button_color = MUTE_ACTIVE_BUTTON_COLOR
-        # activate_mute()
+        activate_mute()
     else:
         mute_is_active = NORMAL_BUTTON_COLOR
-        # deactivate_mute()
+        deactivate_mute()
 
 
