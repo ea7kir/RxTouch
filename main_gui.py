@@ -187,12 +187,6 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 else:
                     window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
                     longmynd_pipe.send('STOP')
-            #if event == '-MUTE-':
-            #    mute_active = not mute_active
-            #    if mute_active:
-            #        window['-MUTE-'].update(button_color=MUTE_ACTIVE_BUTTON_COLOR)
-            #    else:
-            #        window['-MUTE-'].update(button_color=NORMAL_BUTTON_COLOR)
             if event in dispatch_dictionary:
                 func_to_call = dispatch_dictionary[event]
                 func_to_call()
