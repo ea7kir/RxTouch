@@ -177,7 +177,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 #       or dind a way to know when kill has completed
                 sleep(1.5)
                 break
-# TODO: move tune and mute to control_status
+# TODO: move tune to control_status - if possible
             if event == '-TUNE-':
                 tune_active = not tune_active # move this to get auto beacon at startup
                 if tune_active:

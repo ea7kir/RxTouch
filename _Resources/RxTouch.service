@@ -1,0 +1,19 @@
+[Unit]
+Description=EA7KIR RxTouch Service
+After=multi-user.target
+
+[Service]
+User=pi
+
+#WorkingDirectory=/home/pi/longmynd/
+#orkingDirectory=/home/pi
+
+ExecStart=/home/pi/startx /home/pi/.pyenv/shims/python main_gui.py
+
+#SuccessExitStatus=143
+#TimeoutStopSec=10
+#Restart=on-failure
+#RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
