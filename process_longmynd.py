@@ -3,6 +3,7 @@
 """
 import subprocess
 import os
+from time import sleep
 
 #import socket # only used to find ip of apple tv
 
@@ -333,10 +334,12 @@ def process_read_longmynd_data(pipe):
         if longmynd_running:
 
             lines = lm_status_fifo_fd.readlines()
-            if lines == []: 
+            if lines == []:
+                sleep(0)
                 continue
             for line in lines:
                 if line[0] != '$':
+                    sleep(0)
                     continue
                 lm_id_str, lm_value = line[1:].rstrip().split(',',1)
                 lm_id = int(lm_id_str)
@@ -456,11 +459,13 @@ def process_read_longmynd_data(pipe):
                     case 27: # AGC2 Gain - Gain value of AGC2 (0: Minimum Gain, 65535: Maximum Gain)
                         agc_pair.agc2 = int(lm_value)
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
+                #) match
+                if lm_id in {1,6,7,8,12,13,14,15,16,17,18,26,27}:
+                    longmynd_data.status_msg = longmynd_state
+                    pipe.send(longmynd_data)
+            #) for line
 
-                longmynd_data.status_msg = longmynd_state
-                pipe.send(longmynd_data)
-
-        else:
+        else: # not running
             
             longmynd_data.state = STOPPED
             longmynd_data.frequency = '-'
@@ -479,5 +484,7 @@ def process_read_longmynd_data(pipe):
             longmynd_data.status_msg = STOPPED
             pipe.send(longmynd_data)
             sleep(1.0) # delay to simulate data reading
+        #if
+    #while
 
 # LOOP END ########################################################################################

@@ -269,7 +269,7 @@ def mute():
         mute_button_color = MUTE_ACTIVE_BUTTON_COLOR
         activate_mute()
     else:
-        mute_is_active = NORMAL_BUTTON_COLOR
+        mute_button_color = NORMAL_BUTTON_COLOR
         deactivate_mute()
 
 

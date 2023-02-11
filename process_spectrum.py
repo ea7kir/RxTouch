@@ -1,5 +1,7 @@
 import asyncio
 import websockets
+from time import sleep
+
 from device_constants import SPECTRUM_URL
 
 class SpectrumData:
@@ -62,5 +64,6 @@ def process_read_spectrum_data(pipe):
                     spectrum_data.beacon_level += spectrum_data.points[i][1]
                 spectrum_data.beacon_level //= 20
                 pipe.send(spectrum_data)
+                sleep(0)
 
     asyncio.run(handle())
