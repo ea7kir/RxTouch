@@ -19,7 +19,7 @@ from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 # CLASS ###############################################################
 
 class LongmyndData:
-    state = 'stopped' # TODO: could use this to reset VLC when going through 'Locked' to 'DVB-S' or 'DVB-S2'
+    state = '-'
     frequency = '-'
     symbol_rate = '-'
     mode = '-'
@@ -33,8 +33,6 @@ class LongmyndData:
     null_ratio_bar = 0
     provider = '-'
     service = '-'
-    status_msg = '-' # TODO: remove if redundant
-    #longmynd_running: bool = False # TODO: remove if redundant
 
 """
 Example to receive the beacon:
@@ -304,9 +302,6 @@ def process_read_longmynd_data(pipe):
 
 ################################################################
 
-    STOPPED = 'stopped'
-    STARTED = 'started'
-    longmynd_state = STOPPED
     longmynd_running = False
     es_pair = EsPair()
     agc_pair = AgcPair()
@@ -320,7 +315,6 @@ def process_read_longmynd_data(pipe):
             if tune_args == 'STOP':
                 args = LM_STOP_SCRIPT
                 p2 = subprocess.run(args)
-                longmynd_data.status_msg = STOPPED
                 longmynd_running = False
             else:
                 lm_status_fifo_fd.flush()
@@ -328,7 +322,6 @@ def process_read_longmynd_data(pipe):
                 args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 # TODO: OR args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
-                longmynd_state = STARTED #f'tuned: {requestKHzStr}, {tune_args.symbol_rate}'
                 longmynd_running = True
 
         if longmynd_running:
@@ -348,15 +341,15 @@ def process_read_longmynd_data(pipe):
                     case 1: # State
                         match int(lm_value):
                             case 0: # initialising
-                                longmynd_state = 'Initialising'
+                                longmynd_data.state = 'Initialising'
                             case 1: # searching
-                                longmynd_state = 'Seaching'
+                                longmynd_data.state = 'Seaching'
                             case 2: # found headers
-                                longmynd_state = 'Locked'
+                                longmynd_data.state = 'Locked'
                             case 3: # locked on a DVB-S signal
-                                longmynd_state = 'DVB-S'  # TODO: at this point VLC should be set to run
+                                longmynd_data.state = 'DVB-S'  # TODO: at this point VLC should be set to run
                             case 4: # locked on a DVB-S2 signal
-                                longmynd_state = 'DVB-S2'  # TODO: at this point VLC should be set to run
+                                longmynd_data.state = 'DVB-S2'  # TODO: at this point VLC should be set to run
 
                         #if not hasPIDs:
                         #    self.tunerStatus.setPIDs(self.pidCache)
@@ -434,9 +427,9 @@ def process_read_longmynd_data(pipe):
                             longmynd_data.codecs = f'{es_pair.codec(es_pair.the_1st_type)} {es_pair.codec(es_pair.the_2nd_type)}'
                             es_pair.reset()
                     case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
-                        longmynd_data.constellation, longmynd_data.fec = constellation_fec(longmynd_state, int(lm_value))
+                        longmynd_data.constellation, longmynd_data.fec = constellation_fec(longmynd_data.state, int(lm_value))
                         # TODO: move mode_margin() into constellation_fec()
-                        longmynd_data.mode, longmynd_data.db_margin = mode_margin(longmynd_state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
+                        longmynd_data.mode, longmynd_data.db_margin = mode_margin(longmynd_data.state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
 
                     #case 19: # Short Frames - 1 if received signal is using Short Frames, 0 otherwise (DVB-S2 only)
                     #    pass
@@ -461,13 +454,12 @@ def process_read_longmynd_data(pipe):
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
                 #) match
                 if lm_id in {1,6,7,8,12,13,14,15,16,17,18,26,27}:
-                    longmynd_data.status_msg = longmynd_state
                     pipe.send(longmynd_data)
             #) for line
 
         else: # not running
             
-            longmynd_data.state = STOPPED
+            longmynd_data.state = '-'
             longmynd_data.frequency = '-'
             longmynd_data.symbol_rate = '-'
             longmynd_data.mode = '-'
@@ -481,7 +473,6 @@ def process_read_longmynd_data(pipe):
             longmynd_data.null_ratio_bar = 0
             longmynd_data.provider = '-'
             longmynd_data.service = '-'
-            longmynd_data.status_msg = STOPPED
             pipe.send(longmynd_data)
             sleep(1.0) # delay to simulate data reading
         #if

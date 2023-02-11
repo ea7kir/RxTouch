@@ -102,7 +102,7 @@ dispatch_dictionary = {
     # Lookup dictionary that maps button to function to call
     # NOTE: the order could affect responsiveness, but maybe a disctionary lookup is just too slow
     #'-TUNE-':cs.tune,
-    '-MUTE-':cs.mute,
+    #'-MUTE-':cs.mute,
     '-BD-':cs.dec_band, '-BU-':cs.inc_band, 
     '-FD-':cs.dec_frequency, '-FU-':cs.inc_frequency, 
     '-SD-':cs.dec_symbol_rate, '-SU-':cs.inc_symbol_rate,
@@ -150,7 +150,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
                 # draw spectrum
                 graph.draw_polygon(spectrum_data.points, fill_color='green')
-            if longmynd_pipe.poll():
+            elif longmynd_pipe.poll():
                 longmynd_data = longmynd_pipe.recv()
                 while longmynd_pipe.poll():
                     _ = longmynd_pipe.recv()
@@ -167,15 +167,13 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
                 window['-PROVIDER-'].update(longmynd_data.provider)
                 window['-SERVICE-'].update(longmynd_data.service)
-                window['-STATUS_BAR-'].update(longmynd_data.status_msg)
         else: # don't bother searching for __TIMEOUT__ events
             if event == '-SHUTDOWN-':
                 #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-                longmynd_pipe.send('STOP') # NOTE: maybe this needs time to complete
-                window['-STATUS_BAR-'].update(longmynd_data.status_msg)
-                # TODO: a delay is neccessary, but I need to find a better way
-                #       or dind a way to know when kill has completed
-                sleep(1.5)
+                longmynd_pipe.send('STOP') # NOTE: does this need time to complete?
+                # TODO: is a delay is neccessary? If so I need to find a better way
+                #       or find a way to know when kill has completed
+                #sleep(1.5)
                 break
 # TODO: move tune to control_status - if possible
             if event == '-TUNE-':
@@ -187,13 +185,16 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 else:
                     window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
                     longmynd_pipe.send('STOP')
-            if event in dispatch_dictionary:
+            elif event in dispatch_dictionary:
+                window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
+                longmynd_pipe.send('STOP') # even if it isn't running?
                 func_to_call = dispatch_dictionary[event]
                 func_to_call()
                 window['-BV-'].update(cs.curr_value.band)
                 window['-FV-'].update(cs.curr_value.frequency)
                 window['-SV-'].update(cs.curr_value.symbol_rate)
-                #window['-TUNE-'].update(button_color=cs.tune_button_color)
+            elif event == '-MUTE-':
+                cs.mute()
                 window['-MUTE-'].update(button_color=cs.mute_button_color)
 
     window.close()
