@@ -70,7 +70,7 @@ echo "To run RxTouch from my Mac,"
 echo "edit /etc/X11/Xwrapper.config"
 echo "and change allowed_users = console to allowed_users = anybody"
 echo
-echo "Clone TxTouch from within VSCODE"
+echo "Clone RxTouch from within VSCODE"
 echo "using: https://github.com/ea7kir/RxTouch.git"
 echo
 echo "NOTE: currently using longmynd BATC version. Eg:"
