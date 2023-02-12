@@ -5,10 +5,9 @@ After=multi-user.target
 [Service]
 User=pi
 
-#WorkingDirectory=/home/pi/longmynd/
-#orkingDirectory=/home/pi
+WorkingDirectory=/home/pi/RxTouch
 
-ExecStart=/home/pi/startx /home/pi/.pyenv/shims/python main_gui.py
+ExecStart=/usr/bin/startx /home/pi/.pyenv/shims/python /home/pi/RxTouch/main_gui.py
 
 #SuccessExitStatus=143
 #TimeoutStopSec=10
