@@ -1,0 +1,31 @@
+# cd /home/pi/RxTouch/_Resources
+# sudo cp rxtouch.service /etc/systemd/system/
+# sudo chmod 644 /etc/systemd/system/rxtouch.service
+# sudo systemctl daemon-reload
+#
+# sudo systemctl enable rxtouch
+# sudo systemctl start rxtouch
+#
+# sudo systemctl status rxtouch
+#
+# sudo systemctl stop rxtouch
+# sudo systemctl disable rxtouch
+#
+[Unit]
+Description=RxTouch QO-100/Es'Hail-2 DATV Receiver
+After=multi-user.target
+
+[Service]
+User=pi
+
+#WorkingDirectory=/home/pi/RxTouch
+
+ExecStart=/home/pi/RxTouch/rxtouch
+
+#SuccessExitStatus=143
+#TimeoutStopSec=10
+#Restart=on-failure
+#RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
