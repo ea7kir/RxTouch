@@ -2,6 +2,8 @@
 
 from multiprocessing import Process
 from multiprocessing import Pipe
+import threading
+from time import sleep
 
 import PySimpleGUI as sg
 import control_status as cs
@@ -105,9 +107,25 @@ dispatch_dictionary = {
     '-BD-':cs.dec_band, '-BU-':cs.inc_band, 
     '-FD-':cs.dec_frequency, '-FU-':cs.inc_frequency, 
     '-SD-':cs.dec_symbol_rate, '-SU-':cs.inc_symbol_rate,
-    '-DISPLAY_INITIAL_VALUES-':display_initial_values,
+    #'-DISPLAY_INITIAL_VALUES-':display_initial_values,
 }
 
+def spectrum_thread(window, spectrum_pipe):
+    dummy = 0
+    while True:
+        if spectrum_pipe.poll():
+#             while spectrum_pipe.poll():
+#                _ = spectrum_pipe.recv()
+            window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, dummy))
+
+def longmynd_thread(window, longmynd_pipe):
+    dummy = 0
+    while True:
+        if longmynd_pipe.poll():
+#            while longmynd_pipe.poll():
+#                _ = longmynd_pipe.recv()
+            window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, dummy))
+            
 # MAIN ------------------------------------------
 
 def main_gui(spectrum_pipe, longmynd_pipe):
@@ -115,82 +133,91 @@ def main_gui(spectrum_pipe, longmynd_pipe):
     window.set_cursor('none')
     graph = window['graph']
     tune_active = False
+    mute_active = False
     # fix to display initial controll values
-    window.write_event_value('-DISPLAY_INITIAL_VALUES-', None) # fix to display initial control values
+    #window.write_event_value('-DISPLAY_INITIAL_VALUES-', None)
+    threading.Thread(target=spectrum_thread, args=(window, spectrum_pipe), daemon=True).start()
+    threading.Thread(target=longmynd_thread, args=(window, longmynd_pipe), daemon=True).start()
     while True:
-        event, values = window.read(timeout=1)
-        if event == '__TIMEOUT__':
-            if spectrum_pipe.poll():
-                spectrum_data = spectrum_pipe.recv()
-                while spectrum_pipe.poll():
-                    _ = spectrum_pipe.recv()
-                # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
-                graph.erase()
-                # draw graticule
-                c = 0
-                for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
-                    if c == 5:
-                        graph.draw_text('5dB', (13,y), color='#444444')
-                        graph.draw_line((40, y), (918, y), color='#444444')
-                    elif c == 10:
-                        graph.draw_text('10dB', (17,y), color='#444444')
-                        graph.draw_line((40, y), (918, y), color='#444444')
-                    elif c == 15:
-                        graph.draw_text('15dB', (17,y), color='#444444')
-                        graph.draw_line((40, y), (918, y), color='#444444')
-                    else:
-                        graph.draw_line((0, y), (918, y), color='#222222')
-                    c += 1
-                # draw tuned marker
-                x = cs.selected_frequency_marker()
-                graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
-                # draw beacon level
-                graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
-                # draw spectrum
-                graph.draw_polygon(spectrum_data.points, fill_color='green')
-            elif longmynd_pipe.poll():
-                longmynd_data = longmynd_pipe.recv()
-                while longmynd_pipe.poll():
-                    _ = longmynd_pipe.recv()
-                window['-FREQUENCY-'].update(longmynd_data.frequency)
-                window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
-                window['-MODE-'].update(longmynd_data.mode)
-                window['-CONSTELLATION-'].update(longmynd_data.constellation)
-                window['-FEC-'].update(longmynd_data.fec)
-                window['-CODECS-'].update(longmynd_data.codecs)
-                window['-DB_MER-'].update(longmynd_data.db_mer)
-                window['-DB_MARGIN-'].update(longmynd_data.db_margin)
-                window['-DBM_POWER-'].update(longmynd_data.dbm_power)
-                window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
-                window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
-                window['-PROVIDER-'].update(longmynd_data.provider)
-                window['-SERVICE-'].update(longmynd_data.service)
-        else: # don't bother searching for __TIMEOUT__ events
-# TODO: move tune to control_status - if possible
-            if event == '-TUNE-':
-                tune_active = not tune_active # move this to get auto beacon at startup
-                if tune_active:
-                    window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
-                    tune_args = cs.tune_args()
-                    longmynd_pipe.send(tune_args)
+        event, values = window.read()
+        if event == '-SPECTRUM_THREAD-':
+            #spectrum_data = values['-SPECTRUM_THREAD-']
+            #if spectrum_pipe.poll():
+            spectrum_data = spectrum_pipe.recv()
+            # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
+            graph.erase()
+            # draw graticule
+            c = 0
+            for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
+                if c == 5:
+                    graph.draw_text('5dB', (13,y), color='#444444')
+                    graph.draw_line((40, y), (918, y), color='#444444')
+                elif c == 10:
+                    graph.draw_text('10dB', (17,y), color='#444444')
+                    graph.draw_line((40, y), (918, y), color='#444444')
+                elif c == 15:
+                    graph.draw_text('15dB', (17,y), color='#444444')
+                    graph.draw_line((40, y), (918, y), color='#444444')
                 else:
-                    window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                    longmynd_pipe.send('STOP')
-            elif event in dispatch_dictionary:
+                    graph.draw_line((0, y), (918, y), color='#222222')
+                c += 1
+            # draw tuned marker
+            x = cs.selected_frequency_marker()
+            graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
+            # draw beacon level
+            graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
+            # draw spectrum
+            graph.draw_polygon(spectrum_data.points, fill_color='green')
+            while spectrum_pipe.poll():
+                _ = spectrum_pipe.recv()
+
+        if event == '-LONGMYND_THREAD-':
+        #elif longmynd_pipe.poll():
+            longmynd_data = longmynd_pipe.recv()
+            window['-FREQUENCY-'].update(longmynd_data.frequency)
+            window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
+            window['-MODE-'].update(longmynd_data.mode)
+            window['-CONSTELLATION-'].update(longmynd_data.constellation)
+            window['-FEC-'].update(longmynd_data.fec)
+            window['-CODECS-'].update(longmynd_data.codecs)
+            window['-DB_MER-'].update(longmynd_data.db_mer)
+            window['-DB_MARGIN-'].update(longmynd_data.db_margin)
+            window['-DBM_POWER-'].update(longmynd_data.dbm_power)
+            window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
+            window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
+            window['-PROVIDER-'].update(longmynd_data.provider)
+            window['-SERVICE-'].update(longmynd_data.service)
+            while longmynd_pipe.poll():
+                _ = longmynd_pipe.recv()
+
+        if event == '-SHUTDOWN-':
+            #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
+            longmynd_pipe.send('STOP') # NOTE: does this need time to complete?
+            # TODO: is a delay is neccessary? If so I need to find a better way
+            #       or find a way to know when kill has completed
+            #sleep(1.5)
+            break
+# TODO: mov tune to control_status - if possible
+        if event == '-TUNE-':
+            tune_active = not tune_active # move this to get auto beacon at startup
+            if tune_active:
+                window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
+                tune_args = cs.tune_args()
+                longmynd_pipe.send(tune_args)
+            else:
                 window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                longmynd_pipe.send('STOP') # even if it isn't running?
-                func_to_call = dispatch_dictionary[event]
-                func_to_call()
-                window['-BV-'].update(cs.curr_value.band)
-                window['-FV-'].update(cs.curr_value.frequency)
-                window['-SV-'].update(cs.curr_value.symbol_rate)
-            elif event == '-MUTE-':
-                cs.mute()
-                window['-MUTE-'].update(button_color=cs.mute_button_color)
-            elif event == '-SHUTDOWN-':
-                #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-                longmynd_pipe.send('STOP') # NOTE: does this need time to complete?
-                break
+                longmynd_pipe.send('STOP')
+        elif event in dispatch_dictionary:
+            window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
+            longmynd_pipe.send('STOP') # even if it isn't running?
+            func_to_call = dispatch_dictionary[event]
+            func_to_call()
+            window['-BV-'].update(cs.curr_value.band)
+            window['-FV-'].update(cs.curr_value.frequency)
+            window['-SV-'].update(cs.curr_value.symbol_rate)
+        elif event == '-MUTE-':
+            cs.mute()
+            window['-MUTE-'].update(button_color=cs.mute_button_color)
 
     window.close()
     del window
