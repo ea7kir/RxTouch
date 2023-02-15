@@ -19,8 +19,8 @@ sg.theme('Black')
 SCREEN_COLOR = '#111111'
 NORMAL_BUTTON_COLOR = ('#FFFFFF','#222222')
 DISABALED_BUTTON_COLOR = ('#444444',None)
-TUNE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#007700')
-MUTE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#FF0000')
+#TUNE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#007700')
+#MUTE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#FF0000')
 
 def text_data(name, key):
     return sg.Text(name, size=11), sg.Text(' ', size=9, key=key, text_color='orange')
@@ -100,8 +100,8 @@ def display_initial_values():
 dispatch_dictionary = {
     # Lookup dictionary that maps button to function to call
     # NOTE: the order could affect responsiveness, but maybe a disctionary lookup is just too slow
-    #'-TUNE-':cs.tune,
-    #'-MUTE-':cs.mute,
+    '-TUNE-':cs.tune,
+    '-MUTE-':cs.mute,
     '-BD-':cs.dec_band, '-BU-':cs.inc_band, 
     '-FD-':cs.dec_frequency, '-FU-':cs.inc_frequency, 
     '-SD-':cs.dec_symbol_rate, '-SU-':cs.inc_symbol_rate,
@@ -114,7 +114,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
     window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
     window.set_cursor('none')
     graph = window['graph']
-    tune_active = False
+    cs.longmynd_pipe = longmynd_pipe
     # fix to display initial controll values
     window.write_event_value('-DISPLAY_INITIAL_VALUES-', None) # fix to display initial control values
     while True:
@@ -166,30 +166,17 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-PROVIDER-'].update(longmynd_data.provider)
                 window['-SERVICE-'].update(longmynd_data.service)
         else: # don't bother searching for __TIMEOUT__ events
-# TODO: move tune to control_status - if possible
-            if event == '-TUNE-':
-                tune_active = not tune_active # move this to get auto beacon at startup
-                if tune_active:
-                    window['-TUNE-'].update(button_color=TUNE_ACTIVE_BUTTON_COLOR)
-                    tune_args = cs.tune_args()
-                    longmynd_pipe.send(tune_args)
-                else:
-                    window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                    longmynd_pipe.send('STOP')
-            elif event in dispatch_dictionary:
-                window['-TUNE-'].update(button_color=NORMAL_BUTTON_COLOR)
-                longmynd_pipe.send('STOP') # even if it isn't running?
+            if event in dispatch_dictionary:
                 func_to_call = dispatch_dictionary[event]
                 func_to_call()
+                window['-TUNE-'].update(button_color=cs.tune_button_color)
+                window['-MUTE-'].update(button_color=cs.mute_button_color)
                 window['-BV-'].update(cs.curr_value.band)
                 window['-FV-'].update(cs.curr_value.frequency)
                 window['-SV-'].update(cs.curr_value.symbol_rate)
-            elif event == '-MUTE-':
-                cs.mute()
-                window['-MUTE-'].update(button_color=cs.mute_button_color)
             elif event == '-SHUTDOWN-':
                 #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-                longmynd_pipe.send('STOP') # NOTE: does this need time to complete?
+                cs.cancel_tune() # not really neccessary
                 break
 
     window.close()

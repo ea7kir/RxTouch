@@ -186,6 +186,7 @@ max_band_list = len(BAND_LIST) - 1 # TODO: messy!  try integrating band into the
 
 def inc_band():
     global curr_band, max_band_list, curr_value, curr_index
+    cancel_tune()
     if curr_band < max_band_list:
         curr_band += 1
         curr_value = value[curr_band]
@@ -193,6 +194,7 @@ def inc_band():
 
 def dec_band():
     global curr_band, curr_value, curr_index
+    cancel_tune()
     if curr_band > 0:
         curr_band -= 1
         curr_value = value[curr_band]
@@ -200,24 +202,28 @@ def dec_band():
     
 def inc_frequency():
     global curr_value, curr_index
+    cancel_tune()
     if curr_index.frequency < curr_index.max_frequency_index:
         curr_index.frequency += 1
         curr_value.frequency = curr_index.frequency_list[curr_index.frequency]
 
 def dec_frequency():
     global curr_value, curr_index
+    cancel_tune()
     if curr_index.frequency > 0:
         curr_index.frequency -= 1
         curr_value.frequency = curr_index.frequency_list[curr_index.frequency]
     
 def inc_symbol_rate():
     global curr_value, curr_index
+    cancel_tune()
     if curr_index.symbol_rate < curr_index.max_symbol_rate_list:
         curr_index.symbol_rate += 1
         curr_value.symbol_rate = curr_index.symbol_rate_list[curr_index.symbol_rate]
 
 def dec_symbol_rate():
     global curr_value, curr_index
+    cancel_tune()
     if curr_index.symbol_rate > 0:
         curr_index.symbol_rate -= 1
         curr_value.symbol_rate = curr_index.symbol_rate_list[curr_index.symbol_rate]
@@ -252,16 +258,23 @@ mute_is_active = False
 tune_button_color = NORMAL_BUTTON_COLOR
 mute_button_color = NORMAL_BUTTON_COLOR
 
+longmynd_pipe = None # intialized in main_gui.py
+
 def tune():
     global tune_is_active, tune_button_color
     tune_is_active = not tune_is_active
     if tune_is_active:
         tune_button_color = TUNE_ACTIVE_BUTTON_COLOR
-        # activate_longmynd()
+        args = tune_args()
+        longmynd_pipe.send(args)
     else:
         tune_button_color = NORMAL_BUTTON_COLOR
-        # deactivate_longmynd()
-        
+        longmynd_pipe.send('STOP')
+
+def cancel_tune(): # called when any tuning button is pressed
+    if tune_is_active:
+        tune()
+
 def mute():
     global mute_is_active, mute_button_color
     mute_is_active = not mute_is_active
@@ -271,5 +284,3 @@ def mute():
     else:
         mute_button_color = NORMAL_BUTTON_COLOR
         deactivate_mute()
-
-
