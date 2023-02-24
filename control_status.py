@@ -186,47 +186,53 @@ max_band_list = len(BAND_LIST) - 1 # TODO: messy!  try integrating band into the
 
 def inc_band():
     global curr_band, max_band_list, curr_value, curr_index
-    cancel_tune()
     if curr_band < max_band_list:
         curr_band += 1
         curr_value = value[curr_band]
         curr_index = index[curr_band]
+        return True
+    return False
 
 def dec_band():
     global curr_band, curr_value, curr_index
-    cancel_tune()
     if curr_band > 0:
         curr_band -= 1
         curr_value = value[curr_band]
         curr_index = index[curr_band]
+        return True
+    return False
     
 def inc_frequency():
     global curr_value, curr_index
-    cancel_tune()
     if curr_index.frequency < curr_index.max_frequency_index:
         curr_index.frequency += 1
         curr_value.frequency = curr_index.frequency_list[curr_index.frequency]
+        return True
+    return False
 
 def dec_frequency():
     global curr_value, curr_index
-    cancel_tune()
     if curr_index.frequency > 0:
         curr_index.frequency -= 1
         curr_value.frequency = curr_index.frequency_list[curr_index.frequency]
+        return True
+    return False
     
 def inc_symbol_rate():
     global curr_value, curr_index
-    cancel_tune()
     if curr_index.symbol_rate < curr_index.max_symbol_rate_list:
         curr_index.symbol_rate += 1
         curr_value.symbol_rate = curr_index.symbol_rate_list[curr_index.symbol_rate]
+        return True
+    return False
 
 def dec_symbol_rate():
     global curr_value, curr_index
-    cancel_tune()
     if curr_index.symbol_rate > 0:
         curr_index.symbol_rate -= 1
         curr_value.symbol_rate = curr_index.symbol_rate_list[curr_index.symbol_rate]
+        return True
+    return False
     
 def selected_frequency_marker():
     i = int(curr_value.frequency[10:])

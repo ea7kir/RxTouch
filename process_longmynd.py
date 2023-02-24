@@ -113,12 +113,22 @@ def process_read_longmynd_data(pipe):
 
         match state:
             case 'DVB-S':
-                return MODCOD_DVB_S[modcod]
+                try:
+                    mc = MODCOD_DVB_S[modcod]
+                    return mc
+                except:
+                    print(f'Unkown DVB-S MODCOD {modcod}')
+                    return ('?', '?')
             case 'DVB-S2':
                 #if modcod == 0:
                 #    print('Got modcod=0 "{MODCOD_DVB_S2[modcod]}", so returning ("-", "x")')  # TODO: but a better way would be to display it
                 #    return ('-', 'x')
-                return MODCOD_DVB_S2[modcod]
+                try:
+                    mc = MODCOD_DVB_S2[modcod]
+                    return mc
+                except:
+                    print(f'Unkown DVB-S2 MODCOD {modcod}')
+                    return ('?', '?')
         return ('-', '-')
 
 # FUNC ###############################################################

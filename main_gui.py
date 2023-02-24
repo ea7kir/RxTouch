@@ -91,23 +91,6 @@ layout = [
     status_layout,
 ]
 
-# CALLBACK DISPATCH -----------------------------
-
-def display_initial_values():
-    # fix to display initial controll values
-    pass
-
-dispatch_dictionary = {
-    # Lookup dictionary that maps button to function to call
-    # NOTE: the order could affect responsiveness, but maybe a disctionary lookup is just too slow
-    '-TUNE-':cs.tune,
-    '-MUTE-':cs.mute,
-    '-BD-':cs.dec_band, '-BU-':cs.inc_band, 
-    '-FD-':cs.dec_frequency, '-FU-':cs.inc_frequency, 
-    '-SD-':cs.dec_symbol_rate, '-SU-':cs.inc_symbol_rate,
-    '-DISPLAY_INITIAL_VALUES-':display_initial_values,
-}
-
 # MAIN ------------------------------------------
 
 def main_gui(spectrum_pipe, longmynd_pipe):
@@ -115,69 +98,107 @@ def main_gui(spectrum_pipe, longmynd_pipe):
     window.set_cursor('none')
     graph = window['graph']
     cs.longmynd_pipe = longmynd_pipe
-    # fix to display initial controll values
-    window.write_event_value('-DISPLAY_INITIAL_VALUES-', None) # fix to display initial control values
+    window['-TUNE-'].update(button_color=cs.tune_button_color)
+    window['-MUTE-'].update(button_color=cs.mute_button_color)
+    window['-BV-'].update(cs.curr_value.band)
+    window['-FV-'].update(cs.curr_value.frequency)
+    window['-SV-'].update(cs.curr_value.symbol_rate)
+    window.refresh()
     while True:
         event, values = window.read(timeout=1)
-        if event == '__TIMEOUT__':
-            if spectrum_pipe.poll():
-                spectrum_data = spectrum_pipe.recv()
-                while spectrum_pipe.poll():
-                    _ = spectrum_pipe.recv()
-                # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
-                graph.erase()
-                # draw graticule
-                c = 0
-                for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
-                    if c == 5:
-                        graph.draw_text('5dB', (13,y), color='#444444')
-                        graph.draw_line((40, y), (918, y), color='#444444')
-                    elif c == 10:
-                        graph.draw_text('10dB', (17,y), color='#444444')
-                        graph.draw_line((40, y), (918, y), color='#444444')
-                    elif c == 15:
-                        graph.draw_text('15dB', (17,y), color='#444444')
-                        graph.draw_line((40, y), (918, y), color='#444444')
-                    else:
-                        graph.draw_line((0, y), (918, y), color='#222222')
-                    c += 1
-                # draw tuned marker
-                x = cs.selected_frequency_marker()
-                graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
-                # draw beacon level
-                graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
-                # draw spectrum
-                graph.draw_polygon(spectrum_data.points, fill_color='green')
-            elif longmynd_pipe.poll():
-                longmynd_data = longmynd_pipe.recv()
-                while longmynd_pipe.poll():
-                    _ = longmynd_pipe.recv()
-                window['-FREQUENCY-'].update(longmynd_data.frequency)
-                window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
-                window['-MODE-'].update(longmynd_data.mode)
-                window['-CONSTELLATION-'].update(longmynd_data.constellation)
-                window['-FEC-'].update(longmynd_data.fec)
-                window['-CODECS-'].update(longmynd_data.codecs)
-                window['-DB_MER-'].update(longmynd_data.db_mer)
-                window['-DB_MARGIN-'].update(longmynd_data.db_margin)
-                window['-DBM_POWER-'].update(longmynd_data.dbm_power)
-                window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
-                window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
-                window['-PROVIDER-'].update(longmynd_data.provider)
-                window['-SERVICE-'].update(longmynd_data.service)
-        else: # don't bother searching for __TIMEOUT__ events
-            if event in dispatch_dictionary:
-                func_to_call = dispatch_dictionary[event]
-                func_to_call()
+        match event:
+            case '-TUNE-':
+                cs.tune()
                 window['-TUNE-'].update(button_color=cs.tune_button_color)
+            case '-MUTE-':
+                cs.mute()
                 window['-MUTE-'].update(button_color=cs.mute_button_color)
-                window['-BV-'].update(cs.curr_value.band)
-                window['-FV-'].update(cs.curr_value.frequency)
-                window['-SV-'].update(cs.curr_value.symbol_rate)
-            elif event == '-SHUTDOWN-':
+            case '-BD-':
+                if cs.dec_band():
+                    cs.cancel_tune()
+                    window['-TUNE-'].update(button_color=cs.tune_button_color)
+                    window['-BV-'].update(cs.curr_value.band)
+                    window['-SV-'].update(cs.curr_value.symbol_rate)
+                    window['-FV-'].update(cs.curr_value.frequency)
+            case '-BU-':
+                if cs.inc_band():
+                    cs.cancel_tune()
+                    window['-TUNE-'].update(button_color=cs.tune_button_color)
+                    window['-BV-'].update(cs.curr_value.band)
+                    window['-SV-'].update(cs.curr_value.symbol_rate)
+                    window['-FV-'].update(cs.curr_value.frequency)
+            case '-FD-':
+                if cs.dec_frequency():
+                    cs.cancel_tune()
+                    window['-TUNE-'].update(button_color=cs.tune_button_color)
+                    window['-FV-'].update(cs.curr_value.frequency)
+            case '-FU-':
+                if cs.inc_frequency():
+                    cs.cancel_tune()
+                    window['-TUNE-'].update(button_color=cs.tune_button_color)
+                    window['-FV-'].update(cs.curr_value.frequency)
+            case '-SD-':
+                if cs.dec_symbol_rate():
+                    cs.cancel_tune()
+                    window['-TUNE-'].update(button_color=cs.tune_button_color)
+                    window['-SV-'].update(cs.curr_value.symbol_rate)
+            case '-SU-':
+                if cs.inc_symbol_rate():
+                    cs.cancel_tune()
+                    window['-TUNE-'].update(button_color=cs.tune_button_color)
+                    window['-SV-'].update(cs.curr_value.symbol_rate)
+            case '-SHUTDOWN-':
                 #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
-                cs.cancel_tune() # not really neccessary
+                cs.cancel_tune()
+                window['-TUNE-'].update(button_color=cs.tune_button_color)
+                window.refresh()
                 break
+            case _:
+                if spectrum_pipe.poll():
+                    spectrum_data = spectrum_pipe.recv()
+                    while spectrum_pipe.poll():
+                        _ = spectrum_pipe.recv()
+                    # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
+                    graph.erase()
+                    # draw graticule
+                    c = 0
+                    for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
+                        if c == 5:
+                            graph.draw_text('5dB', (13,y), color='#444444')
+                            graph.draw_line((40, y), (918, y), color='#444444')
+                        elif c == 10:
+                            graph.draw_text('10dB', (17,y), color='#444444')
+                            graph.draw_line((40, y), (918, y), color='#444444')
+                        elif c == 15:
+                            graph.draw_text('15dB', (17,y), color='#444444')
+                            graph.draw_line((40, y), (918, y), color='#444444')
+                        else:
+                            graph.draw_line((0, y), (918, y), color='#222222')
+                        c += 1
+                    # draw tuned marker
+                    x = cs.selected_frequency_marker()
+                    graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
+                    # draw beacon level
+                    graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
+                    # draw spectrum
+                    graph.draw_polygon(spectrum_data.points, fill_color='green')
+                elif longmynd_pipe.poll():
+                    longmynd_data = longmynd_pipe.recv()
+                    while longmynd_pipe.poll():
+                        _ = longmynd_pipe.recv()
+                    window['-FREQUENCY-'].update(longmynd_data.frequency)
+                    window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
+                    window['-MODE-'].update(longmynd_data.mode)
+                    window['-CONSTELLATION-'].update(longmynd_data.constellation)
+                    window['-FEC-'].update(longmynd_data.fec)
+                    window['-CODECS-'].update(longmynd_data.codecs)
+                    window['-DB_MER-'].update(longmynd_data.db_mer)
+                    window['-DB_MARGIN-'].update(longmynd_data.db_margin)
+                    window['-DBM_POWER-'].update(longmynd_data.dbm_power)
+                    window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
+                    window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
+                    window['-PROVIDER-'].update(longmynd_data.provider)
+                    window['-SERVICE-'].update(longmynd_data.service)
 
     window.close()
     del window
