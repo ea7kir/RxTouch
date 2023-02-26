@@ -127,6 +127,8 @@ def main_gui(spectrum_pipe, longmynd_pipe):
     threading.Thread(target=spectrum_thread, args=(window, spectrum_pipe), daemon=True).start()
     threading.Thread(target=longmynd_thread, args=(window, longmynd_pipe), daemon=True).start()
 
+    #count = 0 # TEMP
+
     while True:
         event, _ = window.read()
         match event:
@@ -180,6 +182,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 spectrum_data = spectrum_pipe.recv()
                 while spectrum_pipe.poll():
                     _ = spectrum_pipe.recv()
+                    #print('S')
                 # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
                 graph.erase()
                 # draw graticule
@@ -209,6 +212,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 longmynd_data = longmynd_pipe.recv()
                 while longmynd_pipe.poll():
                     _ = longmynd_pipe.recv()
+                    #print('LM', count); count += 1
                 window['-FREQUENCY-'].update(longmynd_data.frequency)
                 window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
                 window['-MODE-'].update(longmynd_data.mode)

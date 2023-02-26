@@ -4,6 +4,7 @@
 import subprocess
 import os
 from time import sleep
+import copy
 
 #import socket # only used to find ip of apple tv
 
@@ -33,6 +34,22 @@ class LongmyndData:
     null_ratio_bar = 0
     provider = '-'
     service = '-'
+    def __eq__(self, other):
+        eq = self.state == other.state
+        eq &= self.frequency == other.frequency
+        eq &= self.symbol_rate == other.symbol_rate
+        eq &= self.mode == other.mode
+        eq &= self.constellation == other.constellation
+        eq &= self.fec == other.fec
+        eq &= self.codecs == other.codecs
+        eq &= self.db_mer == other.db_mer
+        eq &= self.db_margin == other.db_margin
+        eq &= self.provider == other.provider
+        eq &= self.service == other.service
+        eq &= self.null_ratio == other.null_ratio
+        eq &= self.provider == other.service
+        eq &= self.service == other.service
+        return eq
 
 """
 Example to receive the beacon:
@@ -52,6 +69,7 @@ def process_read_longmynd_data(pipe):
 #    TS_PORT = '7777'
 
     longmynd_data = LongmyndData()
+    published_data = LongmyndData()
 
     lm_status_fifo_fd = os.fdopen(os.open(LM_STATUS_FIFO_NAME, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
@@ -464,7 +482,9 @@ def process_read_longmynd_data(pipe):
                         longmynd_data.dbm_power = calculated_dbm_power(agc_pair)
                 #) match
                 if lm_id in {1,6,7,8,12,13,14,15,16,17,18,26,27}:
-                    pipe.send(longmynd_data)
+                    if longmynd_data != published_data:
+                        pipe.send(longmynd_data)
+                        published_data = copy.deepcopy(longmynd_data)
             #) for line
 
         else: # not running
