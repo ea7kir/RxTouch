@@ -3,6 +3,9 @@
 from multiprocessing import Process
 from multiprocessing import Pipe
 
+import threading            # experimenting
+from time import sleep      # experimenting
+
 import PySimpleGUI as sg
 import control_status as cs
 
@@ -12,15 +15,13 @@ from process_video_ts import process_video_ts
 
 from device_manager import configure_devices, shutdown_devices
 
-# LAYOUT ----------------------------------------
+""" LAYOUT FUNCTIONS ------------------------------ """
 
 sg.theme('Black')
 
 SCREEN_COLOR = '#111111'
 NORMAL_BUTTON_COLOR = ('#FFFFFF','#222222')
 DISABALED_BUTTON_COLOR = ('#444444',None)
-#TUNE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#007700')
-#MUTE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#FF0000')
 
 def text_data(name, key):
     return sg.Text(name, size=11), sg.Text(' ', size=9, key=key, text_color='orange')
@@ -30,6 +31,8 @@ def incdec_but(name, key):
 
 def button_selector(key_down, value, key_up, width):
     return  incdec_but('<', key_down), sg.Text(' ', size=width, justification='center', key=value, text_color='orange'), incdec_but('>', key_up) 
+
+""" LAYOUTS --------------------------------------- """
 
 top_layout = [
     sg.Button('RxTouch', key='-SYSTEM-', border_width=0, button_color=NORMAL_BUTTON_COLOR, mouseover_colors=NORMAL_BUTTON_COLOR),
@@ -91,7 +94,23 @@ layout = [
     status_layout,
 ]
 
-# MAIN ------------------------------------------
+""" TREADS --------------------------------------- """
+
+def spectrum_thread(window, pipe):
+    dummy = 0
+    while True:
+        if pipe.poll():
+            window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, dummy))
+        sleep(0.166)
+
+def longmynd_thread(window, pipe):
+    dummy = 0
+    while True:
+        if pipe.poll():
+            window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, dummy))
+        sleep(0.1)
+
+""" MAIN ------------------------------------------ """
 
 def main_gui(spectrum_pipe, longmynd_pipe):
     window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
@@ -104,8 +123,12 @@ def main_gui(spectrum_pipe, longmynd_pipe):
     window['-FV-'].update(cs.curr_value.frequency)
     window['-SV-'].update(cs.curr_value.symbol_rate)
     window.refresh()
+
+    threading.Thread(target=spectrum_thread, args=(window, spectrum_pipe), daemon=True).start()
+    threading.Thread(target=longmynd_thread, args=(window, longmynd_pipe), daemon=True).start()
+
     while True:
-        event, values = window.read(timeout=100)
+        event, _ = window.read()
         match event:
             case '-TUNE-':
                 cs.tune()
@@ -153,52 +176,53 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-TUNE-'].update(button_color=cs.tune_button_color)
                 window.refresh()
                 break
-            case _:
-                if spectrum_pipe.poll():
-                    spectrum_data = spectrum_pipe.recv()
-                    while spectrum_pipe.poll():
-                        _ = spectrum_pipe.recv()
-                    # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
-                    graph.erase()
-                    # draw graticule
-                    c = 0
-                    for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
-                        if c == 5:
-                            graph.draw_text('5dB', (13,y), color='#444444')
-                            graph.draw_line((40, y), (918, y), color='#444444')
-                        elif c == 10:
-                            graph.draw_text('10dB', (17,y), color='#444444')
-                            graph.draw_line((40, y), (918, y), color='#444444')
-                        elif c == 15:
-                            graph.draw_text('15dB', (17,y), color='#444444')
-                            graph.draw_line((40, y), (918, y), color='#444444')
-                        else:
-                            graph.draw_line((0, y), (918, y), color='#222222')
-                        c += 1
-                    # draw tuned marker
-                    x = cs.selected_frequency_marker()
-                    graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
-                    # draw beacon level
-                    graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
-                    # draw spectrum
-                    graph.draw_polygon(spectrum_data.points, fill_color='green')
-                elif longmynd_pipe.poll():
-                    longmynd_data = longmynd_pipe.recv()
-                    while longmynd_pipe.poll():
-                        _ = longmynd_pipe.recv()
-                    window['-FREQUENCY-'].update(longmynd_data.frequency)
-                    window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
-                    window['-MODE-'].update(longmynd_data.mode)
-                    window['-CONSTELLATION-'].update(longmynd_data.constellation)
-                    window['-FEC-'].update(longmynd_data.fec)
-                    window['-CODECS-'].update(longmynd_data.codecs)
-                    window['-DB_MER-'].update(longmynd_data.db_mer)
-                    window['-DB_MARGIN-'].update(longmynd_data.db_margin)
-                    window['-DBM_POWER-'].update(longmynd_data.dbm_power)
-                    window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
-                    window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
-                    window['-PROVIDER-'].update(longmynd_data.provider)
-                    window['-SERVICE-'].update(longmynd_data.service)
+            case '-SPECTRUM_THREAD-':
+                spectrum_data = spectrum_pipe.recv()
+                while spectrum_pipe.poll():
+                    _ = spectrum_pipe.recv()
+                # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
+                graph.erase()
+                # draw graticule
+                c = 0
+                for y in range(0x2697, 0xFFFF, 0xD2D): # 0x196A, 0xFFFF, 0xD2D
+                    if c == 5:
+                        graph.draw_text('5dB', (13,y), color='#444444')
+                        graph.draw_line((40, y), (918, y), color='#444444')
+                    elif c == 10:
+                        graph.draw_text('10dB', (17,y), color='#444444')
+                        graph.draw_line((40, y), (918, y), color='#444444')
+                    elif c == 15:
+                        graph.draw_text('15dB', (17,y), color='#444444')
+                        graph.draw_line((40, y), (918, y), color='#444444')
+                    else:
+                        graph.draw_line((0, y), (918, y), color='#222222')
+                    c += 1
+                # draw tuned marker
+                x = cs.selected_frequency_marker()
+                graph.draw_line((x, 0x2000), (x, 0xFFFF), color='#880000')
+                # draw beacon level
+                graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
+                # draw spectrum
+                graph.draw_polygon(spectrum_data.points, fill_color='green')
+                window.refresh()
+            case '-LONGMYND_THREAD-':
+                longmynd_data = longmynd_pipe.recv()
+                while longmynd_pipe.poll():
+                    _ = longmynd_pipe.recv()
+                window['-FREQUENCY-'].update(longmynd_data.frequency)
+                window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
+                window['-MODE-'].update(longmynd_data.mode)
+                window['-CONSTELLATION-'].update(longmynd_data.constellation)
+                window['-FEC-'].update(longmynd_data.fec)
+                window['-CODECS-'].update(longmynd_data.codecs)
+                window['-DB_MER-'].update(longmynd_data.db_mer)
+                window['-DB_MARGIN-'].update(longmynd_data.db_margin)
+                window['-DBM_POWER-'].update(longmynd_data.dbm_power)
+                window['-NULL_RATIO-'].Update(longmynd_data.null_ratio)
+                window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
+                window['-PROVIDER-'].update(longmynd_data.provider)
+                window['-SERVICE-'].update(longmynd_data.service)
+                window.refresh()
 
     window.close()
     del window
