@@ -105,7 +105,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
     window['-SV-'].update(cs.curr_value.symbol_rate)
     window.refresh()
     while True:
-        event, values = window.read(timeout=1)
+        event, values = window.read(timeout=100)
         match event:
             case '-TUNE-':
                 cs.tune()
