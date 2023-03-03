@@ -7,21 +7,21 @@ echo "Installing RxTouch Part 3"
 
 echo
 echo "-------------------------------"
-echo "-- Installing Python 3.11.1"
+echo "-- Installing Python 3.11.2"
 echo "--"
 echo "-- this will take some time..."
 echo "-------------------------------"
 echo
 
-pyenv install 3.11.1
+pyenv install 3.11.2
 
 echo
 echo "-------------------------------"
-echo "-- Setting env to Python 3.11.1"
+echo "-- Setting env to Python 3.11.2"
 echo "-------------------------------"
 echo
 
-pyenv global 3.11.1
+pyenv global 3.11.2
 pyenv versions
 
 echo
@@ -34,11 +34,11 @@ pip install --upgrade pip
 
 echo
 echo "-------------------------------"
-echo "-- Installing PySimpleGUI, websockets & PyYAML"
+echo "-- Installing PySimpleGUI and websockets"
 echo "-------------------------------"
 echo
 
-pip install pysimplegui websockets PyYAML
+pip install pysimplegui websockets
 
 echo
 echo "-------------------------------"
@@ -48,17 +48,17 @@ echo
 
 sudo apt -y install make gcc libusb-1.0-0-dev libasound2-dev
 
-echo
-echo "-------------------------------"
-echo "-- Install xinit"
-echo "-------------------------------"
-echo
-
-sudo apt install xinit
-sudo apt autoremove
-
-echo "Suggested packages: (not installed)"
-echo "xfonts-100dpi | xfonts-75dpi xfonts-scalable xinput firmware-amd-graphics xserver-xorg-video-r128 xserver-xorg-video-mach64"
+#echo
+#echo "-------------------------------"
+#echo "-- Install xinit"
+#echo "-------------------------------"
+#echo
+#
+#sudo apt install xinit
+#sudo apt autoremove
+#
+#echo "Suggested packages: (not installed)"
+#echo "xfonts-100dpi | xfonts-75dpi xfonts-scalable xinput firmware-amd-graphics xserver-xorg-video-r128 xserver-xorg-video-mach64"
 
 echo
 echo "-------------------------------"
