@@ -97,23 +97,31 @@ layout = [
 """ THREADS -------------------------------------- """
 
 def spectrum_thread(window, pipe):
-    dummy = 0
     while True:
-        if pipe.poll():
-            window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, dummy))
-        sleep(0.166)
+        spectrum_data = pipe.recv()
+        window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, spectrum_data))
+        while pipe.poll():
+            _ = pipe.recv()
+            print('dump spectrum data', flush= True)
 
 def longmynd_thread(window, pipe):
-    dummy = 0
+#    dummy = 0
+#    while True:
+#        if pipe.poll():
+#            window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, dummy))
+#        sleep(0.1)
     while True:
-        if pipe.poll():
-            window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, dummy))
-        sleep(0.1)
+        longmynd_data = pipe.recv()
+        window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, longmynd_data))
+        while pipe.poll():
+            _ = pipe.recv()
+            print('dump longmynd data', flush= True)
 
 """ MAIN ------------------------------------------ """
 
 def main_gui(spectrum_pipe, longmynd_pipe):
     window = sg.Window('', layout, size=(800, 480), font=(None, 11), background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
+    window.move(0,0) # assumes DSI-1 is upper left
     window.set_cursor('none')
     graph = window['graph']
     cs.longmynd_pipe = longmynd_pipe
@@ -127,10 +135,8 @@ def main_gui(spectrum_pipe, longmynd_pipe):
     threading.Thread(target=spectrum_thread, args=(window, spectrum_pipe), daemon=True).start()
     threading.Thread(target=longmynd_thread, args=(window, longmynd_pipe), daemon=True).start()
 
-    #count = 0 # TEMP
-
     while True:
-        event, _ = window.read()
+        event, values = window.read()
         match event:
             case '-TUNE-':
                 cs.tune()
@@ -179,10 +185,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window.refresh()
                 break
             case '-SPECTRUM_THREAD-':
-                spectrum_data = spectrum_pipe.recv()
-                while spectrum_pipe.poll():
-                    _ = spectrum_pipe.recv()
-                    #print('S')
+                spectrum_data = values['-SPECTRUM_THREAD-'][1]
                 # TODO: try just deleting the polygon and beakcon_level with delete_figure(id)
                 graph.erase()
                 # draw graticule
@@ -207,12 +210,11 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
                 # draw spectrum
                 graph.draw_polygon(spectrum_data.points, fill_color='green')
-                window.refresh()
             case '-LONGMYND_THREAD-':
-                longmynd_data = longmynd_pipe.recv()
-                while longmynd_pipe.poll():
-                    _ = longmynd_pipe.recv()
-                    #print('LM', count); count += 1
+                #longmynd_data = longmynd_pipe.recv()
+                #while longmynd_pipe.poll():
+                #    _ = longmynd_pipe.recv()
+                longmynd_data = values['-LONGMYND_THREAD-'][1]
                 window['-FREQUENCY-'].update(longmynd_data.frequency)
                 window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
                 window['-MODE-'].update(longmynd_data.mode)

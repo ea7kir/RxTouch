@@ -39,6 +39,5 @@ def process_read_spectrum_data(pipe):
                     spectrum_data.beacon_level += spectrum_data.points[i][1]
                 spectrum_data.beacon_level //= 20
                 pipe.send(spectrum_data)
-                sleep(0)
 
     asyncio.run(handle())
