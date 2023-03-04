@@ -94,7 +94,7 @@ layout = [
     status_layout,
 ]
 
-""" TREADS --------------------------------------- """
+""" THREADS -------------------------------------- """
 
 def spectrum_thread(window, pipe):
     dummy = 0
