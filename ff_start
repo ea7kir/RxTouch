@@ -1,0 +1,7 @@
+#!/bin/bash
+cd /home/pi/RxTouch
+export DISPLAY=:0
+echo "in ff_start"
+#/usr/bin/sudo /usr/bin/ffplay -fs -autoexit -i /home/pi/RxTouch/longmynd/longmynd_main_ts > /dev/null 2>&1 &
+/usr/bin/ffplay -fs -i /home/pi/RxTouch/longmynd/longmynd_main_ts > /dev/null 2>&1 &
+#/usr/bin/ffplay -fs -autoexit /home/pi/BigBuckBunny.mp4

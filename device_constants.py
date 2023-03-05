@@ -1,11 +1,14 @@
 # constants
 
+LM_START_ATV_SCRIPT             = '/home/pi/RxTouch/lm_start_atv' # ONLY FOR DEVELOPING
 LM_START_SCRIPT                 = '/home/pi/RxTouch/lm_start'
-LM_START_SCRIPT2                 = '/home/pi/RxTouch/lm_start2'
 LM_STOP_SCRIPT                  = '/home/pi/RxTouch/lm_stop'
 
-LM_STATUS_FIFO_NAME             = '/home/pi/RxTouch/longmynd/longmynd_main_status'
-LM_TS_PIPE                      = '/home/pi/RxTouch/longmynd/longmynd_main_ts'
+FF_START_SCRIPT                 = '/home/pi/RxTouch/ff_start'
+FF_STOP_SCRIPT                  = '/home/pi/RxTouch/ff_stop'
+
+LM_STATUS_FIFO                  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
+LM_TS_FIFO                      = '/home/pi/RxTouch/longmynd/longmynd_main_ts'
 
 LM_OFFSET                       = 9750000
 

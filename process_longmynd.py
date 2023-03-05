@@ -11,8 +11,10 @@ import copy
 from collections import OrderedDict # for power levels
 import bisect  # for power levels
 
-from device_constants import LM_START_SCRIPT, LM_START_SCRIPT2, LM_STOP_SCRIPT
-from device_constants import LM_OFFSET, LM_STATUS_FIFO_NAME
+from device_constants import LM_START_ATV_SCRIPT # ONLY FOR DEVELOPING
+
+from device_constants import LM_START_SCRIPT, LM_STOP_SCRIPT, FF_START_SCRIPT, FF_STOP_SCRIPT
+from device_constants import LM_OFFSET, LM_STATUS_FIFO, LM_TS_FIFO
 from device_constants import TS_IP, TS_PORT
 
 from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
@@ -57,21 +59,17 @@ cd /home/pi/RxTouch/longmynd
 /home/pi/RxTouch/longmynd/longmynd -i 192.168.1.41 7777 -S 0.6 741500 1500 &
 OR
 /home/pi/RxTouch/longmynd/longmynd -S 0.6 741500 1500 &
-    and start VLC with 'cvlc longmynd_main_ts
+    AND
+        run cvlc with path_to/longmynd_main_ts
+    OR
+        run ffplay with path_to/longmynd_main_ts
 """
 def process_read_longmynd_data(pipe):
-#    LM_START_SCRIPT = '/home/pi/RxTouch/lm_start'
-#    LM_STOP_SCRIPT = '/home/pi/RxTouch/lm_stop'
-#    LM_STATUS_FIFO_NAME  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
-#
-#    LM_OFFSET = 9750000
-#    TS_IP = socket.gethostbyname('office.local') # Apple TV
-#    TS_PORT = '7777'
 
     longmynd_data = LongmyndData()
     published_data = LongmyndData()
 
-    lm_status_fifo_fd = os.fdopen(os.open(LM_STATUS_FIFO_NAME, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
+    lm_status_fifo_fd = os.fdopen(os.open(LM_STATUS_FIFO, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
 # CLASS ###############################################################
 
@@ -334,6 +332,26 @@ def process_read_longmynd_data(pipe):
     es_pair = EsPair()
     agc_pair = AgcPair()
 
+    ffplay_running = False
+
+    def start_ffplay():
+        if ffplay_running:
+            return True
+        print(f'starting ffplay - {FF_START_SCRIPT}', flush=True)
+        args = FF_START_SCRIPT
+        p = subprocess.run(args)
+        success = True
+        return success
+
+    def stop_ffplay():
+        if not ffplay_running:
+            return False
+        print(f'stoping ffplay - {FF_STOP_SCRIPT}', flush=True)
+        args = FF_STOP_SCRIPT
+        p = subprocess.run(args)
+        success = True
+        return not success
+
 # LOOP BEGIN ########################################################################################
 
     while True:
@@ -344,18 +362,20 @@ def process_read_longmynd_data(pipe):
                 args = LM_STOP_SCRIPT
                 p2 = subprocess.run(args)
                 longmynd_running = False
+                ffplay_running = stop_ffplay()
             else:
                 lm_status_fifo_fd.flush()
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - LM_OFFSET) )
                 if False:
                     # SEND TO APPLE TV
-                    args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                    args = [LM_START_ATV_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 else:
                     # SEND TO longmynd_main_ts
-                    args = [LM_START_SCRIPT2, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
-                # TODO: OR args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                    args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                # TODO: OR args = [LM_START_ATV_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
                 longmynd_running = True
+                #ffplay_running = start_ffplay()
 
         if longmynd_running:
 
@@ -490,10 +510,16 @@ def process_read_longmynd_data(pipe):
                     if longmynd_data != published_data:
                         pipe.send(longmynd_data)
                         published_data = copy.deepcopy(longmynd_data)
+                        if longmynd_data.codecs != '-':
+                            ffplay_running = start_ffplay()
+                        else:
+                            ffplay_running = stop_ffplay()
             #) for line
 
         else: # not running
             
+            ffplay_running = stop_ffplay()
+
             longmynd_data.state = '-'
             longmynd_data.frequency = '-'
             longmynd_data.symbol_rate = '-'

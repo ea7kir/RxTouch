@@ -182,7 +182,9 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 #if sg.popup_yes_no('Shutdown Now?', background_color='red', keep_on_top=True) == 'Yes':
                 cs.cancel_tune()
                 window['-TUNE-'].update(button_color=cs.tune_button_color)
+                window['-STATUS_BAR-'].update('Shutting down...')
                 window.refresh()
+                sleep(3)
                 break
             case '-SPECTRUM_THREAD-':
                 spectrum_data = values['-SPECTRUM_THREAD-'][1]
@@ -239,21 +241,21 @@ if __name__ == '__main__':
 
     parent_spectrum_pipe, child_spectrum_pipe = Pipe()
     parent_longmynd_pipe, child_longmynd_pipe = Pipe()
-    parent_video_ts_pipe, child_video_ts_pipe = Pipe()
+    #parent_video_ts_pipe, child_video_ts_pipe = Pipe()
     # create the process
     p_read_spectrum_data = Process(target=process_read_spectrum_data, args=(child_spectrum_pipe,))
     p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(child_longmynd_pipe,))
-    p_process_video_ts = Process(target=process_video_ts, args=(child_video_ts_pipe,))
+    #p_process_video_ts = Process(target=process_video_ts, args=(child_video_ts_pipe,))
     # start the process
     p_read_spectrum_data.start()
     p_read_longmynd_data.start()
-    p_process_video_ts.start()
+    #p_process_video_ts.start()
     # main ui
     main_gui(parent_spectrum_pipe, parent_longmynd_pipe)
     # kill 
     p_read_spectrum_data.kill()
     p_read_longmynd_data.kill()
-    p_process_video_ts.kill()
+    #p_process_video_ts.kill()
 
     shutdown_devices()
 
