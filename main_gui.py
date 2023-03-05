@@ -115,7 +115,7 @@ def longmynd_thread(window, pipe):
         window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, longmynd_data))
         while pipe.poll():
             _ = pipe.recv()
-            print('dump longmynd data', flush= True)
+            #print('dump longmynd data', flush= True)
 
 """ MAIN ------------------------------------------ """
 

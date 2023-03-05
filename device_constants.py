@@ -1,6 +1,7 @@
 # constants
 
 LM_START_SCRIPT                 = '/home/pi/RxTouch/lm_start'
+LM_START_SCRIPT2                 = '/home/pi/RxTouch/lm_start2'
 LM_STOP_SCRIPT                  = '/home/pi/RxTouch/lm_stop'
 
 LM_STATUS_FIFO_NAME             = '/home/pi/RxTouch/longmynd/longmynd_main_status'

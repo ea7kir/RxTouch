@@ -48,6 +48,20 @@ echo
 
 sudo apt -y install make gcc libusb-1.0-0-dev libasound2-dev
 
+echo
+echo "-------------------------------"
+echo "-- make longmynd and create fifo pipes"
+echo
+echo "-- Assuming COMMENT LINE 22 IN THE Makefile is done!"
+echo "-------------------------------"
+echo
+
+cd /home/pi/longmynd
+make
+mkfifo longmynd_main_status
+mkfifo longmynd_main_ts
+cd
+
 #echo
 #echo "-------------------------------"
 #echo "-- Install xinit"

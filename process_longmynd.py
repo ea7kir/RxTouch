@@ -11,7 +11,7 @@ import copy
 from collections import OrderedDict # for power levels
 import bisect  # for power levels
 
-from device_constants import LM_START_SCRIPT, LM_STOP_SCRIPT
+from device_constants import LM_START_SCRIPT, LM_START_SCRIPT2, LM_STOP_SCRIPT
 from device_constants import LM_OFFSET, LM_STATUS_FIFO_NAME
 from device_constants import TS_IP, TS_PORT
 
@@ -347,7 +347,12 @@ def process_read_longmynd_data(pipe):
             else:
                 lm_status_fifo_fd.flush()
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - LM_OFFSET) )
-                args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                if False:
+                    # SEND TO APPLE TV
+                    args = [LM_START_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                else:
+                    # SEND TO longmynd_main_ts
+                    args = [LM_START_SCRIPT2, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 # TODO: OR args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
                 p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
                 longmynd_running = True
