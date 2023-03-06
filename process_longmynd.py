@@ -68,6 +68,7 @@ def process_read_longmynd_data(pipe):
 
     longmynd_data = LongmyndData()
     published_data = LongmyndData()
+    has_dvb = False
 
     lm_status_fifo_fd = os.fdopen(os.open(LM_STATUS_FIFO, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
@@ -401,8 +402,10 @@ def process_read_longmynd_data(pipe):
                                 longmynd_data.state = 'Locked'
                             case 3: # locked on a DVB-S signal
                                 longmynd_data.state = 'DVB-S'  # TODO: at this point VLC should be set to run
+                                has_dvb = True
                             case 4: # locked on a DVB-S2 signal
                                 longmynd_data.state = 'DVB-S2'  # TODO: at this point VLC should be set to run
+                                has_dvb = True
 
                         #if not hasPIDs:
                         #    self.tunerStatus.setPIDs(self.pidCache)
@@ -411,6 +414,7 @@ def process_read_longmynd_data(pipe):
 
                         if int(lm_value) < 3: # if it is not locked, reset some state
                             # TODO: at this point VLC should output 'NO VIDEO'
+                            has_dvb = False
                             es_pair.reset()
                             longmynd_data.frequency = '-'
                             longmynd_data.symbol_rate = '-'
@@ -510,7 +514,7 @@ def process_read_longmynd_data(pipe):
                     if longmynd_data != published_data:
                         pipe.send(longmynd_data)
                         published_data = copy.deepcopy(longmynd_data)
-                        if longmynd_data.codecs != '-':
+                        if has_dvb:
                             ffplay_running = start_ffplay()
                         else:
                             ffplay_running = stop_ffplay()
@@ -519,6 +523,7 @@ def process_read_longmynd_data(pipe):
         else: # not running
             
             ffplay_running = stop_ffplay()
+            has_dvb = False
 
             longmynd_data.state = '-'
             longmynd_data.frequency = '-'

@@ -120,7 +120,7 @@ def longmynd_thread(window, pipe):
 """ MAIN ------------------------------------------ """
 
 def main_gui(spectrum_pipe, longmynd_pipe):
-    window = sg.Window('', layout, size=(800, 480), location=(1920,0), no_titlebar=True, force_toplevel=True,
+    window = sg.Window('', layout, size=(800, 480), location=(0,0), no_titlebar=True, force_toplevel=True,
                        font=(None, 11), background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
     window.set_cursor('none')
     graph = window['graph']
@@ -212,6 +212,10 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 graph.draw_line((0, spectrum_data.beacon_level), (918, spectrum_data.beacon_level), color='#880000', width=1)
                 # draw spectrum
                 graph.draw_polygon(spectrum_data.points, fill_color='green')
+
+                # MER in 720 x 240
+                #graph.draw_text(window['-DB_MER-'].get(), (470, 0x8900), font=('bold',220), color='white')
+
             case '-LONGMYND_THREAD-':
                 #longmynd_data = longmynd_pipe.recv()
                 #while longmynd_pipe.poll():
