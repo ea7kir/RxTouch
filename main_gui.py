@@ -102,7 +102,8 @@ def spectrum_thread(window, pipe):
         window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, spectrum_data))
         while pipe.poll():
             _ = pipe.recv()
-            print('dump spectrum data', flush= True)
+            sleep(0)
+            #print('dump spectrum data', flush= True)
 
 def longmynd_thread(window, pipe):
 #    dummy = 0
@@ -115,6 +116,7 @@ def longmynd_thread(window, pipe):
         window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, longmynd_data))
         while pipe.poll():
             _ = pipe.recv()
+            sleep(0)
             #print('dump longmynd data', flush= True)
 
 """ MAIN ------------------------------------------ """
@@ -184,7 +186,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-TUNE-'].update(button_color=cs.tune_button_color)
                 window['-STATUS_BAR-'].update('Shutting down...')
                 window.refresh()
-                sleep(3)
+                sleep(5)
                 break
             case '-SPECTRUM_THREAD-':
                 spectrum_data = values['-SPECTRUM_THREAD-'][1]

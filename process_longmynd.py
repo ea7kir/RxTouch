@@ -6,16 +6,11 @@ import os
 from time import sleep
 import copy
 
-#import socket # only used to find ip of apple tv
-
 from collections import OrderedDict # for power levels
 import bisect  # for power levels
 
-from device_constants import LM_START_ATV_SCRIPT # ONLY FOR DEVELOPING
-
 from device_constants import LM_START_SCRIPT, LM_STOP_SCRIPT, FF_START_SCRIPT, FF_STOP_SCRIPT
 from device_constants import LM_OFFSET, LM_STATUS_FIFO, LM_TS_FIFO
-from device_constants import TS_IP, TS_PORT
 
 from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
 
@@ -330,28 +325,10 @@ def process_read_longmynd_data(pipe):
 ################################################################
 
     longmynd_running = False
-    es_pair = EsPair()
-    agc_pair = AgcPair()
-
     ffplay_running = False
 
-    def start_ffplay():
-        if ffplay_running:
-            return True
-        print(f'starting ffplay - {FF_START_SCRIPT}', flush=True)
-        args = FF_START_SCRIPT
-        p = subprocess.run(args)
-        success = True
-        return success
-
-    def stop_ffplay():
-        if not ffplay_running:
-            return False
-        print(f'stoping ffplay - {FF_STOP_SCRIPT}', flush=True)
-        args = FF_STOP_SCRIPT
-        p = subprocess.run(args)
-        success = True
-        return not success
+    es_pair = EsPair()
+    agc_pair = AgcPair()
 
 # LOOP BEGIN ########################################################################################
 
@@ -361,22 +338,18 @@ def process_read_longmynd_data(pipe):
             tune_args = pipe.recv()
             if tune_args == 'STOP':
                 args = LM_STOP_SCRIPT
-                p2 = subprocess.run(args)
+                result = subprocess.run(args)
                 longmynd_running = False
-                ffplay_running = stop_ffplay()
-            else:
+                if ffplay_running:
+                    args = FF_STOP_SCRIPT
+                    result = subprocess.run(args)
+                    ffplay_running = False
+            else: # we have a valid request to tune
                 lm_status_fifo_fd.flush()
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - LM_OFFSET) )
-                if False:
-                    # SEND TO APPLE TV
-                    args = [LM_START_ATV_SCRIPT, '-i ', TS_IP, TS_PORT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
-                else:
-                    # SEND TO longmynd_main_ts
-                    args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
-                # TODO: OR args = [LM_START_ATV_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
-                p1 = subprocess.run(args) #, cwd='/home/pi/RxTouch/longmynd')
+                args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                result = subprocess.run(args)
                 longmynd_running = True
-                #ffplay_running = start_ffplay()
 
         if longmynd_running:
 
@@ -514,15 +487,20 @@ def process_read_longmynd_data(pipe):
                     if longmynd_data != published_data:
                         pipe.send(longmynd_data)
                         published_data = copy.deepcopy(longmynd_data)
-                        if has_dvb:
-                            ffplay_running = start_ffplay()
-                        else:
-                            ffplay_running = stop_ffplay()
+                        if has_dvb & (ffplay_running == False):
+                            args = FF_START_SCRIPT
+                            result = subprocess.run(args)
+                            ffplay_running = True
+                        elif ffplay_running & (has_dvb == False):
+                            args = FF_STOP_SCRIPT
+                            result = subprocess.run(args)
+                            ffplay_running = False
+
             #) for line
 
         else: # not running
-            
-            ffplay_running = stop_ffplay()
+
+            ffplay_running = False
             has_dvb = False
 
             longmynd_data.state = '-'
