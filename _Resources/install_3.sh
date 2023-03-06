@@ -76,6 +76,14 @@ cd
 
 echo
 echo "-------------------------------"
+echo "-- copy NoVideo.jpg wallpaper"
+echo "-------------------------------"
+echo
+
+sudo cp /home/pi/RxTouch/media/NoVideo.jpg /usr/share/rpd-wallpaper
+
+echo
+echo "-------------------------------"
 echo "-- Done"
 echo "-------------------------------"
 echo
