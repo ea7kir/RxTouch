@@ -97,8 +97,7 @@ layout = [
 def spectrum_thread(window, pipe):
     while True:
         while pipe.poll():
-            _ = pip
-            e.recv()
+            _ = pipe.recv()
             sleep(0)
             #print('dump spectrum data', flush= True)
         spectrum_data = pipe.recv()
