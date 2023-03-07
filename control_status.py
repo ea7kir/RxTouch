@@ -243,7 +243,7 @@ class TuneArgs:
     symbol_rate = ''
 
 def tune_args():
-    global curr_value, curr_index
+    #global curr_value, curr_index
     tune_args = TuneArgs()
     tune_args.frequency = curr_value.frequency[:8]
     if curr_value.symbol_rate == 'AUTO':
@@ -255,7 +255,6 @@ def tune_args():
     return tune_args
 
 NORMAL_BUTTON_COLOR = ('#FFFFFF','#222222')
-DISABALED_BUTTON_COLOR = ('#444444',None)
 TUNE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#007700')
 MUTE_ACTIVE_BUTTON_COLOR = ('#FFFFFF','#FF0000')
    

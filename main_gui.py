@@ -3,8 +3,8 @@
 from multiprocessing import Process
 from multiprocessing import Pipe
 
-import threading            # experimenting
-from time import sleep      # experimenting
+import threading
+from time import sleep
 
 import PySimpleGUI as sg
 import control_status as cs
@@ -18,10 +18,8 @@ from device_manager import configure_devices, shutdown_devices
 """ LAYOUT FUNCTIONS ------------------------------ """
 
 sg.theme('Black')
-
 SCREEN_COLOR = '#111111'
 NORMAL_BUTTON_COLOR = ('#FFFFFF','#222222')
-DISABALED_BUTTON_COLOR = ('#444444',None)
 
 def text_data(name, key):
     return sg.Text(name, size=11), sg.Text(' ', size=9, key=key, text_color='orange')
@@ -81,9 +79,9 @@ status_layout = [
         text_data('Service', '-SERVICE-'),
     ], size=(210,120)),
     sg.Column([
-        [sg.Button(' TUNE ', key='-TUNE-', border_width=0, button_color=NORMAL_BUTTON_COLOR, mouseover_colors=NORMAL_BUTTON_COLOR, disabled_button_color=DISABALED_BUTTON_COLOR, disabled=False)],
+        [sg.Button(' TUNE ', key='-TUNE-', border_width=0, button_color=NORMAL_BUTTON_COLOR, mouseover_colors=NORMAL_BUTTON_COLOR)],
         [sg.Text(' ')],
-        [sg.Button(' MUTE ', key='-MUTE-', border_width=0, button_color=NORMAL_BUTTON_COLOR, mouseover_colors=NORMAL_BUTTON_COLOR, disabled_button_color=DISABALED_BUTTON_COLOR, disabled=False)],
+        [sg.Button(' MUTE ', key='-MUTE-', border_width=0, button_color=NORMAL_BUTTON_COLOR, mouseover_colors=NORMAL_BUTTON_COLOR)],
     ]),
 ]
 
@@ -106,11 +104,6 @@ def spectrum_thread(window, pipe):
             #print('dump spectrum data', flush= True)
 
 def longmynd_thread(window, pipe):
-#    dummy = 0
-#    while True:
-#        if pipe.poll():
-#            window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, dummy))
-#        sleep(0.1)
     while True:
         longmynd_data = pipe.recv()
         window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, longmynd_data))
@@ -219,9 +212,6 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 #graph.draw_text(window['-DB_MER-'].get(), (470, 0x8900), font=('bold',220), color='white')
 
             case '-LONGMYND_THREAD-':
-                #longmynd_data = longmynd_pipe.recv()
-                #while longmynd_pipe.poll():
-                #    _ = longmynd_pipe.recv()
                 longmynd_data = values['-LONGMYND_THREAD-'][1]
                 window['-FREQUENCY-'].update(longmynd_data.frequency)
                 window['-SYMBOL_RATE-'].update(longmynd_data.symbol_rate)
@@ -236,7 +226,6 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 window['-NULL_RATIO-BAR-'].UpdateBar(longmynd_data.null_ratio_bar)
                 window['-PROVIDER-'].update(longmynd_data.provider)
                 window['-SERVICE-'].update(longmynd_data.service)
-                window.refresh()
 
     window.close()
     del window
@@ -245,27 +234,26 @@ if __name__ == '__main__':
 
     configure_devices()
 
+    # TODO: consider using duplex=False
+
     parent_spectrum_pipe, child_spectrum_pipe = Pipe()
     parent_longmynd_pipe, child_longmynd_pipe = Pipe()
-    #parent_video_ts_pipe, child_video_ts_pipe = Pipe()
     # create the process
     p_read_spectrum_data = Process(target=process_read_spectrum_data, args=(child_spectrum_pipe,))
     p_read_longmynd_data = Process(target=process_read_longmynd_data, args=(child_longmynd_pipe,))
-    #p_process_video_ts = Process(target=process_video_ts, args=(child_video_ts_pipe,))
     # start the process
     p_read_spectrum_data.start()
     p_read_longmynd_data.start()
-    #p_process_video_ts.start()
     # main ui
     main_gui(parent_spectrum_pipe, parent_longmynd_pipe)
     # kill 
     p_read_spectrum_data.kill()
     p_read_longmynd_data.kill()
-    #p_process_video_ts.kill()
 
     shutdown_devices()
 
     # shutdown
     print('about to shut down')
     #import subprocess
-    #subprocess.check_call(['sudo', 'poweroff'])
+    #args = ['/usr/bin/sudo', 'poweroff']
+    #subprocess.check_call(args)
