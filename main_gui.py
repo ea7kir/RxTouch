@@ -96,21 +96,22 @@ layout = [
 
 def spectrum_thread(window, pipe):
     while True:
-        spectrum_data = pipe.recv()
-        window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, spectrum_data))
         while pipe.poll():
-            _ = pipe.recv()
+            _ = pip
+            e.recv()
             sleep(0)
             #print('dump spectrum data', flush= True)
+        spectrum_data = pipe.recv()
+        window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, spectrum_data))
 
 def longmynd_thread(window, pipe):
     while True:
-        longmynd_data = pipe.recv()
-        window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, longmynd_data))
         while pipe.poll():
             _ = pipe.recv()
             sleep(0)
             #print('dump longmynd data', flush= True)
+        longmynd_data = pipe.recv()
+        window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, longmynd_data))
 
 """ MAIN ------------------------------------------ """
 
