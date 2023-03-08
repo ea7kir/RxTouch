@@ -115,8 +115,8 @@ def longmynd_thread(window, pipe):
 """ MAIN ------------------------------------------ """
 
 def main_gui(spectrum_pipe, longmynd_pipe):
-    window = sg.Window('', layout, size=(800, 480), location=(0,0), no_titlebar=True, force_toplevel=True,
-                       font=(None, 11), background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
+    window = sg.Window('', layout, size=(800, 480), font=(None, 11), location=(0,0), no_titlebar=True, #force_toplevel=True,
+                       background_color=SCREEN_COLOR, use_default_focus=False, finalize=True)
     window.set_cursor('none')
     graph = window['graph']
     cs.longmynd_pipe = longmynd_pipe

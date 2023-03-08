@@ -1,4 +1,4 @@
 #!/bin/bash
 cd /home/pi/RxTouch
-#export DISPLAY=:0
-startx /home/pi/.pyenv/shims/python main_gui.py
+export DISPLAY=:0
+/home/pi/.pyenv/shims/python main_gui.py
