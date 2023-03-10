@@ -11,7 +11,6 @@ import control_status as cs
 
 from process_spectrum import process_read_spectrum_data, SpectrumData
 from process_longmynd import process_read_longmynd_data, LongmyndData
-from process_video_ts import process_video_ts
 
 from device_manager import configure_devices, shutdown_devices
 
@@ -98,7 +97,7 @@ def spectrum_thread(window, pipe):
     while True:
         while pipe.poll():
             _ = pipe.recv()
-            sleep(0)
+            #sleep(0)
             #print('dump spectrum data', flush= True)
         spectrum_data = pipe.recv()
         window.write_event_value('-SPECTRUM_THREAD-', (threading.current_thread().name, spectrum_data))
@@ -107,7 +106,7 @@ def longmynd_thread(window, pipe):
     while True:
         while pipe.poll():
             _ = pipe.recv()
-            sleep(0)
+            #sleep(0)
             #print('dump longmynd data', flush= True)
         longmynd_data = pipe.recv()
         window.write_event_value('-LONGMYND_THREAD-', (threading.current_thread().name, longmynd_data))

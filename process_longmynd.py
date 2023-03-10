@@ -1,6 +1,13 @@
 """ WAITING FOR
     TODO: rewrite of calculated_dbm_power(agc_pair)
 """
+
+START_LONGMYND = 'cd /home/pi/RxTouch/longmynd; /usr/bin/sudo /home/pi/RxTouch/longmynd/longmynd -S 0.6 {} {} > /dev/null 2>&1 &'
+STOP_LONGMYND = '/usr/bin/sudo killall -w longmynd > /dev/null 2>&1'
+
+START_FFPLAY = 'export DISPLAY=:0; /usr/bin/ffplay -left 800 -fs -i /home/pi/RxTouch/longmynd/longmynd_main_ts > /dev/null 2>&1 &'
+STOP_FFPLAY = '/usr/bin/sudo killall -w ffplay pulseaudio > /dev/null 2>&1'
+
 import subprocess
 import os
 from time import sleep
@@ -9,7 +16,6 @@ import copy
 from collections import OrderedDict # for power levels
 import bisect  # for power levels
 
-from device_constants import LM_START_SCRIPT, LM_STOP_SCRIPT, FF_START_SCRIPT, FF_STOP_SCRIPT
 from device_constants import LM_OFFSET, LM_STATUS_FIFO, LM_TS_FIFO
 
 from time import sleep # ONLY NEEDED TO SIMULATE FETCH TIMES DURING DEVELOPMENT
@@ -337,19 +343,21 @@ def process_read_longmynd_data(pipe):
         if pipe.poll():
             tune_args = pipe.recv()
             if tune_args == 'STOP':
-                args = LM_STOP_SCRIPT
-                result = subprocess.run(args)
+                _ = subprocess.run(STOP_LONGMYND, shell=True)
                 longmynd_running = False
                 if ffplay_running:
-                    args = FF_STOP_SCRIPT
-                    result = subprocess.run(args)
+                    _ = subprocess.run(STOP_FFPLAY, shell=True)
                     ffplay_running = False
             else: # we have a valid request to tune
                 lm_status_fifo_fd.flush()
                 requestKHzStr = str( int(float(tune_args.frequency) * 1000 - LM_OFFSET) )
-                args = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
-                result = subprocess.run(args)
+                #cmd_str = [LM_START_SCRIPT, '-S', '0.6', requestKHzStr, tune_args.symbol_rate]
+                #START_LONGMYND = 'cd /home/pi/RxTouch/longmynd; /usr/bin/sudo /home/pi/RxTouch/longmynd/longmynd -S 0.6 {} {} > /dev/null 2>&1 &'
+                #cmd_str = f'cd /home/pi/RxTouch/longmynd; /usr/bin/sudo /home/pi/RxTouch/longmynd/longmynd -S 0.6 {requestKHzStr} {tune_args.symbol_rate} > /dev/null 2>&1 &'
+                cmd_str = START_LONGMYND.format(requestKHzStr, tune_args.symbol_rate)
+                _ = subprocess.run(cmd_str, shell=True)
                 longmynd_running = True
+
 
         if longmynd_running:
 
@@ -488,12 +496,10 @@ def process_read_longmynd_data(pipe):
                         pipe.send(longmynd_data)
                         published_data = copy.deepcopy(longmynd_data)
                         if has_dvb & (ffplay_running == False):
-                            args = FF_START_SCRIPT
-                            result = subprocess.run(args)
+                            _ = subprocess.run(START_FFPLAY, shell=True)
                             ffplay_running = True
                         elif ffplay_running & (has_dvb == False):
-                            args = FF_STOP_SCRIPT
-                            result = subprocess.run(args)
+                            _ = subprocess.run(STOP_FFPLAY, shell=True)
                             ffplay_running = False
 
             #) for line

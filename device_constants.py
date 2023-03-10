@@ -1,11 +1,5 @@
 # constants
 
-LM_START_SCRIPT                 = '/home/pi/RxTouch/lm_start'
-LM_STOP_SCRIPT                  = '/home/pi/RxTouch/lm_stop'
-
-FF_START_SCRIPT                 = '/home/pi/RxTouch/ff_start'
-FF_STOP_SCRIPT                  = '/home/pi/RxTouch/ff_stop'
-
 LM_STATUS_FIFO                  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
 LM_TS_FIFO                      = '/home/pi/RxTouch/longmynd/longmynd_main_ts'
 LM_OFFSET                       = 9750000
