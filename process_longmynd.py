@@ -5,8 +5,8 @@
 START_LONGMYND = 'cd /home/pi/RxTouch/longmynd; /usr/bin/sudo /home/pi/RxTouch/longmynd/longmynd -S 0.6 {} {} > /dev/null 2>&1 &'
 STOP_LONGMYND = '/usr/bin/sudo killall -w longmynd > /dev/null 2>&1'
 
-START_FFPLAY = 'export DISPLAY=:0; /usr/bin/ffplay -left 800 -fs -i /home/pi/RxTouch/longmynd/longmynd_main_ts > /dev/null 2>&1 &'
-STOP_FFPLAY = '/usr/bin/sudo killall -w ffplay pulseaudio > /dev/null 2>&1'
+START_PLAYER = 'export DISPLAY=:0; /usr/bin/ffplay -left 800 -fs -i /home/pi/RxTouch/longmynd/longmynd_main_ts > /dev/null 2>&1 &'
+STOP_PLAYER = '/usr/bin/sudo killall -w ffplay pulseaudio > /dev/null 2>&1'
 
 import subprocess
 import os
@@ -66,6 +66,10 @@ OR
         run ffplay with path_to/longmynd_main_ts
 """
 def process_read_longmynd_data(pipe):
+
+    # kill everything if soem was left running
+    _ = subprocess.run(STOP_LONGMYND, shell=True)
+    _ = subprocess.run(STOP_PLAYER, shell=True)
 
     longmynd_data = LongmyndData()
     published_data = LongmyndData()
@@ -206,9 +210,14 @@ def process_read_longmynd_data(pipe):
                 return ('-', '-')
         if key == 'KEY':
             print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
-        float_threshold = MOD_THRESHOLD[key]
-        float_mer = float(db_mer)
-        db_margin = float_mer - float_threshold
+        try:
+            float_threshold = MOD_THRESHOLD[key]
+            float_mer = float(db_mer)
+            db_margin = float_mer - float_threshold
+        except:
+            # added because I wa getting my "Unknown DVBC MODCOD 31" error message
+            print(f'ERROR in mode_margin() when key is {key}')
+            db_margin = 0.0
         return (state, 'D {:.1f}'.format(db_margin))
 
 # FUNC ###############################################################
@@ -346,7 +355,7 @@ def process_read_longmynd_data(pipe):
                 _ = subprocess.run(STOP_LONGMYND, shell=True)
                 longmynd_running = False
                 if ffplay_running:
-                    _ = subprocess.run(STOP_FFPLAY, shell=True)
+                    _ = subprocess.run(STOP_PLAYER, shell=True)
                     ffplay_running = False
             else: # we have a valid request to tune
                 lm_status_fifo_fd.flush()
@@ -496,10 +505,10 @@ def process_read_longmynd_data(pipe):
                         pipe.send(longmynd_data)
                         published_data = copy.deepcopy(longmynd_data)
                         if has_dvb & (ffplay_running == False):
-                            _ = subprocess.run(START_FFPLAY, shell=True)
+                            _ = subprocess.run(START_PLAYER, shell=True)
                             ffplay_running = True
                         elif ffplay_running & (has_dvb == False):
-                            _ = subprocess.run(STOP_FFPLAY, shell=True)
+                            _ = subprocess.run(STOP_PLAYER, shell=True)
                             ffplay_running = False
 
             #) for line
