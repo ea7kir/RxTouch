@@ -11,21 +11,21 @@
 # sudo systemctl stop rxtouch
 # sudo systemctl disable rxtouch
 #
+# See: https://www.raspberrypi.com/tutorials/how-to-use-a-raspberry-pi-in-kiosk-mode/
+
 [Unit]
-Description=RxTouch QO-100/Es'Hail-2 DATV Receiver
-After=multi-user.target
+Description=RxTouch Kiosk
+Wants=graphical.target
+After=graphical.target
 
 [Service]
+#Environment=DISPLAY=:0.0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+Type=simple
+ExecStart=/bin/bash /home/pi/RxTouch/runkiosk.sh
+Restart=on-abort
 User=pi
-
-#WorkingDirectory=/home/pi/RxTouch
-
-ExecStart=/home/pi/RxTouch/rxtouch
-
-#SuccessExitStatus=143
-#TimeoutStopSec=10
-#Restart=on-failure
-#RestartSec=5
+Group=pi
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=graphical.target

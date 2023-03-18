@@ -3,6 +3,8 @@
 from multiprocessing import Process
 from multiprocessing import Pipe
 
+import subprocess # for shutdown
+
 import threading
 from time import sleep
 
@@ -253,6 +255,5 @@ if __name__ == '__main__':
 
     # shutdown
     print('about to shut down')
-    #import subprocess
-    #args = ['/usr/bin/sudo', 'poweroff']
-    #subprocess.check_call(args)
+    args = ['/usr/bin/sudo', 'poweroff']
+    subprocess.check_call(args)

@@ -1,0 +1,7 @@
+How to auto start rxtouch
+
+mkdir -p /home/pi/.config/autostart
+
+Then copy this
+
+cp /home/pi/RxTouch/_Resources/runkiosk.sh /home/pi/.config/autostart
