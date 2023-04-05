@@ -1,3 +1,6 @@
 [Desktop Entry]
 Type=Application
+#Name=RxTouch
 Exec=/home/pi/RxTouch/runkiosk.sh
+#StartupNotify-False
+#Terminal=false

@@ -5,8 +5,12 @@
 START_LONGMYND = 'cd /home/pi/RxTouch/longmynd; /usr/bin/sudo /home/pi/RxTouch/longmynd/longmynd -S 0.6 {} {} > /dev/null 2>&1 &'
 STOP_LONGMYND = '/usr/bin/sudo killall -w longmynd > /dev/null 2>&1'
 
-START_PLAYER = 'export DISPLAY=:0; /usr/bin/ffplay -left 800 -fs -i /home/pi/RxTouch/longmynd/longmynd_main_ts > /dev/null 2>&1 &'
+# Reduce volume by 3db to get tx/rx unity gain, but the problem is really in the Pluto remux
+START_PLAYER = 'export DISPLAY=:0; /usr/bin/ffplay -left 800 -fs -volume 70 -i /home/pi/RxTouch/longmynd/longmynd_main_ts > /dev/null 2>&1 &'
 STOP_PLAYER = '/usr/bin/sudo killall -w ffplay pulseaudio > /dev/null 2>&1'
+
+#START_PLAYER = 'export DISPLAY=:0; /usr/bin/cvlc -f file:///home/pi/RxTouch/longmynd/longmynd_main_ts' # > /dev/null 2>&1 &'
+#STOP_PLAYER = '/usr/bin/sudo killall -w cvlc pulseaudio > /dev/null 2>&1'
 
 import subprocess
 import os

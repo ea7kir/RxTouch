@@ -209,7 +209,7 @@ def main_gui(spectrum_pipe, longmynd_pipe):
                 # draw spectrum
                 graph.draw_polygon(spectrum_data.points, fill_color='green')
 
-                # MER in 720 x 240
+                # LARGE LETTER for MER in 720 x 240
                 #graph.draw_text(window['-DB_MER-'].get(), (470, 0x8900), font=('bold',220), color='white')
 
             case '-LONGMYND_THREAD-':
@@ -256,4 +256,4 @@ if __name__ == '__main__':
     # shutdown
     print('about to shut down')
     args = ['/usr/bin/sudo', 'poweroff']
-    subprocess.check_call(args)
+    # subprocess.check_call(args)
