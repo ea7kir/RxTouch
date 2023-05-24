@@ -14,3 +14,12 @@ Control a DATV receiver with a touch screen.
 
 In the _Reaources folder, first read "Installing_Pi_OS.md" and follow the instructions.
 
+## Run
+```
+cd ~/RxTouch
+./rxtouch
+```
+Or, if prefered:
+```
+~/RxTouch/rxtouch
+```

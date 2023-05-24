@@ -82,6 +82,8 @@ def process_read_longmynd_data(pipe):
     lm_status_fifo_fd = os.fdopen(os.open(LM_STATUS_FIFO, flags=os.O_NONBLOCK, mode=os.O_RDONLY), encoding="utf-8", errors="replace")
 
 # CLASS ###############################################################
+    # H.266 / VCC clues:
+    # https://patchwork.ffmpeg.org/project/ffmpeg/patch/20230103134040.41140-10-thomas.ff@spin-digital.com/
 
     class EsPair:
         has_1st_pid = False
@@ -92,16 +94,17 @@ def process_read_longmynd_data(pipe):
             pass
         def codec(self, type_str):
             match type_str:
-                case '2': return 'MPEG-2' # TODO: too wide for display column
-                case '3': return 'MP3'
-                case '4': return 'MP3'
-                case '15': return 'ACC'
-                case '16': return 'H.263'
-                case '27': return 'H.264'
-                case '32': return 'MPA'
-                case '36': return 'H.265'
-                case '129': return 'AC3'
-            return '-'
+                case '2': return 'MPEG2'    # 0x02
+                case '3': return 'MP3'      # 0x03
+                case '4': return 'MP3'      # 0x04
+                case '15': return 'ACC'     # 0x0f
+                case '16': return 'H.263'   # 0x10
+                case '27': return 'H.264'   # 0x1b
+                case '32': return 'MPA'     # 0x20
+                case '36': return 'H.265'   # 0x24 aka HEVC or H.265
+                case '51': return 'H.266'   # 0x33 aka VCC or H.266
+                case '129': return 'AC3'    # 0x81
+            return type_str # '-'
         def reset(self):
             self.has_1st_pid = False
             self.has_2nd_pid = False
@@ -143,17 +146,24 @@ def process_read_longmynd_data(pipe):
                     mc = MODCOD_DVB_S[modcod]
                     return mc
                 except:
-                    print(f'Unkown DVB-S MODCOD {modcod}')
+                    print(f'Unknown DVB-S MODCOD {modcod}\n')
                     return ('?', '?')
             case 'DVB-S2':
                 #if modcod == 0:
-                #    print('Got modcod=0 "{MODCOD_DVB_S2[modcod]}", so returning ("-", "x")')  # TODO: but a better way would be to display it
+                #    print('Got modcod=0 "{MODCOD_DVB_S2[modcod]}", so returning ("-", "x")\n')  # TODO: but a better way would be to display it
                 #    return ('-', 'x')
+
+                # Unknown DVB-S2 MODCOD 31 ERROR in mode_margin() when key is DVB-S2 ? ?
+                # TEMP: FIX
+                if modcod > 28:
+                    print(f'Got modcod {modcod} greater than 28\n')
+                    return ('?', '?')
+
                 try:
                     mc = MODCOD_DVB_S2[modcod]
                     return mc
                 except:
-                    print(f'Unkown DVB-S2 MODCOD {modcod}')
+                    print(f'Unknown DVB-S2 MODCOD {modcod}\n')
                     return ('?', '?')
         return ('-', '-')
 
@@ -213,14 +223,14 @@ def process_read_longmynd_data(pipe):
             case '_':
                 return ('-', '-')
         if key == 'KEY':
-            print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}', flush=True)
+            print(f'state: {state}, db_mer: {db_mer}, fec: {fec}, constellation: {constellation}, key: {key}\n', flush=True)
         try:
             float_threshold = MOD_THRESHOLD[key]
             float_mer = float(db_mer)
             db_margin = float_mer - float_threshold
         except:
-            # added because I wa getting my "Unknown DVBC MODCOD 31" error message
-            print(f'ERROR in mode_margin() when key is {key}')
+            # added because I was getting my "Unknown DVBC MODCOD 31" error message
+            print(f'ERROR in mode_margin() when key is {key}\n')
             db_margin = 0.0
         return (state, 'D {:.1f}'.format(db_margin))
 
@@ -477,7 +487,7 @@ def process_read_longmynd_data(pipe):
                         if es_pair.has_1st_pid and es_pair.has_2nd_pid:
                             longmynd_data.codecs = f'{es_pair.codec(es_pair.the_1st_type)} {es_pair.codec(es_pair.the_2nd_type)}'
                             es_pair.reset()
-                    case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table below
+                    case 18: # MODCOD - Received Modulation & Coding Rate. See MODCOD Lookup Table
                         longmynd_data.constellation, longmynd_data.fec = constellation_fec(longmynd_data.state, int(lm_value))
                         # TODO: move mode_margin() into constellation_fec()
                         longmynd_data.mode, longmynd_data.db_margin = mode_margin(longmynd_data.state, longmynd_data.db_mer, longmynd_data.fec, longmynd_data.constellation)
