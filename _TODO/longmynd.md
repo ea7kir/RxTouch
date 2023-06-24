@@ -2,6 +2,9 @@
 
 ## longmynd
 
+Got modcod 31 greater than 28,
+ERROR in mode_margin() when key is DVB-S2 ? ?
+
 Use longmynd from https://github.com/philcrump/longmynd
 
 so it can be controlled over a websocket.
