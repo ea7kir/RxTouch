@@ -9,7 +9,7 @@ Use longmynd from https://github.com/philcrump/longmynd
 
 so it can be controlled over a websocket.
 
-I thing VLC can be restarted from this version.
+I think VLC can be restarted from this version.
 
 
 ## Dependences

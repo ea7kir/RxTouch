@@ -1,4 +1,7 @@
-"""RxTouch"""
+#
+#  TxRouch
+#  Copyright (c) 2023 Michael Naylor EA7KIR (https://michaelnaylor.es)
+#
 
 from multiprocessing import Process
 from multiprocessing import Pipe

@@ -1,3 +1,8 @@
+#
+#  TxRouch
+#  Copyright (c) 2023 Michael Naylor EA7KIR (https://michaelnaylor.es)
+#
+
 import asyncio
 import websockets
 from time import sleep

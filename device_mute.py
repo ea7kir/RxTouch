@@ -1,3 +1,8 @@
+#
+#  TxRouch
+#  Copyright (c) 2023 Michael Naylor EA7KIR (https://michaelnaylor.es)
+#
+
 #import pigpio
 #from device_constants import RELAY_ON, RELAY_OFF
 #from device_constants import RELAY_MUTE_GPIO

@@ -1,3 +1,8 @@
+#
+#  TxRouch
+#  Copyright (c) 2023 Michael Naylor EA7KIR (https://michaelnaylor.es)
+#
+
 """ WAITING FOR
     TODO: rewrite of calculated_dbm_power(agc_pair)
 """

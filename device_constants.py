@@ -1,3 +1,8 @@
+#
+#  TxRouch
+#  Copyright (c) 2023 Michael Naylor EA7KIR (https://michaelnaylor.es)
+#
+
 # constants
 
 LM_STATUS_FIFO                  = '/home/pi/RxTouch/longmynd/longmynd_main_status'
