@@ -5,7 +5,7 @@ THIS PROJECT IS NOW ARCHIVED - FURTHER DEVELOPMENT IS UNLIKELY
 ## Description
 RxTouch, together with [TxTouch](https://github.com/ea7kir/TxTouch) and [TxServer](https://github.com/ea7kir/TxServer), is a system for controlling and monitoring Digital Amateur Television (DATV) equipment over a wired local area network.
 
-Control and monitor a Q-100 DATV receiver.
+Control and monitor a Q-100 DATV receiver from a touch screen.
 
 ## Hardware
 
