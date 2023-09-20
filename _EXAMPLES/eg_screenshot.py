@@ -1,1 +1,0 @@
-# I think it can be done with window.screenshot()

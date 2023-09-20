@@ -1,6 +1,0 @@
-#!/bin/bash
-#echo "in lm_start"
-cd /home/pi/RxTouch/longmynd
-/usr/bin/sudo /home/pi/RxTouch/longmynd/longmynd "$1" "$2" "$3" "$4" > /dev/null 2>&1 &
-cd /home/pi/RxTouch
-exit 0

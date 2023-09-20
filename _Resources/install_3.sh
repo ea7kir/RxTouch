@@ -101,6 +101,7 @@ echo "wget https://github.com/BritishAmateurTelevisionClub/longmynd/archive/refs
 echo "unzip master.zip"
 echo "rm master.zip"
 echo "mv longmynd-master longmynd"
+echo
 echo "COMMENT LINE 22 IN THE Makefile"
 echo
 echo "Compile longmynd"
