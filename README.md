@@ -1,6 +1,6 @@
 # RxTouch
 
-THIS PROJECT IS NOW ARCHIVED - FURTHER DEVELOPMENT IS UNLIKELY
+**THIS PROJECT IS ARCHIVED - FURTHER DEVELOPMENT IS UNLIKELY**
 
 ## Description
 RxTouch, together with [TxTouch](https://github.com/ea7kir/TxTouch) and [TxServer](https://github.com/ea7kir/TxServer), is a system for controlling and monitoring Digital Amateur Television (DATV) equipment over a wired local area network.
@@ -9,7 +9,7 @@ Control and monitor a Q-100 DATV receiver from a touch screen.
 
 ## Hardware
 
-- Raspberry Pi 4B with 8GB RAM
+- Raspberry Pi 4B with 4GB RAM
 - Raspberry Pi Official 7" Touch Screen
 - BATC Minitiouner V2
 
